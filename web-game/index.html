@@ -1,0 +1,1720 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>词语炼金 - 灰月裁缝间</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@400;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            overflow: hidden;
+            font-family: 'Noto Serif SC', serif;
+            background: #0a0a12;
+            color: #e8e4d9;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* UI 层 */
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        #ui-layer > * {
+            pointer-events: auto;
+        }
+
+        /* 顶部状态栏 */
+        #status-bar {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 30px;
+            padding: 15px 40px;
+            background: linear-gradient(135deg, rgba(30, 25, 40, 0.95), rgba(20, 18, 30, 0.9));
+            border: 1px solid rgba(212, 175, 100, 0.3);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #8a8070;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            font-family: 'Ma Shan Zheng', cursive;
+        }
+
+        .stat-value.体面 { color: #d4af64; }
+        .stat-value.怀疑 { color: #a86060; }
+        .stat-value.灵感 { color: #8090d0; }
+
+        /* 阶段标题 */
+        #stage-title {
+            position: absolute;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.8s ease;
+        }
+
+        #stage-title.visible {
+            opacity: 1;
+        }
+
+        #stage-title h2 {
+            font-size: 14px;
+            color: #6a6050;
+            letter-spacing: 4px;
+            margin-bottom: 8px;
+        }
+
+        #stage-title h1 {
+            font-size: 32px;
+            font-family: 'Ma Shan Zheng', cursive;
+            color: #d4c4a8;
+            text-shadow: 0 2px 10px rgba(212, 175, 100, 0.3);
+        }
+
+        /* 物品栏 */
+        #item-shelf {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            padding: 20px 30px;
+            background: linear-gradient(180deg, rgba(30, 25, 40, 0.9), rgba(20, 18, 30, 0.95));
+            border: 1px solid rgba(212, 175, 100, 0.2);
+            border-radius: 16px;
+            box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.4);
+        }
+
+        .shelf-card {
+            width: 90px;
+            height: 130px;
+            background: linear-gradient(145deg, #2a2535, #1a1825);
+            border: 2px solid rgba(212, 175, 100, 0.3);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .shelf-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60%;
+            background: linear-gradient(180deg, rgba(255,255,255,0.05), transparent);
+            pointer-events: none;
+        }
+
+        .shelf-card:hover {
+            transform: translateY(-10px) scale(1.05);
+            border-color: rgba(212, 175, 100, 0.8);
+            box-shadow: 0 15px 40px rgba(212, 175, 100, 0.2);
+        }
+
+        .shelf-card.selected {
+            border-color: #d4af64;
+            box-shadow: 0 0 30px rgba(212, 175, 100, 0.5);
+        }
+
+        .shelf-card.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .card-image {
+            width: 50px;
+            height: 50px;
+            margin-bottom: 8px;
+        }
+
+        .card-name {
+            font-size: 14px;
+            font-family: 'Ma Shan Zheng', cursive;
+            color: #c8b898;
+            text-align: center;
+        }
+
+        /* 拆解区域 */
+        #dissolve-area {
+            position: absolute;
+            left: 40px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 280px;
+            min-height: 400px;
+            background: linear-gradient(135deg, rgba(25, 22, 35, 0.95), rgba(18, 15, 28, 0.95));
+            border: 1px solid rgba(160, 140, 100, 0.2);
+            border-radius: 16px;
+            padding: 20px;
+            display: none;
+        }
+
+        #dissolve-area.visible {
+            display: block;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50%) translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(-50%) translateX(0);
+            }
+        }
+
+        .area-title {
+            font-size: 14px;
+            color: #8a8070;
+            letter-spacing: 3px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(160, 140, 100, 0.2);
+        }
+
+        #selected-cards {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .selected-card-chip {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: rgba(212, 175, 100, 0.15);
+            border: 1px solid rgba(212, 175, 100, 0.3);
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .selected-card-chip:hover {
+            background: rgba(212, 175, 100, 0.25);
+        }
+
+        .selected-card-chip.dissolved {
+            opacity: 0.4;
+            text-decoration: line-through;
+        }
+
+        /* 字池 */
+        #char-pool {
+            margin-top: 15px;
+        }
+
+        .pool-title {
+            font-size: 12px;
+            color: #6a6050;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+
+        #char-bucket {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            min-height: 60px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            border: 1px dashed rgba(160, 140, 100, 0.2);
+        }
+
+        .char-piece {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(145deg, #3a3545, #2a2535);
+            border: 1px solid rgba(212, 175, 100, 0.3);
+            border-radius: 6px;
+            font-size: 18px;
+            font-family: 'Ma Shan Zheng', cursive;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .char-piece:hover {
+            transform: scale(1.1);
+            border-color: rgba(212, 175, 100, 0.7);
+        }
+
+        .char-piece.selected {
+            background: linear-gradient(145deg, #d4af64, #b8964a);
+            color: #1a1825;
+            box-shadow: 0 0 15px rgba(212, 175, 100, 0.5);
+        }
+
+        .char-piece.used {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        /* 合成区域 */
+        #synthesis-area {
+            position: absolute;
+            right: 40px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 280px;
+            min-height: 400px;
+            background: linear-gradient(135deg, rgba(25, 22, 35, 0.95), rgba(18, 15, 28, 0.95));
+            border: 1px solid rgba(160, 140, 100, 0.2);
+            border-radius: 16px;
+            padding: 20px;
+            display: none;
+        }
+
+        #synthesis-area.visible {
+            display: block;
+            animation: slideInRight 0.5s ease;
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateY(-50%) translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(-50%) translateX(0);
+            }
+        }
+
+        #synthesis-preview {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 80px;
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            border: 1px dashed rgba(212, 175, 100, 0.2);
+        }
+
+        .preview-char {
+            font-size: 36px;
+            font-family: 'Ma Shan Zheng', cursive;
+            color: #d4af64;
+            animation: pulse 1.5s ease infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.1); }
+        }
+
+        /* 结果卡片选项 */
+        #result-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 15px;
+        }
+
+        .result-card-option {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: rgba(40, 35, 50, 0.8);
+            border: 1px solid rgba(160, 140, 100, 0.2);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .result-card-option:hover:not(.disabled) {
+            background: rgba(50, 45, 60, 0.9);
+            border-color: rgba(212, 175, 100, 0.4);
+        }
+
+        .result-card-option.craftable {
+            border-color: rgba(100, 200, 150, 0.5);
+            box-shadow: 0 0 20px rgba(100, 200, 150, 0.1);
+        }
+
+        .result-card-option.craftable:hover {
+            box-shadow: 0 0 30px rgba(100, 200, 150, 0.3);
+        }
+
+        .result-card-option.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .result-card-option.selected {
+            border-color: #d4af64;
+            box-shadow: 0 0 25px rgba(212, 175, 100, 0.4);
+        }
+
+        .result-name {
+            font-size: 16px;
+            font-family: 'Ma Shan Zheng', cursive;
+            color: #c8b898;
+        }
+
+        .result-formula {
+            font-size: 12px;
+            color: #6a6050;
+        }
+
+        .result-check {
+            margin-left: auto;
+            width: 24px;
+            height: 24px;
+            border: 2px solid rgba(212, 175, 100, 0.3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .result-card-option.craftable .result-check {
+            border-color: #64c896;
+            color: #64c896;
+        }
+
+        .result-card-option.selected .result-check {
+            background: #d4af64;
+            border-color: #d4af64;
+            color: #1a1825;
+        }
+
+        /* 按钮 */
+        .game-btn {
+            padding: 12px 30px;
+            font-size: 14px;
+            font-family: 'Noto Serif SC', serif;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            letter-spacing: 2px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #d4af64, #b8964a);
+            color: #1a1825;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(212, 175, 100, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(60, 55, 70, 0.8);
+            color: #c8b898;
+            border: 1px solid rgba(160, 140, 100, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(70, 65, 80, 0.9);
+            border-color: rgba(160, 140, 100, 0.5);
+        }
+
+        /* 底部操作区 */
+        #action-bar {
+            position: absolute;
+            bottom: 180px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        #action-bar.visible {
+            opacity: 1;
+        }
+
+        /* 剩余词处理 */
+        #remainder-area {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 500px;
+            background: linear-gradient(135deg, rgba(25, 22, 35, 0.98), rgba(18, 15, 28, 0.98));
+            border: 1px solid rgba(160, 140, 100, 0.3);
+            border-radius: 20px;
+            padding: 30px;
+            display: none;
+            z-index: 100;
+        }
+
+        #remainder-area.visible {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translate(-50%, -50%) scale(0.95); }
+            to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+
+        .remainder-title {
+            font-size: 18px;
+            color: #d4c4a8;
+            text-align: center;
+            margin-bottom: 10px;
+            font-family: 'Ma Shan Zheng', cursive;
+        }
+
+        .remainder-subtitle {
+            font-size: 13px;
+            color: #6a6050;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        #remainder-chars {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .remainder-char {
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(145deg, #3a3545, #2a2535);
+            border: 1px solid rgba(212, 175, 100, 0.3);
+            border-radius: 8px;
+            font-size: 22px;
+            font-family: 'Ma Shan Zheng', cursive;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .remainder-char:hover {
+            transform: scale(1.1);
+            border-color: rgba(212, 175, 100, 0.7);
+        }
+
+        #remainder-sentence {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 60px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 12px;
+            border: 2px solid rgba(212, 175, 100, 0.2);
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        #remainder-sentence .base-word {
+            font-size: 28px;
+            font-family: 'Ma Shan Zheng', cursive;
+            color: #8090d0;
+        }
+
+        #remainder-sentence .remainder-word {
+            font-size: 28px;
+            font-family: 'Ma Shan Zheng', cursive;
+            color: #d4af64;
+        }
+
+        #remainder-sentence .placeholder {
+            font-size: 24px;
+            color: #4a4540;
+        }
+
+        #remainder-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        /* 结果弹窗 */
+        #result-modal {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 600px;
+            max-height: 80vh;
+            background: linear-gradient(135deg, rgba(25, 22, 35, 0.98), rgba(18, 15, 28, 0.98));
+            border: 1px solid rgba(212, 175, 100, 0.4);
+            border-radius: 24px;
+            padding: 40px;
+            display: none;
+            z-index: 200;
+            overflow-y: auto;
+        }
+
+        #result-modal.visible {
+            display: block;
+            animation: modalIn 0.6s ease;
+        }
+
+        @keyframes modalIn {
+            from { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+            to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+
+        .modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 199;
+            display: none;
+        }
+
+        .modal-overlay.visible {
+            display: block;
+        }
+
+        .result-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .result-title {
+            font-size: 14px;
+            color: #6a6050;
+            letter-spacing: 4px;
+            margin-bottom: 10px;
+        }
+
+        .result-card-name {
+            font-size: 42px;
+            font-family: 'Ma Shan Zheng', cursive;
+            color: #d4af64;
+            text-shadow: 0 4px 20px rgba(212, 175, 100, 0.4);
+        }
+
+        .result-description {
+            font-size: 16px;
+            color: #a09080;
+            line-height: 1.8;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .result-stats {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+        }
+
+        .result-stat {
+            text-align: center;
+        }
+
+        .result-stat-label {
+            font-size: 12px;
+            color: #6a6050;
+            letter-spacing: 2px;
+            margin-bottom: 5px;
+        }
+
+        .result-stat-value {
+            font-size: 28px;
+            font-family: 'Ma Shan Zheng', cursive;
+        }
+
+        .result-stat-value.positive { color: #64c896; }
+        .result-stat-value.negative { color: #c86464; }
+
+        /* 开始界面 */
+        #start-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at center, rgba(30, 25, 40, 0.98), rgba(10, 10, 18, 0.99));
+            z-index: 500;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 1s ease;
+        }
+
+        #start-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .start-title {
+            font-size: 64px;
+            font-family: 'Ma Shan Zheng', cursive;
+            color: #d4af64;
+            text-shadow: 0 4px 30px rgba(212, 175, 100, 0.5);
+            margin-bottom: 20px;
+            letter-spacing: 10px;
+        }
+
+        .start-subtitle {
+            font-size: 18px;
+            color: #8a8070;
+            margin-bottom: 60px;
+            letter-spacing: 6px;
+        }
+
+        .start-intro {
+            max-width: 500px;
+            text-align: center;
+            font-size: 15px;
+            color: #a09080;
+            line-height: 2;
+            margin-bottom: 50px;
+        }
+
+        /* 提示文字 */
+        #hint-text {
+            position: absolute;
+            bottom: 170px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 14px;
+            color: #6a6050;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        #hint-text.visible {
+            opacity: 1;
+        }
+
+        /* 消息提示 */
+        #message-toast {
+            position: absolute;
+            top: 180px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 30px;
+            background: rgba(30, 25, 40, 0.95);
+            border: 1px solid rgba(212, 175, 100, 0.3);
+            border-radius: 30px;
+            font-size: 14px;
+            color: #c8b898;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        #message-toast.visible {
+            opacity: 1;
+        }
+
+        /* 3D Canvas */
+        #three-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <!-- Three.js Canvas -->
+        <div id="canvas-container">
+            <canvas id="three-canvas"></canvas>
+        </div>
+
+        <!-- UI Layer -->
+        <div id="ui-layer">
+            <!-- 开始界面 -->
+            <div id="start-screen">
+                <h1 class="start-title">词语炼金</h1>
+                <p class="start-subtitle">WORD ALCHEMY</p>
+                <p class="start-intro">
+                    拆卡成词，组词成卡<br>
+                    用卡改写剧情，用剩词承担代价<br><br>
+                    在这里，你是一个想去参加贵族舞会的女孩<br>
+                    阁楼裁缝间里只有旧物、残片和一点点念头<br>
+                    把它们炼成你的命运
+                </p>
+                <button class="game-btn btn-primary" onclick="startGame()">踏入阁楼</button>
+            </div>
+
+            <!-- 状态栏 -->
+            <div id="status-bar" style="display: none;">
+                <div class="stat-item">
+                    <span class="stat-label">体面</span>
+                    <span class="stat-value 体面" id="stat-体面">3</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">怀疑</span>
+                    <span class="stat-value 怀疑" id="stat-怀疑">2</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">灵感</span>
+                    <span class="stat-value 灵感" id="stat-灵感">1</span>
+                </div>
+            </div>
+
+            <!-- 阶段标题 -->
+            <div id="stage-title">
+                <h2>CHAPTER ONE</h2>
+                <h1>灰月裁缝间</h1>
+            </div>
+
+            <!-- 物品栏 -->
+            <div id="item-shelf" style="display: none;">
+                <!-- 动态生成 -->
+            </div>
+
+            <!-- 拆解区域 -->
+            <div id="dissolve-area">
+                <div class="area-title">▲ 已选卡牌</div>
+                <div id="selected-cards"></div>
+
+                <div class="area-title">▼ 拆解获得</div>
+                <div id="char-pool">
+                    <div class="pool-title">可用字</div>
+                    <div id="char-bucket"></div>
+                </div>
+            </div>
+
+            <!-- 合成区域 -->
+            <div id="synthesis-area">
+                <div class="area-title">★ 合成配方</div>
+                <div id="synthesis-preview">
+                    <span class="placeholder">选择字组合...</span>
+                </div>
+                <div id="result-cards"></div>
+            </div>
+
+            <!-- 剩余词处理 -->
+            <div id="remainder-area">
+                <h3 class="remainder-title">处理剩余词语</h3>
+                <p class="remainder-subtitle">用「我」「你」「在」「了」造句</p>
+                <div id="remainder-chars"></div>
+                <div id="remainder-sentence">
+                    <span class="placeholder">点击字词放入句子</span>
+                </div>
+                <div id="remainder-actions">
+                    <button class="game-btn btn-secondary" onclick="clearRemainderSentence()">重置</button>
+                    <button class="game-btn btn-primary" onclick="confirmRemainder()">确认</button>
+                </div>
+            </div>
+
+            <!-- 操作按钮 -->
+            <div id="action-bar">
+                <button class="game-btn btn-secondary" id="btn-dissolve" onclick="toggleDissolve()" style="display: none;">拆解卡牌</button>
+                <button class="game-btn btn-primary" id="btn-synthesis" onclick="toggleSynthesis()" style="display: none;">开始合成</button>
+                <button class="game-btn btn-primary" id="btn-confirm" onclick="confirmSelection()" style="display: none;">确认选择</button>
+            </div>
+
+            <!-- 提示文字 -->
+            <div id="hint-text">点击卡牌选择它们</div>
+
+            <!-- 消息提示 -->
+            <div id="message-toast"></div>
+
+            <!-- 结果弹窗 -->
+            <div class="modal-overlay"></div>
+            <div id="result-modal">
+                <div class="result-header">
+                    <div class="result-title">你炼成了</div>
+                    <div class="result-card-name" id="result-card-name">灰姑娘</div>
+                </div>
+                <p class="result-description" id="result-description">...</p>
+                <div class="result-stats" id="result-stats">
+                    <!-- 动态生成 -->
+                </div>
+                <div style="text-align: center;">
+                    <button class="game-btn btn-primary" onclick="nextStage()">继续前行</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // ==================== 游戏数据 ====================
+        const GAME_DATA = {
+            // 场景物品卡
+            items: [
+                { id: 'coal_dress', name: '煤灰裙', chars: ['煤', '灰', '裙'], color: '#2a2520', icon: '◼' },
+                { id: 'girl_portrait', name: '姑娘像', chars: ['姑', '娘', '像'], color: '#d4c0a0', icon: '◫' },
+                { id: 'crystal_lamp', name: '水晶灯', chars: ['水', '晶', '灯'], color: '#a0d0e0', icon: '◇' },
+                { id: 'old_dance_shoe', name: '旧舞鞋', chars: ['旧', '舞', '鞋'], color: '#c05060', icon: '▽' },
+                { id: 'invitation_corner', name: '请柬角', chars: ['请', '柬', '角'], color: '#e8d8b0', icon: '▸' },
+                { id: 'noble_paper', name: '贵族报', chars: ['贵', '族', '报'], color: '#e0d8c8', icon: '▤' }
+            ],
+
+            // 合法合成配方
+            recipes: [
+                { result: '灰姑娘', chars: ['灰', '姑', '娘'], desc: '女孩被重新命名为"灰姑娘"。贫穷不再只是羞耻，也变成一个会被记住的故事开头。', stats: {体面: 1, 怀疑: 1, 灵感: 2} },
+                { result: '水晶鞋', chars: ['水', '晶', '鞋'], desc: '女孩得到一件足够吸引视线的奇迹物证。她还不一定像贵族，但已经不像普通来客。', stats: {体面: 2, 灵感: 1} },
+                { result: '请柬', chars: ['请', '柬'], desc: '女孩获得一份能被门卫理解的入场理由。它不华丽，但足够让规则放她进去。', stats: {体面: 1, 怀疑: -1} },
+                { result: '贵族姑娘', chars: ['贵', '族', '姑', '娘'], desc: '女孩以"贵族姑娘"的身份出现。这个身份听起来体面，但它太体面了，反而容易被人追问出身。', stats: {体面: 3, 怀疑: 2} }
+            ],
+
+            // 双卡组合结果
+            comboResults: {
+                '灰姑娘+水晶鞋': { title: '童话开场', desc: '她既有童话身份，又有童话物证。舞会会把她当成今晚的传闻中心。', special: '王子路线强触发' },
+                '灰姑娘+请柬': { title: '被邀请的灰姑娘', desc: '她的故事听起来离奇，但手里有凭证。门卫愿意放行，贵族愿意多看一眼。', special: '正门入场' },
+                '水晶鞋+请柬': { title: '低风险入场', desc: '她有请柬，也有亮点。这个路线不最戏剧化，但最稳。', special: '体面额外+1' },
+                '贵族姑娘+水晶鞋': { title: '假身份，真奇迹', desc: '她的身份可能是假的，但鞋是真的。众人想怀疑，却又被奇迹吸引。', special: '可接近核心圈' },
+                '贵族姑娘+请柬': { title: '像真的小姐', desc: '她看起来有身份，也拿得出凭证。短时间内，没人愿意当众拆穿她。', special: '怀疑不再增加' }
+            },
+
+            // 基础组句词
+            baseWords: ['我', '你', '在', '了']
+        };
+
+        // ==================== 游戏状态 ====================
+        let gameState = {
+            phase: 'select', // select, dissolve, synthesis, remainder, result
+            stats: { 体面: 3, 怀疑: 2, 灵感: 1 },
+            selectedItems: [],
+            dissolvedItems: [],
+            availableChars: [],
+            selectedChars: [],
+            usedChars: [],
+            craftedCards: [],
+            remainderChars: [],
+            baseWordSequence: []
+        };
+
+        // ==================== Three.js 3D场景 ====================
+        let scene, camera, renderer;
+        let card3DObjects = [];
+        let particles = [];
+        let ambientLight, pointLight1, pointLight2;
+
+        function init3DScene() {
+            const canvas = document.getElementById('three-canvas');
+
+            // 场景
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0a0a12);
+            scene.fog = new THREE.Fog(0x0a0a12, 15, 30);
+
+            // 相机
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 4, 12);
+            camera.lookAt(0, 0, 0);
+
+            // 渲染器
+            renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+            // 灯光
+            ambientLight = new THREE.AmbientLight(0x404050, 0.4);
+            scene.add(ambientLight);
+
+            pointLight1 = new THREE.PointLight(0xd4af64, 1.5, 30);
+            pointLight1.position.set(5, 8, 5);
+            pointLight1.castShadow = true;
+            scene.add(pointLight1);
+
+            pointLight2 = new THREE.PointLight(0x6080d0, 0.8, 25);
+            pointLight2.position.set(-5, 6, -3);
+            scene.add(pointLight2);
+
+            // 创建地面
+            createFloor();
+
+            // 创建粒子效果
+            createParticles();
+
+            // 创建装饰元素
+            createDecorations();
+
+            // 动画循环
+            animate();
+
+            // 响应式
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        function createFloor() {
+            // 地板
+            const floorGeo = new THREE.PlaneGeometry(50, 50);
+            const floorMat = new THREE.MeshStandardMaterial({
+                color: 0x1a1820,
+                roughness: 0.9,
+                metalness: 0.1
+            });
+            const floor = new THREE.Mesh(floorGeo, floorMat);
+            floor.rotation.x = -Math.PI / 2;
+            floor.position.y = -3;
+            floor.receiveShadow = true;
+            scene.add(floor);
+
+            // 木地板纹理
+            for (let i = -10; i < 10; i++) {
+                const plankGeo = new THREE.BoxGeometry(0.8, 0.05, 50);
+                const plankMat = new THREE.MeshStandardMaterial({
+                    color: i % 2 === 0 ? 0x2a2520 : 0x252018,
+                    roughness: 0.95
+                });
+                const plank = new THREE.Mesh(plankGeo, plankMat);
+                plank.position.set(i * 1.0, -2.96, 0);
+                plank.receiveShadow = true;
+                scene.add(plank);
+            }
+        }
+
+        function createParticles() {
+            const particleCount = 100;
+            const geometry = new THREE.BufferGeometry();
+            const positions = new Float32Array(particleCount * 3);
+            const colors = new Float32Array(particleCount * 3);
+
+            for (let i = 0; i < particleCount; i++) {
+                positions[i * 3] = (Math.random() - 0.5) * 30;
+                positions[i * 3 + 1] = Math.random() * 15 - 3;
+                positions[i * 3 + 2] = (Math.random() - 0.5) * 20;
+
+                // 金色粒子
+                colors[i * 3] = 0.83 + Math.random() * 0.17;
+                colors[i * 3 + 1] = 0.69 + Math.random() * 0.1;
+                colors[i * 3 + 2] = 0.39 + Math.random() * 0.2;
+            }
+
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+            const material = new THREE.PointsMaterial({
+                size: 0.08,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.6,
+                blending: THREE.AdditiveBlending
+            });
+
+            const particleSystem = new THREE.Points(geometry, material);
+            particleSystem.name = 'particles';
+            scene.add(particleSystem);
+        }
+
+        function createDecorations() {
+            // 创建一个古老的织机/工作台
+            const tableGroup = new THREE.Group();
+
+            // 台面
+            const topGeo = new THREE.BoxGeometry(4, 0.15, 2);
+            const topMat = new THREE.MeshStandardMaterial({ color: 0x3a3020, roughness: 0.9 });
+            const top = new THREE.Mesh(topGeo, topMat);
+            top.position.y = -1;
+            top.castShadow = true;
+            top.receiveShadow = true;
+            tableGroup.add(top);
+
+            // 桌腿
+            const legGeo = new THREE.BoxGeometry(0.15, 1.8, 0.15);
+            const legMat = new THREE.MeshStandardMaterial({ color: 0x2a2015 });
+            const legPositions = [[-1.8, -2, 0.8], [1.8, -2, 0.8], [-1.8, -2, -0.8], [1.8, -2, -0.8]];
+            legPositions.forEach(pos => {
+                const leg = new THREE.Mesh(legGeo, legMat);
+                leg.position.set(...pos);
+                leg.castShadow = true;
+                tableGroup.add(leg);
+            });
+
+            scene.add(tableGroup);
+
+            // 创建3D展示卡片
+            create3DCards();
+        }
+
+        function create3DCards() {
+            const cardGeo = new THREE.BoxGeometry(1.2, 1.7, 0.03);
+
+            GAME_DATA.items.forEach((item, i) => {
+                // 创建卡片组
+                const cardGroup = new THREE.Group();
+
+                // 卡片主体
+                const color = new THREE.Color(item.color);
+                const cardMat = new THREE.MeshStandardMaterial({
+                    color: color,
+                    roughness: 0.4,
+                    metalness: 0.2
+                });
+                const cardMesh = new THREE.Mesh(cardGeo, cardMat);
+                cardGroup.add(cardMesh);
+
+                // 边框
+                const edgeGeo = new THREE.EdgesGeometry(cardGeo);
+                const edgeMat = new THREE.LineBasicMaterial({ color: 0xd4af64, linewidth: 1 });
+                const edges = new THREE.LineSegments(edgeGeo, edgeMat);
+                cardGroup.add(edges);
+
+                // 位置
+                const angle = (i / GAME_DATA.items.length) * Math.PI * 2;
+                const radius = 4;
+                cardGroup.position.set(
+                    Math.sin(angle) * radius,
+                    1.5,
+                    Math.cos(angle) * radius - 2
+                );
+                cardGroup.rotation.y = -angle + Math.PI;
+                cardGroup.rotation.x = -0.3;
+
+                cardGroup.userData = { item: item, baseY: 1.5, baseRotationX: -0.3, index: i };
+
+                scene.add(cardGroup);
+                card3DObjects.push(cardGroup);
+            });
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const time = Date.now() * 0.001;
+
+            // 动画卡片
+            card3DObjects.forEach((card, i) => {
+                if (!card.userData.disabled) {
+                    card.position.y = card.userData.baseY + Math.sin(time * 0.8 + i) * 0.1;
+                    card.rotation.x = card.userData.baseRotationX + Math.sin(time * 0.5 + i * 0.5) * 0.05;
+                }
+            });
+
+            // 动画粒子
+            const particles = scene.getObjectByName('particles');
+            if (particles) {
+                particles.rotation.y += 0.0003;
+                const positions = particles.geometry.attributes.position.array;
+                for (let i = 0; i < positions.length; i += 3) {
+                    positions[i + 1] += Math.sin(time + i) * 0.002;
+                    if (positions[i + 1] > 12) positions[i + 1] = -3;
+                }
+                particles.geometry.attributes.position.needsUpdate = true;
+            }
+
+            // 灯光动画
+            pointLight1.intensity = 1.5 + Math.sin(time * 2) * 0.3;
+            pointLight2.intensity = 0.8 + Math.cos(time * 1.5) * 0.2;
+
+            renderer.render(scene, camera);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // ==================== UI 交互 ====================
+        function startGame() {
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('status-bar').style.display = 'flex';
+            document.getElementById('item-shelf').style.display = 'flex';
+            document.getElementById('hint-text').classList.add('visible');
+
+            setTimeout(() => {
+                document.getElementById('stage-title').classList.add('visible');
+            }, 500);
+
+            renderItemShelf();
+            updateStats();
+        }
+
+        function renderItemShelf() {
+            const shelf = document.getElementById('item-shelf');
+            shelf.innerHTML = '';
+
+            GAME_DATA.items.forEach(item => {
+                const cardEl = document.createElement('div');
+                cardEl.className = 'shelf-card';
+                cardEl.dataset.id = item.id;
+                cardEl.onclick = () => toggleItemSelection(item.id);
+
+                cardEl.innerHTML = `
+                    <div class="card-image" style="color: ${item.color}; font-size: 36px;">${item.icon}</div>
+                    <div class="card-name">${item.name}</div>
+                `;
+
+                if (gameState.selectedItems.includes(item.id)) {
+                    cardEl.classList.add('selected');
+                }
+
+                shelf.appendChild(cardEl);
+            });
+        }
+
+        function toggleItemSelection(itemId) {
+            if (gameState.phase !== 'select') return;
+
+            const index = gameState.selectedItems.indexOf(itemId);
+            if (index > -1) {
+                gameState.selectedItems.splice(index, 1);
+            } else if (gameState.selectedItems.length < 6) {
+                gameState.selectedItems.push(itemId);
+            }
+
+            renderItemShelf();
+            updateActionButtons();
+
+            // 3D卡片效果
+            card3DObjects.forEach(card => {
+                if (card.userData.item.id === itemId) {
+                    if (gameState.selectedItems.includes(itemId)) {
+                        card.userData.baseY = 2.5;
+                        card.userData.baseRotationX = -0.1;
+                    } else {
+                        card.userData.baseY = 1.5;
+                        card.userData.baseRotationX = -0.3;
+                    }
+                }
+            });
+        }
+
+        function updateActionButtons() {
+            const dissolveBtn = document.getElementById('btn-dissolve');
+            const synthesisBtn = document.getElementById('btn-synthesis');
+            const confirmBtn = document.getElementById('btn-confirm');
+            const hintText = document.getElementById('hint-text');
+
+            if (gameState.selectedItems.length > 0) {
+                dissolveBtn.style.display = 'inline-block';
+                synthesisBtn.style.display = 'inline-block';
+                confirmBtn.style.display = 'none';
+                hintText.textContent = '点击"拆解卡牌"获得字词，或直接"开始合成"';
+            } else {
+                dissolveBtn.style.display = 'none';
+                synthesisBtn.style.display = 'none';
+                confirmBtn.style.display = 'none';
+                hintText.textContent = '点击卡牌选择它们';
+            }
+
+            document.getElementById('action-bar').classList.add('visible');
+        }
+
+        function toggleDissolve() {
+            if (gameState.phase !== 'select') return;
+
+            gameState.phase = 'dissolve';
+            gameState.dissolvedItems = [...gameState.selectedItems];
+
+            // 收集所有字
+            gameState.availableChars = [];
+            gameState.selectedItems.forEach(itemId => {
+                const item = GAME_DATA.items.find(i => i.id === itemId);
+                if (item) {
+                    item.chars.forEach(char => {
+                        if (!gameState.availableChars.includes(char)) {
+                            gameState.availableChars.push(char);
+                        }
+                    });
+                }
+            });
+
+            // 更新UI
+            document.getElementById('dissolve-area').classList.add('visible');
+            renderSelectedCards();
+            renderCharBucket();
+
+            showMessage('选择要拆解的卡牌，提取字词');
+        }
+
+        function renderSelectedCards() {
+            const container = document.getElementById('selected-cards');
+            container.innerHTML = '';
+
+            gameState.dissolvedItems.forEach(itemId => {
+                const item = GAME_DATA.items.find(i => i.id === itemId);
+                const isDissolved = gameState.dissolvedItems.indexOf(itemId) !== gameState.selectedItems.indexOf(itemId) === false && gameState.selectedItems.includes(itemId);
+
+                const chip = document.createElement('div');
+                chip.className = 'selected-card-chip';
+                chip.innerHTML = `<span style="color: ${item.color}">${item.icon}</span> ${item.name}`;
+                chip.onclick = () => toggleDissolveCard(itemId);
+                container.appendChild(chip);
+            });
+        }
+
+        function toggleDissolveCard(itemId) {
+            const index = gameState.dissolvedItems.indexOf(itemId);
+            if (index > -1) {
+                gameState.dissolvedItems.splice(index, 1);
+                // 移除该卡的字
+                const item = GAME_DATA.items.find(i => i.id === itemId);
+                item.chars.forEach(char => {
+                    const charIndex = gameState.availableChars.indexOf(char);
+                    if (charIndex > -1) {
+                        gameState.availableChars.splice(charIndex, 1);
+                    }
+                });
+            }
+
+            renderSelectedCards();
+            renderCharBucket();
+        }
+
+        function renderCharBucket() {
+            const bucket = document.getElementById('char-bucket');
+            bucket.innerHTML = '';
+
+            // 排序显示
+            const sortedChars = [...gameState.availableChars].sort();
+
+            sortedChars.forEach(char => {
+                const piece = document.createElement('div');
+                piece.className = 'char-piece';
+                piece.textContent = char;
+                piece.dataset.char = char;
+
+                if (gameState.selectedChars.includes(char)) {
+                    piece.classList.add('selected');
+                }
+                if (gameState.usedChars.includes(char)) {
+                    piece.classList.add('used');
+                }
+
+                piece.onclick = () => toggleCharSelection(char);
+                bucket.appendChild(piece);
+            });
+        }
+
+        function toggleCharSelection(char) {
+            if (gameState.usedChars.includes(char)) return;
+
+            const index = gameState.selectedChars.indexOf(char);
+            if (index > -1) {
+                gameState.selectedChars.splice(index, 1);
+            } else {
+                gameState.selectedChars.push(char);
+            }
+
+            renderCharBucket();
+            updateSynthesisPreview();
+        }
+
+        function toggleSynthesis() {
+            if (gameState.phase !== 'select') return;
+
+            // 如果没有先拆解，提示用户
+            if (gameState.selectedItems.length > 0) {
+                showMessage('建议先"拆解卡牌"查看可用字词');
+            }
+
+            gameState.phase = 'synthesis';
+            gameState.craftedCards = [];
+            gameState.selectedChars = [];
+            gameState.usedChars = [];
+            gameState.remainderChars = [];
+
+            // 收集所有可用字
+            gameState.availableChars = [];
+            gameState.selectedItems.forEach(itemId => {
+                const item = GAME_DATA.items.find(i => i.id === itemId);
+                if (item) {
+                    item.chars.forEach(char => {
+                        if (!gameState.availableChars.includes(char)) {
+                            gameState.availableChars.push(char);
+                        }
+                    });
+                }
+            });
+
+            // 更新UI
+            document.getElementById('synthesis-area').classList.add('visible');
+            renderResultCards();
+            renderCharBucket();
+        }
+
+        function renderResultCards() {
+            const container = document.getElementById('result-cards');
+            container.innerHTML = '';
+
+            GAME_DATA.recipes.forEach(recipe => {
+                const canCraft = recipe.chars.every(char => gameState.availableChars.includes(char));
+                const isSelected = gameState.craftedCards.includes(recipe.result);
+
+                const option = document.createElement('div');
+                option.className = 'result-card-option';
+                if (canCraft) option.classList.add('craftable');
+                if (isSelected) option.classList.add('selected');
+
+                option.innerHTML = `
+                    <div>
+                        <div class="result-name">${recipe.result}</div>
+                        <div class="result-formula">${recipe.chars.join(' + ')}</div>
+                    </div>
+                    <div class="result-check">${isSelected ? '✓' : canCraft ? '◇' : '×'}</div>
+                `;
+
+                if (canCraft) {
+                    option.onclick = () => toggleCraftedCard(recipe.result);
+                } else {
+                    option.classList.add('disabled');
+                }
+
+                container.appendChild(option);
+            });
+        }
+
+        function toggleCraftedCard(cardName) {
+            const index = gameState.craftedCards.indexOf(cardName);
+            if (index > -1) {
+                // 移除并归还字
+                const recipe = GAME_DATA.recipes.find(r => r.result === cardName);
+                recipe.chars.forEach(char => {
+                    const usedIndex = gameState.usedChars.indexOf(char);
+                    if (usedIndex > -1) {
+                        gameState.usedChars.splice(usedIndex, 1);
+                    }
+                    if (!gameState.selectedChars.includes(char)) {
+                        gameState.selectedChars.push(char);
+                    }
+                });
+                gameState.craftedCards.splice(index, 1);
+            } else if (gameState.craftedCards.length < 2) {
+                // 添加并消耗字
+                const recipe = GAME_DATA.recipes.find(r => r.result === cardName);
+                const canAdd = recipe.chars.every(char =>
+                    gameState.availableChars.includes(char) && !gameState.usedChars.includes(char)
+                );
+
+                if (canAdd) {
+                    recipe.chars.forEach(char => {
+                        const selIndex = gameState.selectedChars.indexOf(char);
+                        if (selIndex > -1) {
+                            gameState.selectedChars.splice(selIndex, 1);
+                        }
+                        gameState.usedChars.push(char);
+                    });
+                    gameState.craftedCards.push(cardName);
+                    showMessage(`✓ 炼成「${cardName}」！`);
+                }
+            } else {
+                showMessage('最多只能选择2张结果卡');
+            }
+
+            renderResultCards();
+            renderCharBucket();
+        }
+
+        function updateSynthesisPreview() {
+            const preview = document.getElementById('synthesis-preview');
+
+            // 检查是否有完成的配方
+            let matchedRecipe = null;
+            for (const recipe of GAME_DATA.recipes) {
+                const recipeChars = [...recipe.chars].sort();
+                const selectedSorted = [...gameState.selectedChars].sort();
+                if (JSON.stringify(recipeChars) === JSON.stringify(selectedSorted)) {
+                    matchedRecipe = recipe;
+                    break;
+                }
+            }
+
+            if (matchedRecipe) {
+                preview.innerHTML = `
+                    <span class="preview-char">${matchedRecipe.result}</span>
+                `;
+            } else if (gameState.selectedChars.length > 0) {
+                preview.innerHTML = gameState.selectedChars.map(c =>
+                    `<span class="preview-char">${c}</span>`
+                ).join(' + ');
+            } else {
+                preview.innerHTML = '<span class="placeholder">选择字组合...</span>';
+            }
+        }
+
+        function confirmSelection() {
+            if (gameState.phase === 'synthesis' && gameState.craftedCards.length > 0) {
+                showRemainderPhase();
+            }
+        }
+
+        function showRemainderPhase() {
+            gameState.phase = 'remainder';
+
+            // 计算剩余字
+            gameState.remainderChars = gameState.availableChars.filter(
+                char => !gameState.usedChars.includes(char)
+            );
+
+            gameState.baseWordSequence = [];
+
+            document.getElementById('dissolve-area').classList.remove('visible');
+            document.getElementById('synthesis-area').classList.remove('visible');
+            document.getElementById('remainder-area').classList.add('visible');
+            document.getElementById('action-bar').classList.remove('visible');
+
+            renderRemainderChars();
+            updateRemainderSentence();
+        }
+
+        function renderRemainderChars() {
+            const container = document.getElementById('remainder-chars');
+            container.innerHTML = '';
+
+            gameState.remainderChars.forEach(char => {
+                const piece = document.createElement('div');
+                piece.className = 'remainder-char';
+                piece.textContent = char;
+                piece.dataset.char = char;
+                piece.onclick = () => addToRemainderSentence(char);
+                container.appendChild(piece);
+            });
+        }
+
+        function addToRemainderSentence(char) {
+            gameState.baseWordSequence.push(char);
+            updateRemainderSentence();
+        }
+
+        function updateRemainderSentence() {
+            const sentence = document.getElementById('remainder-sentence');
+
+            // 插入基础词和剩余词
+            let html = '';
+            let charIndex = 0;
+            const sequence = gameState.baseWordSequence;
+
+            // 每4个字插入一个基础词
+            for (let i = 0; i < sequence.length; i++) {
+                html += `<span class="remainder-word">${sequence[i]}</span>`;
+                if ((i + 1) % 3 === 0 && i < sequence.length - 1) {
+                    const baseWord = GAME_DATA.baseWords[Math.floor(i / 3) % 4];
+                    html += `<span class="base-word">${baseWord}</span>`;
+                }
+            }
+
+            if (html) {
+                // 添加结尾的基础词
+                const endWord = GAME_DATA.baseWords[(Math.floor(sequence.length / 3) + 3) % 4];
+                html += `<span class="base-word">${endWord}</span>`;
+            } else {
+                html = '<span class="placeholder">点击字词放入句子</span>';
+            }
+
+            sentence.innerHTML = html;
+        }
+
+        function clearRemainderSentence() {
+            gameState.baseWordSequence = [];
+            updateRemainderSentence();
+        }
+
+        function confirmRemainder() {
+            if (gameState.remainderChars.length > 0 && gameState.baseWordSequence.length === 0) {
+                showMessage('请至少选择一个剩余字');
+                return;
+            }
+
+            document.getElementById('remainder-area').classList.remove('visible');
+            document.getElementById('hint-text').classList.remove('visible');
+
+            // 计算结果
+            showResult();
+        }
+
+        function showResult() {
+            const modal = document.getElementById('result-modal');
+            const overlay = document.querySelector('.modal-overlay');
+
+            // 计算数值变化
+            let totalStats = {体面: 0, 怀疑: 0, 灵感: 0};
+            gameState.craftedCards.forEach(cardName => {
+                const recipe = GAME_DATA.recipes.find(r => r.result === cardName);
+                if (recipe) {
+                    Object.keys(recipe.stats).forEach(stat => {
+                        totalStats[stat] += recipe.stats[stat];
+                    });
+                }
+            });
+
+            // 检查双卡组合
+            let comboTitle = '';
+            let comboDesc = '';
+            let comboSpecial = '';
+            if (gameState.craftedCards.length === 2) {
+                const key = gameState.craftedCards.sort().join('+');
+                const combo = GAME_DATA.comboResults[key];
+                if (combo) {
+                    comboTitle = combo.title;
+                    comboDesc = combo.desc;
+                    comboSpecial = combo.special;
+                    // 组合加成
+                    if (combo.special === '体面额外+1') {
+                        totalStats.体面 += 1;
+                    }
+                }
+            }
+
+            // 更新状态
+            Object.keys(totalStats).forEach(stat => {
+                gameState.stats[stat] += totalStats[stat];
+            });
+            updateStats();
+
+            // 显示结果
+            const cardName = gameState.craftedCards[0] || '???';
+            document.getElementById('result-card-name').textContent = cardName;
+
+            let description = '';
+            if (comboTitle) {
+                description = `【${comboTitle}】\n\n`;
+            }
+            const recipe = GAME_DATA.recipes.find(r => r.result === cardName);
+            if (recipe) {
+                description += recipe.desc;
+            }
+            if (comboSpecial) {
+                description += `\n\n→ ${comboSpecial}`;
+            }
+            document.getElementById('result-description').textContent = description;
+
+            // 数值变化显示
+            const statsContainer = document.getElementById('result-stats');
+            statsContainer.innerHTML = '';
+            Object.keys(totalStats).forEach(stat => {
+                if (totalStats[stat] !== 0) {
+                    const div = document.createElement('div');
+                    div.className = 'result-stat';
+                    div.innerHTML = `
+                        <div class="result-stat-label">${stat}</div>
+                        <div class="result-stat-value ${totalStats[stat] > 0 ? 'positive' : 'negative'}">
+                            ${totalStats[stat] > 0 ? '+' : ''}${totalStats[stat]}
+                        </div>
+                    `;
+                    statsContainer.appendChild(div);
+                }
+            });
+
+            overlay.classList.add('visible');
+            modal.classList.add('visible');
+
+            gameState.phase = 'result';
+        }
+
+        function nextStage() {
+            const modal = document.getElementById('result-modal');
+            const overlay = document.querySelector('.modal-overlay');
+
+            modal.classList.remove('visible');
+            overlay.classList.remove('visible');
+
+            // 重置游戏状态
+            gameState = {
+                phase: 'select',
+                stats: gameState.stats,
+                selectedItems: [],
+                dissolvedItems: [],
+                availableChars: [],
+                selectedChars: [],
+                usedChars: [],
+                craftedCards: [],
+                remainderChars: [],
+                baseWordSequence: []
+            };
+
+            renderItemShelf();
+            updateActionButtons();
+            document.getElementById('hint-text').textContent = '第一关完成！继续探索更多关卡...';
+            document.getElementById('hint-text').classList.add('visible');
+        }
+
+        function updateStats() {
+            document.getElementById('stat-体面').textContent = gameState.stats.体面;
+            document.getElementById('stat-怀疑').textContent = gameState.stats.怀疑;
+            document.getElementById('stat-灵感').textContent = gameState.stats.灵感;
+        }
+
+        function showMessage(text) {
+            const toast = document.getElementById('message-toast');
+            toast.textContent = text;
+            toast.classList.add('visible');
+
+            setTimeout(() => {
+                toast.classList.remove('visible');
+            }, 2000);
+        }
+
+        // ==================== 初始化 ====================
+        document.addEventListener('DOMContentLoaded', () => {
+            init3DScene();
+        });
+    </script>
+</body>
+</html>
