@@ -1,0 +1,35 @@
+{
+  "titles": [
+    {
+      "id": "cut",
+      "name": "因技术原因",
+      "cond": "rating==0"
+    },
+    {
+      "id": "cctv",
+      "name": "央视预备役",
+      "cond": "fixRate>=0.9"
+    },
+    {
+      "id": "camel",
+      "name": "喝水冠军",
+      "cond": "waterCount>=8"
+    },
+    {
+      "id": "sponsor",
+      "name": "甲方孝子",
+      "cond": "sponsorOnTimeRate==1"
+    },
+    {
+      "id": "stitch",
+      "name": "缝合怪",
+      "cond": "fixWrongCount>=3"
+    },
+    {
+      "id": "fish",
+      "name": "义务教育漏网之鱼",
+      "cond": "commonErrors>=3"
+    }
+  ],
+  "priority": ["cut", "cctv", "fish", "stitch", "camel", "sponsor"]
+}

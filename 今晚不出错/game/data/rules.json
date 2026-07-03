@@ -1,0 +1,28 @@
+{
+  "rules": [
+    {
+      "id": "rule_sponsor_hook",
+      "type": "notice",
+      "announceAt": "a1p1",
+      "title": "句间插播",
+      "announce": "导播：口播卡可以直接拖到任意两个词之间，排好后点结束插入，他才会开始念。",
+      "icon": "广"
+    },
+    {
+      "id": "rule_gap_safe",
+      "type": "notice",
+      "announceAt": "a1p2",
+      "title": "保底空档",
+      "announce": "导播：没把握就拖到段落空档，稳稳念完也算钱，只是没那么漂亮。",
+      "icon": "稳"
+    },
+    {
+      "id": "rule_heavy_mood",
+      "type": "notice",
+      "announceAt": "a2p3",
+      "title": "看气氛",
+      "announce": "导播：沉重稿件别硬接广告，哪怕词对上了也会很尴尬。",
+      "icon": "慎"
+    }
+  ]
+}

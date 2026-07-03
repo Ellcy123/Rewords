@@ -1,0 +1,97 @@
+{
+  "cards": [
+    {
+      "id": "card_zhuanzhuan",
+      "type": "sponsor",
+      "name": "转转严选·二手回收",
+      "label": "转转严选口播",
+      "spawnAt": "a1p1",
+      "hooks": ["转一转", "转转"],
+      "segueTemplate": "说到{hook}，旧手机旧电脑也能转出新价值，转转严选二手回收，省心又放心。",
+      "gapReadText": "本节目由转转严选二手回收支持，旧手机旧电脑上转转，专业质检，安心回收。",
+      "awkwardText": "转转严选二手回收提醒您，旧手机别闲着，转一转更值钱。",
+      "deadline": 55,
+      "timeoutSec": 55,
+      "rewards": {
+        "smooth": 8,
+        "onTime": 3,
+        "awkward": -5,
+        "clash": -8,
+        "timeout": -6
+      }
+    },
+    {
+      "id": "card_water",
+      "type": "sponsor",
+      "name": "蓝天矿泉水",
+      "label": "蓝天矿泉水口播",
+      "spawnAt": "a2p1",
+      "hooks": ["喝", "水"],
+      "segueTemplate": "说到{hook}，本节目由蓝天矿泉水陪您清爽收看，蓝天矿泉水，喝了不上头。",
+      "gapReadText": "本节目由蓝天矿泉水独家冠名，蓝天矿泉水，喝了不上头。",
+      "awkwardText": "蓝天矿泉水突然入镜，提醒大家多喝水，少上头。",
+      "deadline": 42,
+      "timeoutSec": 42,
+      "rewards": {
+        "smooth": 8,
+        "onTime": 3,
+        "awkward": -5,
+        "clash": -8,
+        "timeout": -6
+      }
+    },
+    {
+      "id": "card_powerbank",
+      "type": "sponsor",
+      "name": "稳稳牌充电宝",
+      "label": "稳稳充电宝口播",
+      "spawnAt": "a2p2",
+      "hooks": ["充电", "电"],
+      "segueTemplate": "说到{hook}，出门带稳稳牌充电宝，电量稳，心也稳。",
+      "gapReadText": "稳稳牌充电宝提醒您，出门不断电，直播不断线。",
+      "awkwardText": "稳稳牌充电宝此刻强行出现，电量稳不稳，场面先不稳了。",
+      "deadline": 38,
+      "timeoutSec": 38,
+      "rewards": {
+        "smooth": 8,
+        "onTime": 3,
+        "awkward": -5,
+        "clash": -8,
+        "timeout": -6
+      }
+    },
+    {
+      "id": "card_study",
+      "type": "sponsor",
+      "name": "金榜学习机",
+      "label": "金榜学习机口播",
+      "spawnAt": "a3p1",
+      "hooks": ["高考", "学习", "孩子", "金榜"],
+      "segueTemplate": "说到{hook}，金榜学习机陪孩子把知识点吃透，查漏补缺更省心。",
+      "gapReadText": "金榜学习机提醒家长，学习别硬熬，方法对了才高效。",
+      "awkwardText": "金榜学习机突然提醒您，孩子学习很重要，主播体面也很重要。",
+      "deadline": 44,
+      "timeoutSec": 44,
+      "rewards": {
+        "smooth": 8,
+        "onTime": 3,
+        "awkward": -5,
+        "clash": -8,
+        "timeout": -6
+      }
+    },
+    {
+      "id": "card_breaking_1",
+      "type": "breaking",
+      "label": "突发：台风路径更新",
+      "spawnAt": "a3p2",
+      "timeoutSec": 25,
+      "paragraphRef": "a3p_breaking1",
+      "rewards": {
+        "onTime": 1,
+        "timeout": -6,
+        "midSentence": -5
+      }
+    }
+  ]
+}

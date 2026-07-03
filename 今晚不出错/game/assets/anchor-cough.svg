@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 560" role="img" aria-label="咳嗽的主播">
+  <defs>
+    <linearGradient id="suit" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#263b61"/>
+      <stop offset="1" stop-color="#101821"/>
+    </linearGradient>
+  </defs>
+  <path d="M64 548c10-122 48-184 116-184s106 62 116 184Z" fill="url(#suit)"/>
+  <path d="M142 368l38 76l38-76" fill="#edf2f7"/>
+  <path d="M170 413h20l16 92l-26 26l-26-26Z" fill="#10a69a"/>
+  <circle cx="180" cy="226" r="98" fill="#f0c59c"/>
+  <path d="M86 211c5-92 62-146 125-130c65 16 86 60 70 142c-28-39-66-55-121-50c-34 3-58 16-74 38Z" fill="#262423"/>
+  <path d="M132 244c16 10 34 10 48 0M204 244c16 10 34 10 48 0" fill="none" stroke="#262423" stroke-width="8" stroke-linecap="round"/>
+  <path d="M154 306c18-12 35-12 52 0" fill="none" stroke="#8a3a30" stroke-width="8" stroke-linecap="round"/>
+  <path d="M178 252l-12 34h28" fill="none" stroke="#b5765c" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="88" y="326" width="184" height="50" rx="25" fill="#f0c59c"/>
+  <path d="M262 264c32 2 48 18 56 42M252 304c30 8 44 24 46 50" fill="none" stroke="#10a69a" stroke-width="8" stroke-linecap="round"/>
+  <text x="180" y="72" text-anchor="middle" font-family="Microsoft YaHei, sans-serif" font-size="30" font-weight="700" fill="#f6f0d0">咳</text>
+</svg>

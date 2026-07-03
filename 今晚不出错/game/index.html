@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>今晚不出错</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="game-shell" id="app">
+      <section class="studio-panel" aria-label="直播演播室">
+        <img class="studio-bg" src="assets/studio-bg.svg" alt="">
+        <div class="studio-topline">
+          <div class="brand-lockup">
+            <span class="live-dot"></span>
+            <span>NEWS 9527</span>
+          </div>
+          <div class="act-label" id="actLabel">待开播</div>
+        </div>
+        <div class="rating-wrap" id="ratingWrap" aria-label="收视率">
+          <div class="rating-meta">
+            <span>收视率</span>
+            <strong id="ratingText">50</strong>
+          </div>
+          <div class="rating-track">
+            <div class="rating-fill" id="ratingFill"></div>
+          </div>
+          <canvas id="ratingCanvas" width="320" height="42" aria-hidden="true"></canvas>
+        </div>
+        <div class="anchor-stage" id="anchorStage">
+          <img id="anchorImg" class="anchor-img" src="assets/anchor-normal.svg" alt="新闻主播">
+          <div class="desk-sign">今晚不出错</div>
+        </div>
+        <div class="director-bubble" id="directorBubble" hidden></div>
+        <div class="danmaku-layer" id="danmakuLayer" aria-hidden="true"></div>
+      </section>
+
+      <section class="teleprompter-panel" aria-label="提词器">
+        <div class="teleprompter-head">
+          <div>
+            <span class="eyebrow">TELEPROMPTER</span>
+            <h1>今晚不出错</h1>
+          </div>
+          <div class="teleprompter-actions">
+            <button class="insert-done-button" id="insertDoneButton" type="button" hidden>结束插入</button>
+            <div class="clock-chip" id="clockChip">00:00</div>
+          </div>
+        </div>
+        <div class="teleprompter-body" id="teleprompterBody"></div>
+        <div class="choice-popover" id="choicePopover" hidden></div>
+      </section>
+
+      <section class="control-panel" aria-label="播控台">
+        <div class="control-block hand-block">
+          <div class="block-title">
+            <span>手牌</span>
+            <small>拖到任意两个词之间，点结束后开念</small>
+          </div>
+          <div class="hand-row" id="handRow"></div>
+        </div>
+        <div class="control-block rules-block">
+          <div class="block-title">
+            <span>台规</span>
+            <small>只增不减，每条都得守</small>
+          </div>
+          <div class="rules-row" id="rulesRow"></div>
+        </div>
+        <div class="control-block resource-block">
+          <div class="block-title">
+            <span>自救</span>
+            <small>顶不住就用，用多了也疼</small>
+          </div>
+          <div class="resource-row">
+            <button class="tool-button" id="waterButton" type="button" title="空格：暂停 3 秒">
+              <span class="tool-icon">杯</span>
+              <span>喝水</span>
+              <b id="waterCount">0</b>
+            </button>
+            <button class="tool-button" id="coughButton" type="button" title="C：跳过当前句">
+              <span class="tool-icon">咳</span>
+              <span>咳嗽</span>
+              <b id="coughCount">2</b>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <div class="flash-layer" id="flashLayer" aria-hidden="true"></div>
+
+      <section class="start-screen" id="startScreen">
+        <div class="start-copy">
+          <p class="eyebrow">GAME JAM PROTOTYPE</p>
+          <h2>全场都在崩，你是唯一不能崩的人。</h2>
+          <p>主播只会照着提词器念，稿子是错的他也照念。你是他肚子里那个明白人：看到不对劲的词就点它，三秒内从三个说法里挑出对的。广告和突发稿可以直接拖到任意两个词之间，排好后点“结束插入”，主播才会按新顺序开念。空格＝喝水暂停，C＝咳嗽混过这一句。</p>
+          <button class="primary-button" id="startButton" type="button">开始直播</button>
+        </div>
+      </section>
+
+      <section class="summary-screen" id="summaryScreen" hidden>
+        <div class="summary-card">
+          <p class="eyebrow">直播复盘</p>
+          <h2 id="summaryTitle">直播结束</h2>
+          <p class="summary-note" id="summaryCompare"></p>
+          <p class="section-label">本场数据</p>
+          <div class="score-grid" id="scoreGrid"></div>
+          <p class="section-label">事故回放</p>
+          <div class="replay-list" id="replayList"></div>
+          <div class="summary-actions">
+            <button class="primary-button" id="restartButton" type="button">再播一场</button>
+            <button class="ghost-button" id="copyButton" type="button">复制战绩</button>
+          </div>
+        </div>
+      </section>
+    </main>
+    <script src="app.js" type="module"></script>
+  </body>
+</html>
