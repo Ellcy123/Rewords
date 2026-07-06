@@ -1,0 +1,5 @@
+[mcp_servers.feishu]
+command = "node"
+args = [
+    "D:/Rewords/.codex/mcp/start-feishu.mjs",
+]
