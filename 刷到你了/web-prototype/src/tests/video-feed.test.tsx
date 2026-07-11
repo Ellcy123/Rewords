@@ -16,12 +16,14 @@ function renderFeed(index = 1, onIndexChange = vi.fn()) {
   return { feed, onIndexChange }
 }
 
-function ControlledFeed() {
-  const [index, setIndex] = useState(1)
+function ControlledFeed({ initialIndex = 1, nodes = NODES.slice(0, 3) }: { initialIndex?: number; nodes?: typeof NODES }) {
+  const [index, setIndex] = useState(initialIndex)
   return (
-    <PlaybackProvider>
-      <VideoFeed nodes={NODES.slice(0, 3)} index={index} onIndexChange={setIndex} />
-    </PlaybackProvider>
+    <div data-testid="controlled-feed" data-index={index}>
+      <PlaybackProvider>
+        <VideoFeed nodes={nodes} index={index} onIndexChange={setIndex} />
+      </PlaybackProvider>
+    </div>
   )
 }
 
@@ -76,5 +78,54 @@ describe('three-card video feed', () => {
 
     expect(document.querySelector('.feed-slot[data-feed-slot="0"]')).toBe(incoming)
     expect(document.querySelector('.feed-slot[data-feed-slot="-1"]')).toBe(oldCurrent)
+  })
+
+  it('loops forward from the last card to the first without remounting it', () => {
+    render(<ControlledFeed initialIndex={2} />)
+    const feed = screen.getByTestId('video-feed')
+    Object.defineProperty(feed, 'clientHeight', { configurable: true, value: 1000 })
+    const current = document.querySelector<HTMLElement>('.feed-slot[data-feed-slot="0"]')
+    const incoming = document.querySelector<HTMLElement>('.feed-slot[data-feed-slot="1"]')
+    if (!current || !incoming) throw new Error('Expected circular feed cards were not rendered')
+    expect(incoming.dataset.nodeId).toBe('W001')
+
+    fireEvent.pointerDown(feed, { pointerId: 1, clientY: 700 })
+    fireEvent.pointerMove(feed, { pointerId: 1, clientY: 400 })
+    fireEvent.pointerUp(feed, { pointerId: 1, clientY: 400 })
+    fireEvent.transitionEnd(current)
+
+    expect(screen.getByTestId('controlled-feed').dataset.index).toBe('0')
+    expect(document.querySelector('.feed-slot[data-feed-slot="0"]')).toBe(incoming)
+  })
+
+  it('loops backward from the first card to the last without remounting it', () => {
+    render(<ControlledFeed initialIndex={0} />)
+    const feed = screen.getByTestId('video-feed')
+    Object.defineProperty(feed, 'clientHeight', { configurable: true, value: 1000 })
+    const current = document.querySelector<HTMLElement>('.feed-slot[data-feed-slot="0"]')
+    const incoming = document.querySelector<HTMLElement>('.feed-slot[data-feed-slot="-1"]')
+    if (!current || !incoming) throw new Error('Expected circular feed cards were not rendered')
+    expect(incoming.dataset.nodeId).toBe('W300')
+
+    fireEvent.pointerDown(feed, { pointerId: 1, clientY: 300 })
+    fireEvent.pointerMove(feed, { pointerId: 1, clientY: 600 })
+    fireEvent.pointerUp(feed, { pointerId: 1, clientY: 600 })
+    fireEvent.transitionEnd(current)
+
+    expect(screen.getByTestId('controlled-feed').dataset.index).toBe('2')
+    expect(document.querySelector('.feed-slot[data-feed-slot="0"]')).toBe(incoming)
+  })
+
+  it('renders distinct previous and next occurrences for a two-card loop', () => {
+    render(<ControlledFeed initialIndex={0} nodes={NODES.slice(0, 2)} />)
+    const slots = screen.getAllByTestId('feed-slot')
+    expect(slots.map(slot => slot.dataset.nodeId)).toEqual(['W101', 'W001', 'W101'])
+    expect(slots[0]).not.toBe(slots[2])
+  })
+
+  it('uses empty neighbors when only one card remains', () => {
+    render(<ControlledFeed initialIndex={0} nodes={NODES.slice(0, 1)} />)
+    const slots = screen.getAllByTestId('feed-slot')
+    expect(slots.map(slot => slot.dataset.nodeId)).toEqual([undefined, 'W001', undefined])
   })
 })
