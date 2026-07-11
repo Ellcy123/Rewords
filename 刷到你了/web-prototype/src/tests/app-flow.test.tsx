@@ -27,6 +27,28 @@ describe('app shell', () => {
     expect(screen.getByText('已暂停')).toBeTruthy()
   })
 
+  it('marks the correct gift as recommended and opens direct purchase', async () => {
+    const user = userEvent.setup()
+    render(<App storage={memoryStorage()} />)
+    await user.click(screen.getByRole('button', { name: '改命礼物' }))
+    expect(screen.getByText('推荐赠送')).toBeTruthy()
+    await user.click(screen.getByRole('button', { name: '购买推荐梯子' }))
+    expect(screen.getByRole('heading', { name: '商品详情' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: '购买 20 金币' })).toBeTruthy()
+  })
+
+  it('routes an undiscovered recommended gift to its clue video', async () => {
+    const user = userEvent.setup()
+    const state = createInitialState()
+    state.unlockedNodeIds.push('W300')
+    state.feedNodeIds.push('W300')
+    state.currentNodeId = 'W300'
+    render(<App storage={memoryStorage(state)} />)
+    await user.click(screen.getByRole('button', { name: '改命礼物' }))
+    await user.click(screen.getByRole('button', { name: '寻找推荐录音笔线索' }))
+    expect(screen.getAllByText('结论：电脑先冻关机了').length).toBeGreaterThan(0)
+  })
+
   it('buys a product and rewrites a video', async () => {
     const user = userEvent.setup()
     render(<App storage={memoryStorage()} />)

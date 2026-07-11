@@ -18,3 +18,11 @@ export const TRIGGERS: TriggerDefinition[] = [
 export function findTrigger(targetNodeId: NodeId, itemId: ItemId): TriggerDefinition | undefined {
   return TRIGGERS.find(trigger => trigger.targetNodeId === targetNodeId && trigger.itemId === itemId)
 }
+
+export function findCorrectTrigger(targetNodeId: NodeId): TriggerDefinition | undefined {
+  return TRIGGERS.find(trigger => trigger.targetNodeId === targetNodeId && trigger.kind !== 'wrong')
+}
+
+export function findDiscoveryTrigger(itemId: ItemId): TriggerDefinition | undefined {
+  return TRIGGERS.find(trigger => trigger.kind !== 'wrong' && trigger.discoverItemId === itemId)
+}
