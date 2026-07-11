@@ -53,7 +53,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         resolvedNodeIds: appendUnique(state.resolvedNodeIds, action.nodeId),
         unlockedNodeIds: appendUnique(state.unlockedNodeIds, unlock),
         feedNodeIds: appendUnique(state.feedNodeIds.filter(id => id !== action.nodeId), unlock),
-        pendingResultNodeId: unlock,
+        currentNodeId: unlock,
+        pendingResultNodeId: null,
       }
     }
     case 'RESULT_FINISHED': {

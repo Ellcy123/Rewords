@@ -9,13 +9,14 @@ interface Props {
   onProduct?: () => void
   onGift?: () => void
   onComments?: () => void
+  onPlaybackComplete?: () => void
 }
 
-export function VideoCard({ node, active, onProduct, onGift, onComments }: Props) {
+export function VideoCard({ node, active, onProduct, onGift, onComments, onPlaybackComplete }: Props) {
   const product = node.productItemId ? ITEM_BY_ID[node.productItemId] : null
   return (
     <article className={`video-card channel-${node.channel}`} data-node-id={node.id}>
-      <StoryStage node={node} active={active} />
+      <StoryStage node={node} active={active} onPlaybackComplete={onPlaybackComplete} />
       <header className="feed-tabs"><span>关注</span><b>推荐</b></header>
       <aside className="action-rail">
         <button aria-label="点赞"><Heart /><small>12.8万</small></button>
