@@ -74,8 +74,23 @@ describe('app shell', () => {
     await user.click(screen.getByRole('button', { name: '确认送入命运' }))
     expect((await screen.findAllByText('师傅到了，还是够不着')).length).toBeGreaterThan(0)
     await user.click(screen.getByRole('button', { name: '收进命运记录' }))
-    await user.click(screen.getByRole('button', { name: '命运' }))
+    await user.click(screen.getByRole('button', { name: '记录' }))
+    await user.click(screen.getByRole('button', { name: '别的命运' }))
     expect(screen.getByText('师傅到了但没有梯子')).toBeTruthy()
+  })
+
+  it('separates resolved videos from alternate fates and replays without changing progress', async () => {
+    const user = userEvent.setup()
+    const state = createInitialState()
+    state.resolvedNodeIds = ['W001']
+    state.destinyNodeIds = ['X001']
+    render(<App storage={memoryStorage(state)} />)
+    await user.click(screen.getByRole('button', { name: '记录' }))
+    expect(screen.getByRole('button', { name: '已改写' })).toBeTruthy()
+    expect(screen.getByText('婚礼灯架事故')).toBeTruthy()
+    await user.click(screen.getByRole('button', { name: '重看婚礼灯架事故' }))
+    expect(screen.getByRole('button', { name: '关闭重看' })).toBeTruthy()
+    expect(screen.getAllByText('婚礼开始第 7 秒，新娘死亡').length).toBeGreaterThan(0)
   })
 
   it('shows completion after finishing W400', async () => {

@@ -6,7 +6,7 @@ import { GiftSheet } from '../commerce/GiftSheet'
 import { InventorySheet } from '../commerce/InventorySheet'
 import { ProductSheet } from '../commerce/ProductSheet'
 import { rankFeed } from '../engine/feed'
-import { DestinySheet } from '../destiny/DestinySheet'
+import { RecordsSheet } from '../destiny/RecordsSheet'
 import { CompletionOverlay } from '../destiny/CompletionOverlay'
 import { useGame } from '../game/useGame'
 import { BottomNav } from '../shell/BottomNav'
@@ -15,11 +15,12 @@ import { ProfileSheet } from '../shell/ProfileSheet'
 import { TutorialCue } from '../tutorial/TutorialCue'
 import { PlaybackProvider } from './PlaybackContext'
 import { VideoFeed } from './VideoFeed'
+import { ReplayOverlay } from './ReplayOverlay'
 
 type Overlay =
   | { type: 'product'; itemId: ItemId; returnToGiftNodeId?: NodeId }
-  | { type: 'gift' | 'comments'; nodeId: NodeId }
-  | { type: 'inventory' | 'destiny' | 'profile' }
+  | { type: 'gift' | 'comments' | 'replay'; nodeId: NodeId }
+  | { type: 'inventory' | 'records' | 'profile' }
 
 export function FeedScreen() {
   const { state, dispatch } = useGame()
@@ -53,5 +54,5 @@ export function FeedScreen() {
     if (current.onCompleteUnlock) dispatch({ type: 'NODE_FINISHED', nodeId: current.id })
     if (current.id === 'W400') setCompletionOpen(true)
   }
-  return <PlaybackProvider><main className="phone-shell"><VideoFeed nodes={nodes} index={index} onIndexChange={change} locked={!!overlay || completionOpen} onProduct={node => node.productItemId && setOverlay({ type: 'product', itemId: node.productItemId })} onGift={node => setOverlay({ type: 'gift', nodeId: node.id })} onComments={node => setOverlay({ type: 'comments', nodeId: node.id })} />{state.pendingResultNodeId === current?.id && <button className="result-continue" onClick={finishResult}>{current.resultKind === 'wrong' ? '收进命运记录' : current.id === 'W400' ? '完成婚礼' : '继续刷'}</button>}<TutorialCue step={state.tutorialStep} /><BottomNav onDestiny={() => setOverlay({ type: 'destiny' })} onGift={() => current && setOverlay({ type: 'gift', nodeId: current.id })} onInventory={() => setOverlay({ type: 'inventory' })} onProfile={() => setOverlay({ type: 'profile' })} />{overlay?.type === 'product' && <ProductSheet item={ITEM_BY_ID[overlay.itemId]} onClose={() => setOverlay(overlay.returnToGiftNodeId ? { type: 'gift', nodeId: overlay.returnToGiftNodeId } : null)} />}{overlay?.type === 'gift' && <GiftSheet node={NODE_BY_ID[overlay.nodeId]} onClose={() => setOverlay(null)} onPurchase={itemId => setOverlay({ type: 'product', itemId, returnToGiftNodeId: overlay.nodeId })} onFind={jumpToNode} />}{overlay?.type === 'comments' && <CommentsSheet node={NODE_BY_ID[overlay.nodeId]} onClose={() => setOverlay(null)} />}{overlay?.type === 'inventory' && <InventorySheet onClose={() => setOverlay(null)} />}{overlay?.type === 'destiny' && <DestinySheet onClose={() => setOverlay(null)} onReplay={() => setOverlay(null)} />}{overlay?.type === 'profile' && <ProfileSheet onClose={() => setOverlay(null)} />}{completionOpen && <CompletionOverlay onContinue={() => setCompletionOpen(false)} onReset={() => { dispatch({ type: 'RESET_GAME' }); setCompletionOpen(false) }} />}</main></PlaybackProvider>
+  return <PlaybackProvider><main className="phone-shell"><VideoFeed nodes={nodes} index={index} onIndexChange={change} locked={!!overlay || completionOpen} onProduct={node => node.productItemId && setOverlay({ type: 'product', itemId: node.productItemId })} onGift={node => setOverlay({ type: 'gift', nodeId: node.id })} onComments={node => setOverlay({ type: 'comments', nodeId: node.id })} />{state.pendingResultNodeId === current?.id && <button className="result-continue" onClick={finishResult}>{current.resultKind === 'wrong' ? '收进命运记录' : current.id === 'W400' ? '完成婚礼' : '继续刷'}</button>}<TutorialCue step={state.tutorialStep} /><BottomNav onRecords={() => setOverlay({ type: 'records' })} onGift={() => current && setOverlay({ type: 'gift', nodeId: current.id })} onInventory={() => setOverlay({ type: 'inventory' })} onProfile={() => setOverlay({ type: 'profile' })} />{overlay?.type === 'product' && <ProductSheet item={ITEM_BY_ID[overlay.itemId]} onClose={() => setOverlay(overlay.returnToGiftNodeId ? { type: 'gift', nodeId: overlay.returnToGiftNodeId } : null)} />}{overlay?.type === 'gift' && <GiftSheet node={NODE_BY_ID[overlay.nodeId]} onClose={() => setOverlay(null)} onPurchase={itemId => setOverlay({ type: 'product', itemId, returnToGiftNodeId: overlay.nodeId })} onFind={jumpToNode} />}{overlay?.type === 'comments' && <CommentsSheet node={NODE_BY_ID[overlay.nodeId]} onClose={() => setOverlay(null)} />}{overlay?.type === 'inventory' && <InventorySheet onClose={() => setOverlay(null)} />}{overlay?.type === 'records' && <RecordsSheet onClose={() => setOverlay(null)} onReplay={nodeId => setOverlay({ type: 'replay', nodeId })} />}{overlay?.type === 'replay' && <ReplayOverlay node={NODE_BY_ID[overlay.nodeId]} onClose={() => setOverlay({ type: 'records' })} />}{overlay?.type === 'profile' && <ProfileSheet onClose={() => setOverlay(null)} />}{completionOpen && <CompletionOverlay onContinue={() => setCompletionOpen(false)} onReset={() => { dispatch({ type: 'RESET_GAME' }); setCompletionOpen(false) }} />}</main></PlaybackProvider>
 }

@@ -1,5 +1,5 @@
 import { ITEM_BY_ID } from '../content/items'
-import { NODE_BY_ID } from '../content/nodes'
+import { NODES, NODE_BY_ID } from '../content/nodes'
 import type { ItemDefinition, NodeId, VideoNode } from '../content/types'
 import type { GameState } from './state'
 
@@ -7,4 +7,5 @@ export const selectDiscoveredItems = (state: GameState): ItemDefinition[] => sta
 export const selectOwnedItems = (state: GameState): ItemDefinition[] => state.discoveredItemIds.filter(id => state.inventory[id] > 0).map(id => ITEM_BY_ID[id])
 export const selectAvailableGifts = (state: GameState, nodeId: NodeId): ItemDefinition[] => NODE_BY_ID[nodeId].selectableItemIds.filter(id => state.discoveredItemIds.includes(id)).map(id => ITEM_BY_ID[id])
 export const selectDestinyNodes = (state: GameState): VideoNode[] => state.destinyNodeIds.map(id => NODE_BY_ID[id])
+export const selectResolvedNodes = (state: GameState): VideoNode[] => NODES.filter(node => state.resolvedNodeIds.includes(node.id) && node.resultKind !== 'wrong')
 export const selectProgress = (state: GameState): number => state.unlockedNodeIds.filter(id => !id.startsWith('X')).length
