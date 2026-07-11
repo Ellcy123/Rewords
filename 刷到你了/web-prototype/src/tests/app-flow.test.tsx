@@ -2,9 +2,12 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { App } from '../App'
+import { SAVE_KEY } from '../engine/persistence'
+import { createInitialState } from '../engine/state'
 
-function memoryStorage(): Storage {
+function memoryStorage(initial?: object): Storage {
   const values = new Map<string, string>()
+  if (initial) values.set(SAVE_KEY, JSON.stringify(initial))
   return { get length() { return values.size }, clear: () => values.clear(), getItem: key => values.get(key) ?? null, key: index => [...values.keys()][index] ?? null, removeItem: key => { values.delete(key) }, setItem: (key, value) => { values.set(key, value) } }
 }
 
@@ -37,5 +40,36 @@ describe('app shell', () => {
     await user.click(screen.getByRole('button', { name: /选择梯子/ }))
     await user.click(screen.getByRole('button', { name: '确认送入命运' }))
     expect((await screen.findAllByText('有梯子，新娘还是死了')).length).toBeGreaterThan(0)
+  })
+
+  it('returns a wrong result to destiny records', async () => {
+    const user = userEvent.setup()
+    const state = createInitialState()
+    state.inventory.technician = 1
+    render(<App storage={memoryStorage(state)} />)
+    await user.click(screen.getByRole('button', { name: '改命礼物' }))
+    await user.click(screen.getByRole('button', { name: /选择空调师傅/ }))
+    await user.click(screen.getByRole('button', { name: '确认送入命运' }))
+    expect((await screen.findAllByText('师傅到了，还是够不着')).length).toBeGreaterThan(0)
+    await user.click(screen.getByRole('button', { name: '收进命运记录' }))
+    await user.click(screen.getByRole('button', { name: '命运' }))
+    expect(screen.getByText('师傅到了但没有梯子')).toBeTruthy()
+  })
+
+  it('shows completion after finishing W400', async () => {
+    const user = userEvent.setup()
+    const state = createInitialState()
+    state.discoveredItemIds = ['ladder', 'technician', 'recorder', 'projector']
+    state.inventory.projector = 1
+    state.unlockedNodeIds = ['W301']
+    state.feedNodeIds = ['W301']
+    state.currentNodeId = 'W301'
+    render(<App storage={memoryStorage(state)} />)
+    await user.click(screen.getByRole('button', { name: '改命礼物' }))
+    await user.click(screen.getByRole('button', { name: /选择投影服务/ }))
+    await user.click(screen.getByRole('button', { name: '确认送入命运' }))
+    await user.click(await screen.findByRole('button', { name: '完成婚礼' }))
+    expect(screen.getByRole('heading', { name: '婚礼顺利结束' })).toBeTruthy()
+    expect(screen.getByText('让婚礼顺利结束——已完成')).toBeTruthy()
   })
 })
