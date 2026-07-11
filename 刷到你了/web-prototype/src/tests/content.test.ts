@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import type { ItemId, NodeId, TriggerDefinition, VideoNode } from '../content/types'
 import { validateContent } from '../content/validate'
+import { ITEMS } from '../content/items'
+import { NODES } from '../content/nodes'
+import { TRIGGERS } from '../content/triggers'
 
 function fakeNode(id: string): VideoNode {
   return {
@@ -39,5 +42,11 @@ describe('validateContent', () => {
     expect(errors).toContain('duplicate node id: W001')
     expect(errors).toContain('unknown target node: missing')
     expect(errors).toContain('unknown result node: also-missing')
+  })
+
+  it('accepts the complete prototype catalog', () => {
+    expect(NODES).toHaveLength(16)
+    expect(ITEMS.map(item => item.id)).toEqual(['ladder', 'technician', 'recorder', 'projector'])
+    expect(validateContent({ items: ITEMS, nodes: NODES, triggers: TRIGGERS })).toEqual([])
   })
 })
