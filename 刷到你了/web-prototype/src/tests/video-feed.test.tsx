@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react'
+import { useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import { NODES } from '../content/nodes'
 import { PlaybackProvider } from '../feed/PlaybackContext'
@@ -13,6 +14,15 @@ function renderFeed(index = 1, onIndexChange = vi.fn()) {
   const feed = screen.getByTestId('video-feed')
   Object.defineProperty(feed, 'clientHeight', { configurable: true, value: 1000 })
   return { feed, onIndexChange }
+}
+
+function ControlledFeed() {
+  const [index, setIndex] = useState(1)
+  return (
+    <PlaybackProvider>
+      <VideoFeed nodes={NODES.slice(0, 3)} index={index} onIndexChange={setIndex} />
+    </PlaybackProvider>
+  )
 }
 
 describe('three-card video feed', () => {
@@ -49,5 +59,22 @@ describe('three-card video feed', () => {
     expect(slots[1].style.transform).toBe('translate3d(0, calc(0% + -1000px), 0)')
     fireEvent.transitionEnd(slots[1])
     expect(onIndexChange).toHaveBeenCalledWith(2)
+  })
+
+  it('preserves card elements while the next card becomes current', () => {
+    render(<ControlledFeed />)
+    const feed = screen.getByTestId('video-feed')
+    Object.defineProperty(feed, 'clientHeight', { configurable: true, value: 1000 })
+    const oldCurrent = document.querySelector<HTMLElement>('.feed-slot[data-node-id="W101"]')
+    const incoming = document.querySelector<HTMLElement>('.feed-slot[data-node-id="W300"]')
+    if (!oldCurrent || !incoming) throw new Error('Expected feed cards were not rendered')
+
+    fireEvent.pointerDown(feed, { pointerId: 1, clientY: 700 })
+    fireEvent.pointerMove(feed, { pointerId: 1, clientY: 400 })
+    fireEvent.pointerUp(feed, { pointerId: 1, clientY: 400 })
+    fireEvent.transitionEnd(oldCurrent)
+
+    expect(document.querySelector('.feed-slot[data-feed-slot="0"]')).toBe(incoming)
+    expect(document.querySelector('.feed-slot[data-feed-slot="-1"]')).toBe(oldCurrent)
   })
 })

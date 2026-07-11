@@ -49,7 +49,7 @@ export function VideoFeed({ nodes, index, onIndexChange, locked = false, onProdu
         }
         return (
           <div
-            key={`${slot}-${node.id}`}
+            key={node.id}
             className="feed-slot"
             data-testid="feed-slot"
             data-feed-slot={slot}
