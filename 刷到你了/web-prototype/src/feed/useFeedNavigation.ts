@@ -11,6 +11,7 @@ interface FeedNavigationOptions {
   index: number
   onChange: (nextIndex: number) => void
   locked: boolean
+  loop?: boolean
 }
 
 export type FeedNavigationPhase = 'idle' | 'dragging' | 'settling'
@@ -28,7 +29,7 @@ function prefersReducedMotion() {
     window.matchMedia('(prefers-reduced-motion: reduce)').matches
 }
 
-export function useFeedNavigation({ count, index, onChange, locked }: FeedNavigationOptions) {
+export function useFeedNavigation({ count, index, onChange, locked, loop = false }: FeedNavigationOptions) {
   const [offset, setOffset] = useState(0)
   const [phase, setPhase] = useState<FeedNavigationPhase>('idle')
   const [transitionMs, setTransitionMs] = useState(0)
@@ -76,11 +77,13 @@ export function useFeedNavigation({ count, index, onChange, locked }: FeedNaviga
     if (direction !== 0) onChange(index + direction)
   }, [clearSettleTimer, index, onChange, setNavigationPhase])
 
+  const canMove = useCallback((direction: -1 | 1) => count > 1 && (
+    loop || (index + direction >= 0 && index + direction < count)
+  ), [count, index, loop])
+
   const beginSettle = useCallback((requestedDirection: -1 | 0 | 1, height: number) => {
     if (locked || phaseRef.current === 'settling') return
-    const direction = requestedDirection !== 0 &&
-      index + requestedDirection >= 0 &&
-      index + requestedDirection < count
+    const direction = requestedDirection !== 0 && canMove(requestedDirection)
       ? requestedDirection
       : 0
     const duration = prefersReducedMotion() ? 40 : SETTLE_DURATION
@@ -91,7 +94,7 @@ export function useFeedNavigation({ count, index, onChange, locked }: FeedNaviga
     setOffset(direction === 0 ? 0 : -direction * safeHeight)
     clearSettleTimer()
     settleTimer.current = setTimeout(finishSettle, duration + 80)
-  }, [clearSettleTimer, count, finishSettle, index, locked, setNavigationPhase])
+  }, [canMove, clearSettleTimer, finishSettle, locked, setNavigationPhase])
 
   useEffect(() => () => clearSettleTimer(), [clearSettleTimer])
 
@@ -127,8 +130,8 @@ export function useFeedNavigation({ count, index, onChange, locked }: FeedNaviga
     if (phaseRef.current !== 'dragging' || event.pointerId !== pointerId.current) return
     const rawOffset = event.clientY - pointerStartY.current
     maxMovement.current = Math.max(maxMovement.current, Math.abs(rawOffset))
-    const pullingPastStart = index === 0 && rawOffset > 0
-    const pullingPastEnd = index === count - 1 && rawOffset < 0
+    const pullingPastStart = !loop && index === 0 && rawOffset > 0
+    const pullingPastEnd = !loop && index === count - 1 && rawOffset < 0
     setOffset((pullingPastStart || pullingPastEnd) ? rawOffset * BOUNDARY_RESISTANCE : rawOffset)
   }
 
