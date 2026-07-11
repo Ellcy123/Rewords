@@ -58,10 +58,10 @@ Every gift sheet renders every gift that can be used on that node, including und
 The recommended card has three states:
 
 - Owned: selectable like any other gift.
-- Discovered but not owned: shows “去购买” and navigates directly to its product video.
+- Discovered but not owned: shows “去购买” and opens its product sheet directly, even when the original product video has already been archived.
 - Undiscovered: shows “去找线索” and navigates to the active prerequisite video that discovers it.
 
-Navigation closes the gift sheet, ensures the target video is active, updates the current node, and focuses it. For the current content graph, an undiscovered recorder routes to K001 and an undiscovered projector routes through C001 once the recorder is available.
+Clue navigation closes the gift sheet, ensures the prerequisite video is active, updates the current node, and focuses it. Purchase navigation replaces the gift sheet with the existing product sheet and returns to the gift sheet after purchase. For the current content graph, an undiscovered recorder routes to K001 and an undiscovered projector routes through C001 once the recorder is available.
 
 If a route cannot be resolved because save data is inconsistent, the card remains locked and shows a short recovery message; it never recommends an incorrect gift.
 
