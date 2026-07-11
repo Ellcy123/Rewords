@@ -81,6 +81,10 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     case 'RESET_GAME':
       return createInitialState()
     case 'RECOVER_FEED':
-      return state.feedNodeIds.length ? state : { ...state, feedNodeIds: ['W001', 'C001', 'K001'], unlockedNodeIds: ['W001', 'C001', 'K001'].reduce((list, id) => appendUnique(list, id as NodeId), state.unlockedNodeIds) }
+      if (state.feedNodeIds.length || state.completed) return state
+      const recoverable = state.unlockedNodeIds.filter(id => !state.resolvedNodeIds.includes(id) && NODE_BY_ID[id].resultKind !== 'wrong')
+      if (recoverable.length) return { ...state, feedNodeIds: recoverable }
+      const roots = (['W001', 'C001', 'K001'] as NodeId[]).filter(id => !state.resolvedNodeIds.includes(id))
+      return { ...state, feedNodeIds: roots, unlockedNodeIds: roots.reduce((list, id) => appendUnique(list, id), state.unlockedNodeIds) }
   }
 }

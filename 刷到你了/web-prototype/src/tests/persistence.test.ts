@@ -23,6 +23,26 @@ describe('persistence', () => {
     expect(loadGame(storage, () => 42)).toEqual({ kind: 'loaded', state: createInitialState() })
   })
 
+  it('migrates a version-1 save and derives resolved sources', () => {
+    const storage = memoryStorage()
+    const legacy = {
+      ...createInitialState(),
+      version: 1,
+      triggeredKeys: ['W001:ladder'],
+      unlockedNodeIds: ['W001', 'W101'],
+      feedNodeIds: ['W001', 'W101'],
+    } as Record<string, unknown>
+    delete legacy.resolvedNodeIds
+    storage.setItem(SAVE_KEY, JSON.stringify(legacy))
+    const result = loadGame(storage)
+    expect(result.kind).toBe('loaded')
+    if (result.kind === 'loaded') {
+      expect(result.state.version).toBe(2)
+      expect(result.state.resolvedNodeIds).toEqual(['W001'])
+      expect(result.state.feedNodeIds).toEqual(['W101'])
+    }
+  })
+
   it('backs up corrupt JSON and returns a fresh state', () => {
     const storage = memoryStorage()
     storage.setItem(SAVE_KEY, '{bad')

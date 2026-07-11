@@ -53,4 +53,14 @@ describe('game reducer', () => {
     expect(gameReducer(empty, { type: 'BUY_ITEM', itemId: 'ladder' })).toEqual(empty)
     expect(gameReducer(empty, { type: 'CLAIM_DEMO_COINS' }).coins).toBe(100)
   })
+
+  it('recovers only unresolved unlocked nodes', () => {
+    const empty = {
+      ...createInitialState(),
+      feedNodeIds: [],
+      resolvedNodeIds: ['W001'],
+      unlockedNodeIds: ['W001', 'C001', 'K001'],
+    } as ReturnType<typeof createInitialState>
+    expect(gameReducer(empty, { type: 'RECOVER_FEED' }).feedNodeIds).toEqual(['C001', 'K001'])
+  })
 })

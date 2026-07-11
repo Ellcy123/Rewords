@@ -3,7 +3,7 @@ import type { ItemId, NodeId } from '../content/types'
 export type TutorialStep = 'product' | 'gift' | 'target' | 'done'
 
 export interface GameState {
-  version: 1
+  version: 2
   coins: number
   inventory: Record<ItemId, number>
   discoveredItemIds: ItemId[]
@@ -22,7 +22,7 @@ export interface GameState {
 
 export function createInitialState(): GameState {
   return {
-    version: 1,
+    version: 2,
     coins: 100,
     inventory: { ladder: 0, technician: 0, recorder: 0, projector: 0 },
     discoveredItemIds: ['ladder', 'technician'],
