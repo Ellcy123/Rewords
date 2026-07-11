@@ -18,7 +18,8 @@ describe('game reducer', () => {
     expect(bought.inventory.ladder).toBe(1)
     const result = gameReducer(bought, { type: 'GIVE_ITEM', targetNodeId: 'W001', itemId: 'ladder' })
     expect(result.inventory.ladder).toBe(0)
-    expect(result.pendingResultNodeId).toBe('W101')
+    expect(result.pendingResultNodeId).toBeNull()
+    expect(result.currentNodeId).toBe('W101')
     expect(result.unlockedNodeIds).toContain('W101')
     expect(result.resolvedNodeIds).toContain('W001')
     expect(result.feedNodeIds).not.toContain('W001')
@@ -37,13 +38,19 @@ describe('game reducer', () => {
     expect(replay.destinyNodeIds).toEqual(['X001'])
   })
 
-  it('unlocks W300 on W200 completion and completes on W400 result', () => {
-    const w200 = { ...createInitialState(), unlockedNodeIds: ['W001', 'W101', 'W200'], feedNodeIds: ['W001', 'W101', 'W200'] } as ReturnType<typeof createInitialState>
-    const unlocked = gameReducer(w200, { type: 'NODE_FINISHED', nodeId: 'W200' })
-    expect(unlocked.unlockedNodeIds).toContain('W300')
-    expect(unlocked.resolvedNodeIds).toContain('W200')
-    expect(unlocked.feedNodeIds).not.toContain('W200')
-    const complete = gameReducer({ ...unlocked, pendingResultNodeId: 'W400' }, { type: 'RESULT_FINISHED', nodeId: 'W400' })
+  it('opens W300 immediately after the technician resolves W101', () => {
+    const state = createInitialState()
+    state.inventory.technician = 1
+    state.unlockedNodeIds.push('W101')
+    state.feedNodeIds.push('W101')
+    const result = gameReducer(state, { type: 'GIVE_ITEM', targetNodeId: 'W101', itemId: 'technician' })
+    expect(result.currentNodeId).toBe('W300')
+    expect(result.pendingResultNodeId).toBeNull()
+    expect(result.feedNodeIds).toContain('W300')
+  })
+
+  it('completes on W400 result', () => {
+    const complete = gameReducer({ ...createInitialState(), feedNodeIds: ['W400'], pendingResultNodeId: 'W400' }, { type: 'RESULT_FINISHED', nodeId: 'W400' })
     expect(complete.completed).toBe(true)
     expect(complete.resolvedNodeIds).toContain('W400')
   })

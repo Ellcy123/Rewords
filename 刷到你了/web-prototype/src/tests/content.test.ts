@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest'
 import type { ItemId, NodeId, TriggerDefinition, VideoNode } from '../content/types'
 import { validateContent } from '../content/validate'
 import { ITEMS } from '../content/items'
-import { NODES } from '../content/nodes'
-import { TRIGGERS } from '../content/triggers'
+import { NODES, NODE_BY_ID } from '../content/nodes'
+import { findTrigger, TRIGGERS } from '../content/triggers'
 
 function fakeNode(id: string): VideoNode {
   return {
@@ -45,8 +45,16 @@ describe('validateContent', () => {
   })
 
   it('accepts the complete prototype catalog', () => {
-    expect(NODES).toHaveLength(16)
+    expect(NODES).toHaveLength(15)
     expect(ITEMS.map(item => item.id)).toEqual(['ladder', 'technician', 'recorder', 'projector'])
     expect(validateContent({ items: ITEMS, nodes: NODES, triggers: TRIGGERS })).toEqual([])
+  })
+
+  it('routes the repair directly into a combined W300 story without W200', () => {
+    expect(NODE_BY_ID).not.toHaveProperty('W200')
+    expect(findTrigger('W101', 'technician')?.resultNodeId).toBe('W300')
+    const story = NODE_BY_ID.W300.beats.map(beat => `${beat.text} ${beat.detail ?? ''}`).join(' ')
+    expect(story).toContain('新娘活下来了')
+    expect(story).toContain('私会维修工')
   })
 })

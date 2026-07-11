@@ -31,6 +31,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       if (resolution.kind !== 'success') return state
       const { trigger, key } = resolution
       const wrong = trigger.kind === 'wrong'
+      const interactiveResult = !wrong && NODE_BY_ID[trigger.resultNodeId].selectableItemIds.length > 0
       const resolvedNodeIds = wrong ? state.resolvedNodeIds : appendUnique(state.resolvedNodeIds, action.targetNodeId)
       const activeFeed = wrong ? state.feedNodeIds : state.feedNodeIds.filter(id => id !== action.targetNodeId)
       return {
@@ -42,7 +43,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         feedNodeIds: wrong ? state.feedNodeIds : appendUnique(activeFeed, trigger.resultNodeId),
         destinyNodeIds: wrong ? appendUnique(state.destinyNodeIds, trigger.resultNodeId) : state.destinyNodeIds,
         discoveredItemIds: trigger.discoverItemId ? appendUnique(state.discoveredItemIds, trigger.discoverItemId) : state.discoveredItemIds,
-        pendingResultNodeId: trigger.resultNodeId,
+        currentNodeId: interactiveResult ? trigger.resultNodeId : state.currentNodeId,
+        pendingResultNodeId: interactiveResult ? null : trigger.resultNodeId,
       }
     }
     case 'NODE_FINISHED': {

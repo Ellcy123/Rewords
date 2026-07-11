@@ -49,6 +49,21 @@ describe('app shell', () => {
     expect(screen.getAllByText('结论：电脑先冻关机了').length).toBeGreaterThan(0)
   })
 
+  it('enters the combined W300 immediately after giving the technician to W101', async () => {
+    const user = userEvent.setup()
+    const state = createInitialState()
+    state.inventory.technician = 1
+    state.unlockedNodeIds = ['W101']
+    state.feedNodeIds = ['W101']
+    state.currentNodeId = 'W101'
+    render(<App storage={memoryStorage(state)} />)
+    await user.click(screen.getByRole('button', { name: '改命礼物' }))
+    await user.click(screen.getByRole('button', { name: /选择空调师傅/ }))
+    await user.click(screen.getByRole('button', { name: '确认送入命运' }))
+    expect(screen.getAllByText('新娘婚礼当天私会维修工？').length).toBeGreaterThan(0)
+    expect(screen.queryByRole('button', { name: '继续刷' })).toBeNull()
+  })
+
   it('buys a product and rewrites a video', async () => {
     const user = userEvent.setup()
     render(<App storage={memoryStorage()} />)
