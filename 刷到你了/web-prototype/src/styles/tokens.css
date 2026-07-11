@@ -1,0 +1,2 @@
+:root{font-family:Inter,-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;color:#fff;background:#050507;font-synthesis:none;--pink:#ff315f;--gold:#ffd36a;--glass:rgba(12,12,16,.62);--safe-bottom:max(10px,env(safe-area-inset-bottom));}
+button{color:inherit;border:0;background:none;cursor:pointer}button:disabled{cursor:default}

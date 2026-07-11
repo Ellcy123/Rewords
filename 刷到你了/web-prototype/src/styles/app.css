@@ -1,0 +1,4 @@
+.app-frame{width:100%;height:100%;height:100dvh;display:grid;place-items:center;background:radial-gradient(circle at 50% 20%,#25232d,#050507 55%)}
+.phone-shell{position:relative;width:min(100vw,430px);height:100%;max-height:932px;overflow:hidden;background:#09090c;box-shadow:0 25px 90px #000;border-radius:0}
+@media(min-width:600px){.phone-shell{height:min(94vh,932px);border-radius:28px;border:1px solid #2f2e38}.app-frame:before{content:"刷到你了 · WEB DEMO";position:fixed;left:32px;top:30px;color:#777482;font-size:12px;letter-spacing:.18em}}
+@media(orientation:landscape) and (max-height:600px){.app-frame:after{content:"竖屏体验更完整";position:fixed;right:18px;top:18px;padding:8px 12px;border-radius:99px;background:#23222a;color:#aaa;font-size:12px}}
