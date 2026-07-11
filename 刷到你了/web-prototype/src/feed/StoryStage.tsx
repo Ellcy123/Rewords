@@ -1,17 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { VideoNode } from '../content/types'
 import { usePlayback } from './PlaybackContext'
 
-export function StoryStage({ node, active, onPlaybackComplete }: { node: VideoNode; active: boolean; onPlaybackComplete?: () => void }) {
+export function StoryStage({ node, active }: { node: VideoNode; active: boolean }) {
   const { paused, toggle } = usePlayback()
   const [beatIndex, setBeatIndex] = useState(0)
-  const completedCycle = useRef(false)
-  useEffect(() => { setBeatIndex(0); completedCycle.current = false }, [node.id])
-  useEffect(() => {
-    if (!active || beatIndex !== node.beats.length - 1 || completedCycle.current) return
-    completedCycle.current = true
-    onPlaybackComplete?.()
-  }, [active, beatIndex, node.beats.length, onPlaybackComplete])
+  useEffect(() => { setBeatIndex(0) }, [node.id])
   useEffect(() => {
     if (!active || paused || node.beats.length < 2) return
     const timer = window.setInterval(() => setBeatIndex(value => (value + 1) % node.beats.length), Math.max(1500, node.duration * 1000 / node.beats.length))

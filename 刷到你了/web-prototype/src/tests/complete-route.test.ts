@@ -16,8 +16,6 @@ describe('complete wedding route', () => {
     state = gameReducer(state, { type: 'GIVE_ITEM', targetNodeId: 'K001', itemId: 'ladder' })
     state = gameReducer(state, { type: 'GIVE_ITEM', targetNodeId: 'W001', itemId: 'ladder' })
     state = gameReducer(state, { type: 'GIVE_ITEM', targetNodeId: 'W101', itemId: 'technician' })
-    state = gameReducer(state, { type: 'RESULT_FINISHED', nodeId: 'W200' })
-    state = gameReducer(state, { type: 'NODE_FINISHED', nodeId: 'W200' })
 
     state = grant(state, 'recorder', 2)
     state = gameReducer(state, { type: 'GIVE_ITEM', targetNodeId: 'C001', itemId: 'recorder' })
@@ -27,7 +25,7 @@ describe('complete wedding route', () => {
     state = gameReducer(state, { type: 'RESULT_FINISHED', nodeId: 'W400' })
 
     expect(state.completed).toBe(true)
-    expect(state.resolvedNodeIds).toEqual(expect.arrayContaining(['K001', 'W001', 'W101', 'W200', 'C001', 'W300', 'W301', 'W400']))
+    expect(state.resolvedNodeIds).toEqual(expect.arrayContaining(['K001', 'W001', 'W101', 'C001', 'W300', 'W301', 'W400']))
     expect(state.resolvedNodeIds.filter(id => rankFeed(state).includes(id))).toEqual([])
   })
 })

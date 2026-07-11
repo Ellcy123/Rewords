@@ -1,6 +1,6 @@
-import { act, render, screen } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { App } from '../App'
 import { SAVE_KEY } from '../engine/persistence'
 import { createInitialState } from '../engine/state'
@@ -123,23 +123,6 @@ describe('app shell', () => {
     await user.click(await screen.findByRole('button', { name: '完成婚礼' }))
     expect(screen.getByRole('heading', { name: '婚礼顺利结束' })).toBeTruthy()
     expect(screen.getByText('让婚礼顺利结束——已完成')).toBeTruthy()
-  })
-
-  it('archives W200 and reveals W300 when playback finishes', () => {
-    vi.useFakeTimers()
-    try {
-      const state = createInitialState()
-      state.unlockedNodeIds = ['W200']
-      state.feedNodeIds = ['W200']
-      state.currentNodeId = 'W200'
-      state.pendingResultNodeId = 'W200'
-      render(<App storage={memoryStorage(state)} />)
-      act(() => vi.advanceTimersByTime(9_000))
-      expect(screen.getAllByText('新娘婚礼当天私会维修工？').length).toBeGreaterThan(0)
-      expect(screen.queryByRole('button', { name: '继续刷' })).toBeNull()
-    } finally {
-      vi.useRealTimers()
-    }
   })
 
   it('shows a safe reset screen for an unsupported save', () => {

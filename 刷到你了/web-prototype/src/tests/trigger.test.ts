@@ -6,7 +6,7 @@ describe('prototype trigger graph', () => {
     ['W001', 'ladder', 'W101'],
     ['K001', 'ladder', 'K101'],
     ['C001', 'recorder', 'C101'],
-    ['W101', 'technician', 'W200'],
+    ['W101', 'technician', 'W300'],
     ['W300', 'recorder', 'W301'],
     ['W301', 'projector', 'W400'],
     ['W001', 'technician', 'X001'],

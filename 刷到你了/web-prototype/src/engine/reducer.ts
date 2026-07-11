@@ -8,7 +8,6 @@ export type GameAction =
   | { type: 'BUY_ITEM'; itemId: ItemId }
   | { type: 'GIVE_ITEM'; targetNodeId: NodeId; itemId: ItemId }
   | { type: 'RESULT_FINISHED'; nodeId: NodeId }
-  | { type: 'NODE_FINISHED'; nodeId: NodeId }
   | { type: 'NODE_VIEWED'; nodeId: NodeId }
   | { type: 'SET_CURRENT_NODE'; nodeId: NodeId }
   | { type: 'CLAIM_DEMO_COINS' }
@@ -45,18 +44,6 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         discoveredItemIds: trigger.discoverItemId ? appendUnique(state.discoveredItemIds, trigger.discoverItemId) : state.discoveredItemIds,
         currentNodeId: interactiveResult ? trigger.resultNodeId : state.currentNodeId,
         pendingResultNodeId: interactiveResult ? null : trigger.resultNodeId,
-      }
-    }
-    case 'NODE_FINISHED': {
-      const unlock = NODE_BY_ID[action.nodeId].onCompleteUnlock
-      if (!unlock) return state
-      return {
-        ...state,
-        resolvedNodeIds: appendUnique(state.resolvedNodeIds, action.nodeId),
-        unlockedNodeIds: appendUnique(state.unlockedNodeIds, unlock),
-        feedNodeIds: appendUnique(state.feedNodeIds.filter(id => id !== action.nodeId), unlock),
-        currentNodeId: unlock,
-        pendingResultNodeId: null,
       }
     }
     case 'RESULT_FINISHED': {
