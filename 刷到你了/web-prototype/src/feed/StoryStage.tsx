@@ -24,7 +24,7 @@ export function StoryStage({ node, active }: { node: VideoNode; active: boolean 
         <strong>{beat.text}</strong>
         {beat.detail && <span>{beat.detail}</span>}
       </div>
-      {paused && <span className="pause-badge">已暂停</span>}
+      {paused && active && <span className="pause-badge">已暂停</span>}
     </button>
   )
 }

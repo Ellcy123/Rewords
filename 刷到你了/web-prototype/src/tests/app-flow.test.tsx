@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { App } from '../App'
@@ -11,6 +11,12 @@ function memoryStorage(initial?: object): Storage {
   return { get length() { return values.size }, clear: () => values.clear(), getItem: key => values.get(key) ?? null, key: index => [...values.keys()][index] ?? null, removeItem: key => { values.delete(key) }, setItem: (key, value) => { values.set(key, value) } }
 }
 
+function finishFeedTransition() {
+  const currentSlot = document.querySelector<HTMLElement>('.feed-slot[data-feed-slot="0"]')
+  if (!currentSlot) throw new Error('Current feed slot was not rendered')
+  fireEvent.transitionEnd(currentSlot)
+}
+
 describe('app shell', () => {
   it('renders the first short video and navigates by keyboard', async () => {
     render(<App storage={memoryStorage()} />)
@@ -18,7 +24,9 @@ describe('app shell', () => {
     expect(screen.getByRole('button', { name: '改命礼物' })).toBeTruthy()
     expect(screen.getByRole('navigation', { name: '主导航' })).toBeTruthy()
     await userEvent.keyboard('{ArrowDown}')
-    expect(screen.getAllByText('王妃翻墙私逃，被抓现行').length).toBeGreaterThan(0)
+    finishFeedTransition()
+    const currentSlot = document.querySelector<HTMLElement>('.feed-slot[data-feed-slot="0"]')
+    expect(currentSlot?.textContent).toContain('王妃翻墙私逃，被抓现行')
   })
 
   it('toggles playback from the stage', async () => {
@@ -68,11 +76,13 @@ describe('app shell', () => {
     const user = userEvent.setup()
     render(<App storage={memoryStorage()} />)
     await user.keyboard('{ArrowDown}')
+    finishFeedTransition()
     await user.click(screen.getByRole('button', { name: /刺客同款多功能梯子/ }))
     await user.click(screen.getByRole('button', { name: '购买 20 金币' }))
     expect(screen.getByText('梯子 ×1')).toBeTruthy()
     await user.keyboard('{Escape}')
     await user.keyboard('{ArrowUp}')
+    finishFeedTransition()
     await user.click(screen.getByRole('button', { name: '改命礼物' }))
     await user.click(screen.getByRole('button', { name: /选择梯子/ }))
     await user.click(screen.getByRole('button', { name: '确认送入命运' }))
