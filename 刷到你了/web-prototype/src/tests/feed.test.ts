@@ -19,4 +19,9 @@ describe('rankFeed', () => {
     const ranked = rankFeed(state)
     expect(ranked.slice(0, 3)).not.toEqual(['W001', 'W101', 'C001'])
   })
+
+  it('excludes resolved videos even when stale feed data still contains them', () => {
+    const state = { ...createInitialState(), resolvedNodeIds: ['W001'] } as ReturnType<typeof createInitialState>
+    expect(rankFeed(state)).toEqual(['C001', 'K001'])
+  })
 })

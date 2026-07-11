@@ -10,6 +10,7 @@ function score(state: GameState, id: NodeId): number {
 
 export function rankFeed(state: GameState): NodeId[] {
   const candidates = state.feedNodeIds
+    .filter(id => !state.resolvedNodeIds.includes(id))
     .filter(id => NODE_BY_ID[id].resultKind !== 'wrong')
     .map((id, index) => ({ id, index, score: score(state, id) }))
     .sort((a, b) => b.score - a.score || a.index - b.index || a.id.localeCompare(b.id))

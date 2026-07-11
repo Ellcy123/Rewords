@@ -20,6 +20,9 @@ describe('game reducer', () => {
     expect(result.inventory.ladder).toBe(0)
     expect(result.pendingResultNodeId).toBe('W101')
     expect(result.unlockedNodeIds).toContain('W101')
+    expect(result.resolvedNodeIds).toContain('W001')
+    expect(result.feedNodeIds).not.toContain('W001')
+    expect(result.feedNodeIds).toContain('W101')
   })
 
   it('records wrong results without replacing the route and is idempotent', () => {
@@ -27,6 +30,8 @@ describe('game reducer', () => {
     const wrong = gameReducer(bought, { type: 'GIVE_ITEM', targetNodeId: 'W001', itemId: 'technician' })
     expect(wrong.destinyNodeIds).toEqual(['X001'])
     expect(wrong.feedNodeIds).not.toContain('X001')
+    expect(wrong.resolvedNodeIds).not.toContain('W001')
+    expect(wrong.feedNodeIds).toContain('W001')
     const replay = gameReducer({ ...wrong, inventory: { ...wrong.inventory, technician: 1 } }, { type: 'GIVE_ITEM', targetNodeId: 'W001', itemId: 'technician' })
     expect(replay.inventory.technician).toBe(1)
     expect(replay.destinyNodeIds).toEqual(['X001'])
@@ -36,8 +41,11 @@ describe('game reducer', () => {
     const w200 = { ...createInitialState(), unlockedNodeIds: ['W001', 'W101', 'W200'], feedNodeIds: ['W001', 'W101', 'W200'] } as ReturnType<typeof createInitialState>
     const unlocked = gameReducer(w200, { type: 'NODE_FINISHED', nodeId: 'W200' })
     expect(unlocked.unlockedNodeIds).toContain('W300')
+    expect(unlocked.resolvedNodeIds).toContain('W200')
+    expect(unlocked.feedNodeIds).not.toContain('W200')
     const complete = gameReducer({ ...unlocked, pendingResultNodeId: 'W400' }, { type: 'RESULT_FINISHED', nodeId: 'W400' })
     expect(complete.completed).toBe(true)
+    expect(complete.resolvedNodeIds).toContain('W400')
   })
 
   it('does not buy without coins and can claim demo coins', () => {

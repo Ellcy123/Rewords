@@ -9,6 +9,7 @@ export interface GameState {
   discoveredItemIds: ItemId[]
   unlockedNodeIds: NodeId[]
   viewedNodeIds: NodeId[]
+  resolvedNodeIds: NodeId[]
   feedNodeIds: NodeId[]
   triggeredKeys: string[]
   destinyNodeIds: NodeId[]
@@ -27,6 +28,7 @@ export function createInitialState(): GameState {
     discoveredItemIds: ['ladder', 'technician'],
     unlockedNodeIds: ['W001', 'C001', 'K001'],
     viewedNodeIds: [],
+    resolvedNodeIds: [],
     feedNodeIds: ['W001', 'C001', 'K001'],
     triggeredKeys: [],
     destinyNodeIds: [],

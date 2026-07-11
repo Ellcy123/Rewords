@@ -31,12 +31,15 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       if (resolution.kind !== 'success') return state
       const { trigger, key } = resolution
       const wrong = trigger.kind === 'wrong'
+      const resolvedNodeIds = wrong ? state.resolvedNodeIds : appendUnique(state.resolvedNodeIds, action.targetNodeId)
+      const activeFeed = wrong ? state.feedNodeIds : state.feedNodeIds.filter(id => id !== action.targetNodeId)
       return {
         ...state,
         inventory: { ...state.inventory, [action.itemId]: state.inventory[action.itemId] - 1 },
         triggeredKeys: [...state.triggeredKeys, key],
+        resolvedNodeIds,
         unlockedNodeIds: appendUnique(state.unlockedNodeIds, trigger.resultNodeId),
-        feedNodeIds: wrong ? state.feedNodeIds : appendUnique(state.feedNodeIds, trigger.resultNodeId),
+        feedNodeIds: wrong ? state.feedNodeIds : appendUnique(activeFeed, trigger.resultNodeId),
         destinyNodeIds: wrong ? appendUnique(state.destinyNodeIds, trigger.resultNodeId) : state.destinyNodeIds,
         discoveredItemIds: trigger.discoverItemId ? appendUnique(state.discoveredItemIds, trigger.discoverItemId) : state.discoveredItemIds,
         pendingResultNodeId: trigger.resultNodeId,
@@ -45,10 +48,25 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     case 'NODE_FINISHED': {
       const unlock = NODE_BY_ID[action.nodeId].onCompleteUnlock
       if (!unlock) return state
-      return { ...state, unlockedNodeIds: appendUnique(state.unlockedNodeIds, unlock), feedNodeIds: appendUnique(state.feedNodeIds, unlock), pendingResultNodeId: unlock }
+      return {
+        ...state,
+        resolvedNodeIds: appendUnique(state.resolvedNodeIds, action.nodeId),
+        unlockedNodeIds: appendUnique(state.unlockedNodeIds, unlock),
+        feedNodeIds: appendUnique(state.feedNodeIds.filter(id => id !== action.nodeId), unlock),
+        pendingResultNodeId: unlock,
+      }
     }
-    case 'RESULT_FINISHED':
-      return { ...state, pendingResultNodeId: null, viewedNodeIds: appendUnique(state.viewedNodeIds, action.nodeId), completed: state.completed || action.nodeId === 'W400' }
+    case 'RESULT_FINISHED': {
+      const completesGame = action.nodeId === 'W400'
+      return {
+        ...state,
+        pendingResultNodeId: null,
+        viewedNodeIds: appendUnique(state.viewedNodeIds, action.nodeId),
+        resolvedNodeIds: completesGame ? appendUnique(state.resolvedNodeIds, action.nodeId) : state.resolvedNodeIds,
+        feedNodeIds: completesGame ? state.feedNodeIds.filter(id => id !== action.nodeId) : state.feedNodeIds,
+        completed: state.completed || completesGame,
+      }
+    }
     case 'NODE_VIEWED':
       if (state.viewedNodeIds.includes(action.nodeId)) return state
       return { ...state, viewedNodeIds: [...state.viewedNodeIds, action.nodeId], coins: state.coins + 5 }
