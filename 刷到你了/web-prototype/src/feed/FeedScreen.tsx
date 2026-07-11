@@ -1,8 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
 import { NODE_BY_ID } from '../content/nodes'
+import { ITEM_BY_ID } from '../content/items'
+import type { NodeId } from '../content/types'
+import { GiftSheet } from '../commerce/GiftSheet'
+import { InventorySheet } from '../commerce/InventorySheet'
+import { ProductSheet } from '../commerce/ProductSheet'
 import { rankFeed } from '../engine/feed'
 import { useGame } from '../game/useGame'
 import { BottomNav } from '../shell/BottomNav'
+import { TutorialCue } from '../tutorial/TutorialCue'
 import { PlaybackProvider } from './PlaybackContext'
 import { VideoFeed } from './VideoFeed'
 
@@ -11,6 +17,7 @@ export function FeedScreen() {
   const nodes = useMemo(() => rankFeed(state).map(id => NODE_BY_ID[id]), [state])
   const currentIndex = Math.max(0, nodes.findIndex(node => node.id === state.currentNodeId))
   const [index, setIndex] = useState(currentIndex)
+  const [overlay, setOverlay] = useState<{ type: 'product' | 'gift'; nodeId: NodeId } | { type: 'inventory' } | null>(null)
   useEffect(() => {
     if (state.pendingResultNodeId) setIndex(Math.max(0, nodes.findIndex(node => node.id === state.pendingResultNodeId)))
   }, [nodes, state.pendingResultNodeId])
@@ -18,5 +25,6 @@ export function FeedScreen() {
     setIndex(next)
     if (nodes[next]) dispatch({ type: 'SET_CURRENT_NODE', nodeId: nodes[next].id })
   }
-  return <PlaybackProvider><main className="phone-shell"><VideoFeed nodes={nodes} index={index} onIndexChange={change} /><BottomNav /></main></PlaybackProvider>
+  const current = nodes[index] ?? nodes[0]
+  return <PlaybackProvider><main className="phone-shell"><VideoFeed nodes={nodes} index={index} onIndexChange={change} locked={!!overlay} onProduct={node => setOverlay({ type: 'product', nodeId: node.id })} onGift={node => setOverlay({ type: 'gift', nodeId: node.id })} /><TutorialCue step={state.tutorialStep} /><BottomNav onGift={() => current && setOverlay({ type: 'gift', nodeId: current.id })} onInventory={() => setOverlay({ type: 'inventory' })} />{overlay?.type === 'product' && NODE_BY_ID[overlay.nodeId].productItemId && <ProductSheet item={ITEM_BY_ID[NODE_BY_ID[overlay.nodeId].productItemId!]} onClose={() => setOverlay(null)} />}{overlay?.type === 'gift' && <GiftSheet node={NODE_BY_ID[overlay.nodeId]} onClose={() => setOverlay(null)} />}{overlay?.type === 'inventory' && <InventorySheet onClose={() => setOverlay(null)} />}</main></PlaybackProvider>
 }
