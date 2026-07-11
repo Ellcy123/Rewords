@@ -72,4 +72,17 @@ describe('app shell', () => {
     expect(screen.getByRole('heading', { name: '婚礼顺利结束' })).toBeTruthy()
     expect(screen.getByText('让婚礼顺利结束——已完成')).toBeTruthy()
   })
+
+  it('shows a safe reset screen for an unsupported save', () => {
+    render(<App storage={memoryStorage({ version: 99 })} />)
+    expect(screen.getByRole('heading', { name: '存档需要更新' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: '安全重新开始' })).toBeTruthy()
+  })
+
+  it('recovers the root feed when saved feed is empty', () => {
+    const state = createInitialState()
+    state.feedNodeIds = []
+    render(<App storage={memoryStorage(state)} />)
+    expect(screen.getAllByText('婚礼开始第 7 秒，新娘死亡').length).toBeGreaterThan(0)
+  })
 })

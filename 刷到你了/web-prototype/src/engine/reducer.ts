@@ -15,6 +15,7 @@ export type GameAction =
   | { type: 'SET_MUTED'; muted: boolean }
   | { type: 'ADVANCE_TUTORIAL'; step: TutorialStep }
   | { type: 'RESET_GAME' }
+  | { type: 'RECOVER_FEED' }
 
 const appendUnique = <T,>(list: T[], value: T): T[] => list.includes(value) ? list : [...list, value]
 
@@ -61,5 +62,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       return { ...state, tutorialStep: action.step }
     case 'RESET_GAME':
       return createInitialState()
+    case 'RECOVER_FEED':
+      return state.feedNodeIds.length ? state : { ...state, feedNodeIds: ['W001', 'C001', 'K001'], unlockedNodeIds: ['W001', 'C001', 'K001'].reduce((list, id) => appendUnique(list, id as NodeId), state.unlockedNodeIds) }
   }
 }

@@ -1,0 +1,38 @@
+# 《刷到你了》网页试玩原型
+
+移动端优先、桌面兼容的短视频因果解谜演示。首版包含 16 条内容节点、4 件物品、6 条错误命运与完整婚礼通关路线。
+
+## 运行
+
+```bash
+npm install
+npm run dev
+```
+
+开发服务器默认显示本地地址。手机访问时使用竖屏；电脑端会显示居中的 430 × 932 手机画布。
+
+## 验证
+
+```bash
+npm test
+npm run typecheck
+npm run build
+```
+
+## 内容结构
+
+- `src/content/nodes.ts`：视频节点、逐拍字幕、评论、商品和可选礼物；
+- `src/content/items.ts`：物品名称、来源、价格与说明；
+- `src/content/triggers.ts`：目标视频 + 物品 → 结果节点；
+- `src/engine/`：纯函数状态、结算、推荐排序与存档；
+- `src/feed/StoryStage.tsx`：可被正式 MP4/WebM 替换的动态分镜播放器。
+
+新增内容时必须同时完成三项：添加节点、添加触发关系、让 `validateContent()` 通过。节点的 `selectableItemIds` 只能包含已有 Trigger 的组合，避免试玩中出现没有反馈的礼物。
+
+## 存档
+
+主存档键为 `shuadaonile.save.v1`。损坏 JSON 会备份为 `shuadaonile.save-corrupt-<timestamp>`；不兼容版本显示安全重置页。静态剧情文本不写入存档。
+
+## 原型限制
+
+视频内容目前使用 CSS 动态分镜、字幕和反馈动画，不代表已经制作真人短视频素材。界面与节点数据已为后续媒体替换保留统一接口。
