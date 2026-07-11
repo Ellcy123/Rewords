@@ -37,9 +37,34 @@ describe('persistence', () => {
     const result = loadGame(storage)
     expect(result.kind).toBe('loaded')
     if (result.kind === 'loaded') {
-      expect(result.state.version).toBe(2)
+      expect(result.state.version).toBe(3)
       expect(result.state.resolvedNodeIds).toEqual(['W001'])
       expect(result.state.feedNodeIds).toEqual(['W101'])
+    }
+  })
+
+  it('moves a version-2 save stopped at W200 directly to W300', () => {
+    const storage = memoryStorage()
+    const legacy = {
+      ...createInitialState(),
+      version: 2,
+      unlockedNodeIds: ['W001', 'W101', 'W200'],
+      feedNodeIds: ['W200'],
+      currentNodeId: 'W200',
+      pendingResultNodeId: 'W200',
+      viewedNodeIds: ['W200'],
+      resolvedNodeIds: ['W001', 'W101', 'W200'],
+    }
+    storage.setItem(SAVE_KEY, JSON.stringify(legacy))
+    const result = loadGame(storage)
+    expect(result.kind).toBe('loaded')
+    if (result.kind === 'loaded') {
+      expect(result.state.version).toBe(3)
+      expect(result.state.currentNodeId).toBe('W300')
+      expect(result.state.pendingResultNodeId).toBeNull()
+      expect(result.state.unlockedNodeIds).toContain('W300')
+      expect(result.state.feedNodeIds).toContain('W300')
+      expect(JSON.stringify(result.state)).not.toContain('W200')
     }
   })
 
