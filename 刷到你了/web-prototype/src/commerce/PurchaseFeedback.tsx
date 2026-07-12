@@ -9,9 +9,14 @@ export function PurchaseFeedback({ item, onDone }: { item: ItemDefinition; onDon
 
   return (
     <div className="purchase-feedback" role="status" aria-label={label} onAnimationEnd={finish}>
-      <span className="purchase-debit">-{item.price} 金币</span>
+      <div className="purchase-reward-card">
+        <small>购买成功</small>
+        <span className="purchase-reward-icon" aria-hidden="true">{item.icon}</span>
+        <strong>获得 {item.shortName} ×1</strong>
+        <span className="purchase-debit">-{item.price} 金币</span>
+      </div>
       <span className="purchase-flyer" aria-hidden="true">{item.icon}</span>
-      <span className="purchase-added">已放入背包</span>
+      <span className="purchase-added">{item.shortName} ×1 已放入背包</span>
     </div>
   )
 }
