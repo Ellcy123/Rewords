@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { Profiler } from 'react'
 import { describe, expect, it } from 'vitest'
 import { App } from '../App'
 import { SAVE_KEY } from '../engine/persistence'
@@ -82,6 +83,29 @@ describe('app shell', () => {
     await user.click(screen.getByRole('button', { name: '确认送入命运' }))
     expect(screen.getAllByText('新娘婚礼当天私会维修工？').length).toBeGreaterThan(0)
     expect(screen.queryByRole('button', { name: '继续刷' })).toBeNull()
+  })
+
+  it('never commits an unrelated current video while a gift rewrites the feed', async () => {
+    const user = userEvent.setup()
+    const state = createInitialState()
+    state.inventory.ladder = 1
+    const committedCurrentIds: string[] = []
+    render(
+      <Profiler id="app" onRender={() => {
+        const current = document.querySelector<HTMLElement>('.feed-slot[data-feed-slot="0"]')
+        if (current?.dataset.nodeId) committedCurrentIds.push(current.dataset.nodeId)
+      }}>
+        <App storage={memoryStorage(state)} />
+      </Profiler>,
+    )
+    await user.click(screen.getByRole('button', { name: '改命礼物' }))
+    await user.click(screen.getByRole('button', { name: /选择梯子/ }))
+    committedCurrentIds.length = 0
+
+    await user.click(screen.getByRole('button', { name: '确认送入命运' }))
+
+    expect(committedCurrentIds).not.toContain('C001')
+    expect(committedCurrentIds.at(-1)).toBe('W101')
   })
 
   it('buys a product and rewrites a video', async () => {

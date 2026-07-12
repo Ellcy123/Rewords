@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { NODE_BY_ID } from '../content/nodes'
 import { ITEM_BY_ID } from '../content/items'
 import type { ItemId, NodeId } from '../content/types'
@@ -29,17 +29,11 @@ export function FeedScreen() {
     const ids = state.pendingResultNodeId && !ranked.includes(state.pendingResultNodeId) ? [state.pendingResultNodeId, ...ranked] : ranked
     return ids.map(id => NODE_BY_ID[id])
   }, [state])
-  const currentIndex = Math.max(0, nodes.findIndex(node => node.id === state.currentNodeId))
-  const [index, setIndex] = useState(currentIndex)
+  const focusNodeId = state.pendingResultNodeId ?? state.currentNodeId
+  const index = Math.max(0, nodes.findIndex(node => node.id === focusNodeId))
   const [overlay, setOverlay] = useState<Overlay | null>(null)
   const [completionOpen, setCompletionOpen] = useState(false)
-  useEffect(() => {
-    const focusNodeId = state.pendingResultNodeId ?? state.currentNodeId
-    const focusIndex = nodes.findIndex(node => node.id === focusNodeId)
-    if (focusIndex >= 0) setIndex(focusIndex)
-  }, [nodes, state.currentNodeId, state.pendingResultNodeId])
   const change = (next: number) => {
-    setIndex(next)
     if (nodes[next]) dispatch({ type: 'SET_CURRENT_NODE', nodeId: nodes[next].id })
   }
   const current = nodes[index] ?? nodes[0]
@@ -47,7 +41,6 @@ export function FeedScreen() {
     const nextIndex = nodes.findIndex(node => node.id === nodeId)
     if (nextIndex < 0) return
     setOverlay(null)
-    setIndex(nextIndex)
     dispatch({ type: 'SET_CURRENT_NODE', nodeId })
   }
   const finishResult = () => {
