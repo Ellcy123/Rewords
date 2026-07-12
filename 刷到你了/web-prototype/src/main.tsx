@@ -8,6 +8,7 @@ import './styles/feed.css'
 import './styles/stage.css'
 import './styles/sheets.css'
 import './styles/tutorial.css'
+import './styles/commerce.css'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

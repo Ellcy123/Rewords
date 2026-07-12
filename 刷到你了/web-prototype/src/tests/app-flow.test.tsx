@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest'
 import { App } from '../App'
 import { SAVE_KEY } from '../engine/persistence'
 import { createInitialState } from '../engine/state'
+import '../styles/commerce.css'
 
 function memoryStorage(initial?: object): Storage {
   const values = new Map<string, string>()
@@ -115,6 +116,15 @@ describe('app shell', () => {
     finishFeedTransition()
     await user.click(screen.getByRole('button', { name: /刺客同款多功能梯子/ }))
     await user.click(screen.getByRole('button', { name: '购买 20 金币' }))
+    const feedback = screen.getByRole('status', { name: '购买成功：已扣除 20 金币，梯子已放入背包' })
+    const flyer = feedback.querySelector<HTMLElement>('.purchase-flyer')
+    if (!flyer) throw new Error('Expected purchased item to fly toward the backpack')
+    expect(screen.getByText('-20 金币')).toBeTruthy()
+    expect(screen.getByText('已放入背包')).toBeTruthy()
+    expect(screen.queryByRole('heading', { name: '商品详情' })).toBeNull()
+    expect(getComputedStyle(flyer).animationName).toBe('item-fly-to-backpack')
+    fireEvent.animationEnd(feedback)
+    await user.click(screen.getByRole('button', { name: '背包' }))
     expect(screen.getByText('梯子 ×1')).toBeTruthy()
     await user.keyboard('{Escape}')
     await user.keyboard('{ArrowUp}')

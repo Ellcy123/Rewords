@@ -1,0 +1,98 @@
+.purchase-feedback {
+  position: absolute;
+  z-index: 42;
+  inset: 0;
+  pointer-events: none;
+  animation-name: purchase-feedback-life;
+  animation-duration: 1.55s;
+  animation-timing-function: linear;
+  animation-iteration-count: 1;
+  animation-fill-mode: forwards;
+}
+
+.purchase-debit {
+  position: absolute;
+  top: 47%;
+  left: 50%;
+  padding: 8px 13px;
+  border: 1px solid rgba(255, 211, 106, .35);
+  border-radius: 99px;
+  background: rgba(23, 22, 28, .9);
+  color: #ffd36a;
+  font-size: 13px;
+  font-weight: 900;
+  white-space: nowrap;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .38);
+  animation: purchase-debit-rise 1.1s ease-out forwards;
+}
+
+.purchase-flyer {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  display: grid;
+  width: 54px;
+  height: 54px;
+  place-items: center;
+  border: 2px solid rgba(255, 211, 106, .9);
+  border-radius: 17px;
+  background: linear-gradient(145deg, #fff9d2, #ffd850);
+  font-size: 29px;
+  box-shadow: 0 9px 30px rgba(0, 0, 0, .46), 0 0 25px rgba(255, 209, 40, .34);
+  animation-name: item-fly-to-backpack;
+  animation-duration: 1.2s;
+  animation-delay: .08s;
+  animation-timing-function: cubic-bezier(.2, .72, .16, 1);
+  animation-iteration-count: 1;
+  animation-fill-mode: forwards;
+}
+
+.purchase-added {
+  position: absolute;
+  bottom: 74px;
+  left: 70%;
+  padding: 7px 10px;
+  border-radius: 99px;
+  background: rgba(20, 19, 24, .92);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateX(-50%);
+  animation: purchase-added-pop 1.5s ease-out forwards;
+}
+
+.phone-shell:has(.purchase-feedback) .bottom-nav button:nth-child(4) {
+  animation: backpack-receive 1.5s ease-out;
+}
+
+@keyframes item-fly-to-backpack {
+  0% { opacity: 0; transform: translate(-50%, 16px) scale(.55) rotate(-8deg); }
+  16% { opacity: 1; transform: translate(-50%, 0) scale(1.12) rotate(3deg); }
+  62% { opacity: 1; transform: translate(-16%, 80px) scale(.82) rotate(8deg); }
+  100% { top: calc(100% - 34px); left: 70%; opacity: .3; transform: translate(-50%, -50%) scale(.28) rotate(12deg); }
+}
+
+@keyframes purchase-debit-rise {
+  0% { opacity: 0; transform: translate(-50%, 10px) scale(.96); }
+  18%, 58% { opacity: 1; transform: translate(-50%, -8px) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -58px) scale(.98); }
+}
+
+@keyframes purchase-added-pop {
+  0%, 66% { opacity: 0; transform: translate(-50%, 8px) scale(.92); }
+  78%, 92% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -7px) scale(.98); }
+}
+
+@keyframes backpack-receive {
+  0%, 66% { transform: scale(1); }
+  78% { color: #ffd36a; transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+@keyframes purchase-feedback-life {
+  0%, 94% { opacity: 1; }
+  100% { opacity: 0; }
+}
