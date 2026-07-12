@@ -82,7 +82,7 @@
   z-index: 4;
   left: 14px;
   right: 70px;
-  bottom: 86px;
+  bottom: 118px;
   text-shadow: 0 2px 8px #000;
 }
 
@@ -206,26 +206,40 @@
 .gift-fab {
   position: absolute;
   z-index: 6;
-  right: 11px;
-  bottom: 74px;
+  top: 62px;
+  top: max(62px, calc(env(safe-area-inset-top) + 48px));
+  right: auto;
+  bottom: auto;
+  left: 12px;
   display: flex;
   align-items: center;
   gap: 5px;
-  padding: 8px 10px;
+  min-height: 38px;
+  padding: 8px 11px;
+  border: 1px solid rgba(255, 255, 255, .14);
   border-radius: 99px;
-  background: #2b2930;
-  color: #777;
+  background: rgba(24, 23, 29, .78);
+  color: #8b8992;
   font-size: 11px;
+  font-weight: 800;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 5px 18px rgba(0, 0, 0, .28);
 }
 
 .gift-fab svg {
-  width: 14px;
+  width: 15px;
 }
 
 .gift-fab.is-active {
   background: linear-gradient(110deg, #ff315f, #a738ff);
   color: #fff;
   box-shadow: 0 0 22px rgba(255, 49, 95, .42);
+}
+
+.video-card .rec-badge,
+.video-card .episode-badge {
+  right: 14px;
+  left: auto;
 }
 
 .bottom-nav {
