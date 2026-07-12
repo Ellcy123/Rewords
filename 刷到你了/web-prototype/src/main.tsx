@@ -7,6 +7,7 @@ import './styles/app.css'
 import './styles/feed.css'
 import './styles/stage.css'
 import './styles/sheets.css'
+import './styles/tutorial.css'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
