@@ -11,6 +11,18 @@ function memoryStorage(initial?: object): Storage {
   return { get length() { return values.size }, clear: () => values.clear(), getItem: key => values.get(key) ?? null, key: index => [...values.keys()][index] ?? null, removeItem: key => { values.delete(key) }, setItem: (key, value) => { values.set(key, value) } }
 }
 
+function unavailableStorage(): Storage {
+  const denied = () => { throw new DOMException('Storage access denied', 'SecurityError') }
+  return {
+    get length() { return denied() },
+    clear: denied,
+    getItem: denied,
+    key: denied,
+    removeItem: denied,
+    setItem: denied,
+  }
+}
+
 function finishFeedTransition() {
   const currentSlot = document.querySelector<HTMLElement>('.feed-slot[data-feed-slot="0"]')
   if (!currentSlot) throw new Error('Current feed slot was not rendered')
@@ -146,5 +158,24 @@ describe('app shell', () => {
     state.feedNodeIds = []
     render(<App storage={memoryStorage(state)} />)
     expect(screen.getAllByText('婚礼开始第 7 秒，新娘死亡').length).toBeGreaterThan(0)
+  })
+
+  it('still enters the game when a mobile browser blocks local storage', () => {
+    render(<App storage={unavailableStorage()} />)
+    expect(screen.getAllByText('婚礼开始第 7 秒，新娘死亡').length).toBeGreaterThan(0)
+  })
+
+  it('still enters when a mobile WebView blocks the localStorage property', () => {
+    const original = Object.getOwnPropertyDescriptor(window, 'localStorage')
+    Object.defineProperty(window, 'localStorage', {
+      configurable: true,
+      get: () => { throw new DOMException('Storage property denied', 'SecurityError') },
+    })
+    try {
+      render(<App />)
+      expect(screen.getAllByText('婚礼开始第 7 秒，新娘死亡').length).toBeGreaterThan(0)
+    } finally {
+      if (original) Object.defineProperty(window, 'localStorage', original)
+    }
   })
 })

@@ -31,7 +31,12 @@ type StoredState = Partial<Omit<GameState,
 }
 
 export function saveGame(storage: Storage, state: GameState): void {
-  storage.setItem(SAVE_KEY, JSON.stringify(state))
+  try {
+    storage.setItem(SAVE_KEY, JSON.stringify(state))
+  } catch {
+    // Some mobile WebViews expose Storage but deny writes. Gameplay should
+    // remain available for the current session even when progress cannot persist.
+  }
 }
 
 function appendUnique<T>(list: T[], value: T): T[] {
@@ -100,7 +105,12 @@ function migrateV1(value: StoredState): GameState {
 }
 
 export function loadGame(storage: Storage, now: () => number = Date.now): LoadResult {
-  const raw = storage.getItem(SAVE_KEY)
+  let raw: string | null
+  try {
+    raw = storage.getItem(SAVE_KEY)
+  } catch {
+    return { kind: 'fresh', state: createInitialState() }
+  }
   if (!raw) return { kind: 'fresh', state: createInitialState() }
   try {
     const value = repairLegacyW200(JSON.parse(raw) as StoredState)
@@ -108,8 +118,12 @@ export function loadGame(storage: Storage, now: () => number = Date.now): LoadRe
     if (value.version === 2 || value.version === 3) return { kind: 'loaded', state: normalizeState(value) }
     return { kind: 'requires-reset', raw }
   } catch {
-    storage.setItem(`shuadaonile.save-corrupt-${now()}`, raw)
-    storage.removeItem(SAVE_KEY)
+    try {
+      storage.setItem(`shuadaonile.save-corrupt-${now()}`, raw)
+      storage.removeItem(SAVE_KEY)
+    } catch {
+      // Storage cleanup is best-effort in restricted mobile browsers.
+    }
     return { kind: 'fresh', state: createInitialState() }
   }
 }
