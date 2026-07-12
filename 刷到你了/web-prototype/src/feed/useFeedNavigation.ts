@@ -22,6 +22,8 @@ const BOUNDARY_RESISTANCE = 0.28
 const CLICK_SUPPRESSION_DISTANCE = 8
 const WHEEL_THRESHOLD = 60
 const SETTLE_DURATION = 240
+const WHEEL_GESTURE_COOLDOWN = 540
+const WHEEL_QUIET_PERIOD = 180
 
 function prefersReducedMotion() {
   return typeof window !== 'undefined' &&
@@ -42,6 +44,7 @@ export function useFeedNavigation({ count, index, onChange, locked, loop = false
   const pendingDirection = useRef<-1 | 0 | 1>(0)
   const suppressClick = useRef(false)
   const wheelTotal = useRef(0)
+  const wheelBlockedUntil = useRef(0)
   const settleTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const clearSettleTimer = useCallback(() => {
@@ -107,6 +110,7 @@ export function useFeedNavigation({ count, index, onChange, locked, loop = false
       if (locked || phaseRef.current !== 'idle') return
       if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return
       event.preventDefault()
+      wheelBlockedUntil.current = Date.now() + WHEEL_GESTURE_COOLDOWN
       beginSettle(event.key === 'ArrowDown' ? 1 : -1, viewportHeight.current || window.innerHeight)
     }
     window.addEventListener('keydown', onKey)
@@ -150,6 +154,7 @@ export function useFeedNavigation({ count, index, onChange, locked, loop = false
       Math.abs(velocity) >= VELOCITY_THRESHOLD
     suppressClick.current = maxMovement.current >= CLICK_SUPPRESSION_DISTANCE ||
       Math.abs(rawOffset) >= CLICK_SUPPRESSION_DISTANCE
+    wheelBlockedUntil.current = Date.now() + WHEEL_GESTURE_COOLDOWN
     releasePointer(event.currentTarget, event.pointerId)
     if (rawOffset === 0) {
       setOffset(0)
@@ -162,16 +167,24 @@ export function useFeedNavigation({ count, index, onChange, locked, loop = false
 
   const onPointerCancel: PointerEventHandler<HTMLDivElement> = event => {
     if (phaseRef.current !== 'dragging' || event.pointerId !== pointerId.current) return
+    wheelBlockedUntil.current = Date.now() + WHEEL_GESTURE_COOLDOWN
     releasePointer(event.currentTarget, event.pointerId)
     beginSettle(0, viewportHeight.current)
   }
 
   const onWheel: WheelEventHandler<HTMLDivElement> = event => {
-    if (locked || phaseRef.current !== 'idle') return
+    if (locked) return
+    const now = Date.now()
+    if (phaseRef.current !== 'idle' || now < wheelBlockedUntil.current) {
+      wheelTotal.current = 0
+      wheelBlockedUntil.current = Math.max(wheelBlockedUntil.current, now + WHEEL_QUIET_PERIOD)
+      return
+    }
     wheelTotal.current += event.deltaY
     if (Math.abs(wheelTotal.current) < WHEEL_THRESHOLD) return
     const direction = wheelTotal.current > 0 ? 1 : -1
     wheelTotal.current = 0
+    wheelBlockedUntil.current = now + WHEEL_GESTURE_COOLDOWN
     viewportHeight.current = event.currentTarget.clientHeight || window.innerHeight || 1
     beginSettle(direction, viewportHeight.current)
   }

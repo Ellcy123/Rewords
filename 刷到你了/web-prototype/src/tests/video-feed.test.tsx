@@ -1,6 +1,6 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import { useState } from 'react'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { NODES } from '../content/nodes'
 import { PlaybackProvider } from '../feed/PlaybackContext'
 import { VideoFeed } from '../feed/VideoFeed'
@@ -26,6 +26,8 @@ function ControlledFeed({ initialIndex = 1, nodes = NODES.slice(0, 3) }: { initi
     </div>
   )
 }
+
+afterEach(() => vi.useRealTimers())
 
 describe('three-card video feed', () => {
   it('renders previous, current, and next cards in fixed vertical slots', () => {
@@ -127,5 +129,24 @@ describe('three-card video feed', () => {
     render(<ControlledFeed initialIndex={0} nodes={NODES.slice(0, 1)} />)
     const slots = screen.getAllByTestId('feed-slot')
     expect(slots.map(slot => slot.dataset.nodeId)).toEqual([undefined, 'W001', undefined])
+  })
+
+  it('keeps the previewed card current when settlement uses the timeout fallback', () => {
+    vi.useFakeTimers()
+    render(<ControlledFeed initialIndex={0} />)
+    const feed = screen.getByTestId('video-feed')
+    Object.defineProperty(feed, 'clientHeight', { configurable: true, value: 1000 })
+    const incoming = document.querySelector<HTMLElement>('.feed-slot[data-feed-slot="1"]')
+    if (!incoming) throw new Error('Expected the incoming feed card')
+    expect(incoming.dataset.nodeId).toBe('W101')
+
+    fireEvent.pointerDown(feed, { pointerId: 1, clientY: 700 })
+    fireEvent.pointerMove(feed, { pointerId: 1, clientY: 400 })
+    fireEvent.pointerUp(feed, { pointerId: 1, clientY: 400 })
+    act(() => vi.advanceTimersByTime(321))
+
+    expect(document.querySelector('.feed-slot[data-feed-slot="0"]')).toBe(incoming)
+    act(() => vi.advanceTimersByTime(1000))
+    expect(document.querySelector('.feed-slot[data-feed-slot="0"]')).toBe(incoming)
   })
 })

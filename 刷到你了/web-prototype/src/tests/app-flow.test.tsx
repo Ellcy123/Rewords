@@ -140,6 +140,24 @@ describe('app shell', () => {
     expect(screen.getByText('师傅到了但没有梯子')).toBeTruthy()
   })
 
+  it('does not start a swipe while a result is waiting to be recorded', () => {
+    const state = createInitialState()
+    state.pendingResultNodeId = 'X001'
+    state.unlockedNodeIds.push('X001')
+    state.destinyNodeIds.push('X001')
+    render(<App storage={memoryStorage(state)} />)
+    const feed = screen.getByTestId('video-feed')
+    Object.defineProperty(feed, 'clientHeight', { configurable: true, value: 1000 })
+    expect(document.querySelector<HTMLElement>('.feed-slot[data-feed-slot="0"]')?.dataset.nodeId).toBe('X001')
+    expect(screen.getByRole('button', { name: '收进命运记录' })).toBeTruthy()
+
+    fireEvent.pointerDown(feed, { pointerId: 1, clientY: 700 })
+    fireEvent.pointerMove(feed, { pointerId: 1, clientY: 400 })
+
+    expect(feed.dataset.feedPhase).toBe('idle')
+    expect(document.querySelector<HTMLElement>('.feed-slot[data-feed-slot="0"]')?.style.transform).toBe('translate3d(0, calc(0% + 0px), 0)')
+  })
+
   it('separates resolved videos from alternate fates and replays without changing progress', async () => {
     const user = userEvent.setup()
     const state = createInitialState()

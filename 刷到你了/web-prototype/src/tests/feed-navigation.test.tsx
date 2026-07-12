@@ -139,6 +139,46 @@ describe('gesture feed navigation', () => {
     expect(onChange).not.toHaveBeenCalled()
   })
 
+  it('ignores a synthetic wheel event after a pointer swipe settles', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(0)
+    const onChange = vi.fn()
+    render(<Harness loop onChange={onChange} />)
+    const feed = feedWithHeight()
+    fireEvent.pointerDown(feed, { pointerId: 1, clientY: 600 })
+    fireEvent.pointerMove(feed, { pointerId: 1, clientY: 300 })
+    fireEvent.pointerUp(feed, { pointerId: 1, clientY: 300 })
+    fireEvent.transitionEnd(feed)
+    expect(onChange).toHaveBeenCalledTimes(1)
+
+    vi.setSystemTime(100)
+    fireEvent.wheel(feed, { deltaY: 70 })
+    expect(feed.dataset.phase).toBe('idle')
+    expect(onChange).toHaveBeenCalledTimes(1)
+
+    vi.setSystemTime(700)
+    fireEvent.wheel(feed, { deltaY: 70 })
+    expect(feed.dataset.phase).toBe('settling')
+    fireEvent.transitionEnd(feed)
+    expect(onChange).toHaveBeenCalledTimes(2)
+  })
+
+  it('treats momentum wheel events as one navigation', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(0)
+    const onChange = vi.fn()
+    render(<Harness loop onChange={onChange} />)
+    const feed = feedWithHeight()
+    fireEvent.wheel(feed, { deltaY: 70 })
+    fireEvent.transitionEnd(feed)
+    expect(onChange).toHaveBeenCalledTimes(1)
+
+    vi.setSystemTime(100)
+    fireEvent.wheel(feed, { deltaY: 70 })
+    expect(feed.dataset.phase).toBe('idle')
+    expect(onChange).toHaveBeenCalledTimes(1)
+  })
+
   it('ignores gestures while locked', () => {
     const onChange = vi.fn()
     render(<Harness locked onChange={onChange} />)
