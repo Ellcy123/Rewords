@@ -1,4 +1,4 @@
-import { Bookmark, Heart, MessageCircle, Share2, Sparkles } from 'lucide-react'
+import { Bookmark, Heart, MessageCircle, Share2, ShoppingCart, Sparkles } from 'lucide-react'
 import type { VideoNode } from '../content/types'
 import { ITEM_BY_ID } from '../content/items'
 import { StoryStage } from './StoryStage'
@@ -27,7 +27,21 @@ export function VideoCard({ node, active, onProduct, onGift, onComments }: Props
         <b>{node.account}</b>
         <h1>{node.headline}</h1>
         <p>{node.subtitle}</p>
-        {product && <button className="product-chip" onClick={onProduct}><span>{product.icon}</span>{product.name}<em>›</em></button>}
+        {product && (
+          <button
+            className="product-chip"
+            aria-label={`小黄车 · ${product.name} · ${product.price} 金币 · 去看看`}
+            onClick={onProduct}
+          >
+            <span className="product-thumb" aria-hidden="true">{product.icon}</span>
+            <span className="product-info">
+              <small className="product-cart-label"><ShoppingCart />小黄车</small>
+              <strong>{product.name}</strong>
+              <small className="product-price">{product.price} 金币</small>
+            </span>
+            <span className="product-cta">去看看</span>
+          </button>
+        )}
       </section>
       <button className={`gift-fab ${node.selectableItemIds.length ? 'is-active' : ''}`} aria-label="改命礼物" onClick={onGift} disabled={!node.selectableItemIds.length}><Sparkles />改命礼物</button>
     </article>

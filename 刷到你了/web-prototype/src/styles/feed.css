@@ -103,24 +103,104 @@
 }
 
 .product-chip {
-  display: flex;
+  position: relative;
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr) auto;
   align-items: center;
-  gap: 7px;
-  max-width: 100%;
+  gap: 9px;
+  width: min(100%, 310px);
+  min-height: 62px;
   margin-top: 11px;
-  padding: 8px 10px;
-  border: 1px solid rgba(255, 255, 255, .18);
-  border-radius: 10px;
-  background: rgba(20, 18, 23, .72);
-  backdrop-filter: blur(10px);
-  font-size: 12px;
-  white-space: nowrap;
+  padding: 6px 7px;
+  border: 1px solid rgba(255, 210, 65, .94);
+  border-radius: 13px;
+  background: linear-gradient(105deg, rgba(255, 254, 244, .97), rgba(255, 242, 173, .97));
+  color: #261d09;
+  text-align: left;
+  text-shadow: none;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .3), 0 0 0 1px rgba(255, 192, 20, .14);
+  backdrop-filter: blur(12px);
   overflow: hidden;
 }
 
-.product-chip em {
-  margin-left: auto;
-  font-style: normal;
+.product-chip::after {
+  position: absolute;
+  top: -20px;
+  left: -34px;
+  width: 26px;
+  height: 104px;
+  background: rgba(255, 255, 255, .38);
+  content: '';
+  transform: rotate(24deg);
+  animation: product-shine 3.2s ease-in-out infinite;
+}
+
+.product-thumb {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  place-items: center;
+  border: 1px solid rgba(255, 190, 15, .48);
+  border-radius: 10px;
+  background: linear-gradient(145deg, #fff9d2, #ffd850);
+  font-size: 25px;
+  box-shadow: inset 0 1px rgba(255, 255, 255, .75);
+}
+
+.product-info {
+  display: grid;
+  min-width: 0;
+  gap: 1px;
+}
+
+.product-cart-label {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  color: #a86100;
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.product-cart-label svg {
+  width: 12px;
+  height: 12px;
+  stroke-width: 2.7;
+}
+
+.product-info strong {
+  overflow: hidden;
+  font-size: 12px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.product-price {
+  color: #e34b18;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.product-cta {
+  padding: 7px 9px;
+  border-radius: 99px;
+  background: #ffd128;
+  color: #3b2900;
+  font-size: 11px;
+  font-weight: 900;
+  white-space: nowrap;
+  box-shadow: inset 0 -1px rgba(142, 93, 0, .12);
+}
+
+.product-chip:active .product-cta {
+  transform: scale(.96);
+}
+
+@keyframes product-shine {
+  0%, 58% { transform: translateX(0) rotate(24deg); }
+  82%, 100% { transform: translateX(350px) rotate(24deg); }
 }
 
 .gift-fab {
