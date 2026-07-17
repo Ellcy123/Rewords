@@ -1,6 +1,6 @@
 # W001 RunningHub Video Test Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Produce one browser-ready 9:16 W001 wedding-lighting-accident test video from a generated keyframe through the verified RunningHub LTX2.3 AI App.
 
@@ -38,11 +38,11 @@
 - Consumes: W001 script at `刷到你了/05_第一关_婚礼逆天改命/剧情节点/W_婚礼线/W001_婚礼灯架事故.md`.
 - Produces: a local PNG path accepted by the RunningHub upload endpoint.
 
-- [ ] **Step 1: Create the output directory**
+- [x] **Step 1: Create the output directory**
 
 Use `apply_patch` to add the first tracked text artifact in the directory when needed; do not write credentials or generated binary data through shell redirection.
 
-- [ ] **Step 2: Generate a portrait keyframe**
+- [x] **Step 2: Generate a portrait keyframe**
 
 Invoke the `imagegen` skill and generate one image with this complete direction:
 
@@ -50,7 +50,7 @@ Invoke the `imagegen` skill and generate one image with this complete direction:
 A vertical 9:16 cinematic frame from a polished Chinese mobile wedding drama. A modern indoor wedding stage filled with ivory flowers and warm practical lights. A young Chinese bride in an elegant white wedding dress stands at the visual center and has just looked upward in alarm. Four meters above her, a large professional black stage-lighting truss has visibly come loose and is beginning to tilt and fall; small dust particles and flower petals shake loose. Guests at the sides recoil and raise their hands, leaving a clear view between the bride and the failing truss. Strong depth, believable rigging geometry, realistic fabric and faces, dramatic but non-graphic danger, high-end short-drama cinematography, slight handheld urgency, enough empty space for the camera to pull backward. No impact, no injury, no blood, no text, no subtitles, no app interface, no logo, no watermark.
 ```
 
-- [ ] **Step 3: Normalize the image to exact 9:16 if required**
+- [x] **Step 3: Normalize the image to exact 9:16 if required**
 
 Run:
 
@@ -60,11 +60,11 @@ sips -g pixelWidth -g pixelHeight '刷到你了/assets/video-tests/W001/W001_key
 
 Expected: width-to-height ratio exactly `9:16`. If the generator returns `1024×1536`, assign its returned local path to `GENERATED_PATH`, then run `sips --cropToHeightWidth 1536 864 "$GENERATED_PATH" --out '刷到你了/assets/video-tests/W001/W001_keyframe_v1.png'` to center-crop without stretching.
 
-- [ ] **Step 4: Visually inspect the full-resolution keyframe**
+- [x] **Step 4: Visually inspect the full-resolution keyframe**
 
 Use `view_image` at original detail. Reject the frame before any paid video call if the bride has malformed hands or face, the truss is not clearly above her, the truss geometry cannot plausibly move, or the image contains text, injury, or a watermark.
 
-- [ ] **Step 5: Verify the file type**
+- [x] **Step 5: Verify the file type**
 
 Run:
 
@@ -83,11 +83,11 @@ Expected: PNG image data with portrait dimensions and no decode error.
 - Consumes: `W001_keyframe_v1.png` and a RunningHub API Key read interactively with terminal echo disabled.
 - Produces: a RunningHub `taskId` and downloaded raw MP4.
 
-- [ ] **Step 1: Ensure FFmpeg inspection tools are available**
+- [x] **Step 1: Ensure FFmpeg inspection tools are available**
 
-Run `command -v ffmpeg && command -v ffprobe`. If absent, install the Homebrew `ffmpeg` formula after the platform permission prompt, then rerun the command. Expected: both executables resolve before the paid task is submitted.
+Run `command -v ffmpeg && command -v ffprobe`. If absent, install the Homebrew `ffmpeg` formula after the platform permission prompt, then rerun the command. Also verify `ffmpeg -hide_banner -filters` contains `subtitles`; if the base formula lacks `libass`, install the official keg-only `ffmpeg-full` formula and use `/opt/homebrew/opt/ffmpeg-full/bin/ffmpeg` and `/opt/homebrew/opt/ffmpeg-full/bin/ffprobe`. Expected: both inspection tools and the `subtitles` filter resolve before the paid task is submitted.
 
-- [ ] **Step 2: Read the API Key without persisting or echoing it**
+- [x] **Step 2: Read the API Key without persisting or echoing it**
 
 Start an interactive shell command with:
 
@@ -99,7 +99,7 @@ stty echo
 
 Keep the value only in that process. Do not place it in `.env`, command arguments, JSON files, or logs.
 
-- [ ] **Step 3: Upload the keyframe**
+- [x] **Step 3: Upload the keyframe**
 
 Within the same shell process, call:
 
@@ -113,7 +113,7 @@ test -n "$FILE_NAME"
 
 Expected: exit 0 and a non-empty RunningHub `fileName`. Print only `upload: ok`, never the request or key.
 
-- [ ] **Step 4: Submit exactly one image-to-video task**
+- [x] **Step 4: Submit exactly one image-to-video task**
 
 Build the request in memory with `jq -n` and submit it to `/task/openapi/ai-app/run`. Use this prompt verbatim for the first attempt:
 
@@ -147,7 +147,7 @@ test -n "$TASK_ID"
 
 Expected: `.code == 0` and a non-empty `.data.taskId`. Print only the task ID and task status.
 
-- [ ] **Step 5: Poll the V2 query endpoint**
+- [x] **Step 5: Poll the V2 query endpoint**
 
 Every 10 seconds call:
 
@@ -160,7 +160,7 @@ curl -sS 'https://www.runninghub.cn/openapi/v2/query' \
 
 Stop on `SUCCESS` or `FAILED`, and stop after 20 minutes with the task ID preserved. Do not submit another task merely because the first is still queued or running.
 
-- [ ] **Step 6: Download the first successful MP4**
+- [x] **Step 6: Download the first successful MP4**
 
 Read `.results[0].url` from the successful query and download it to:
 
@@ -170,7 +170,7 @@ curl -fL "$RESULT_URL" -o '刷到你了/assets/video-tests/W001/W001_ltx_raw_v1.
 
 Expected: curl exit 0 and a non-empty MP4 file.
 
-- [ ] **Step 7: Validate before deciding on any retry**
+- [x] **Step 7: Validate before deciding on any retry**
 
 Extract duration, dimensions, codec, frame rate, and audio presence with `ffprobe`. Visually inspect representative frames. A second paid task is permitted only for persistent subject deformation, near-zero motion, or a result unrelated to the wedding accident; otherwise continue to local packaging.
 
@@ -185,11 +185,11 @@ Extract duration, dimensions, codec, frame rate, and audio presence with `ffprob
 - Consumes: `W001_ltx_raw_v1.mp4`.
 - Produces: one captioned H.264/AAC MP4 and one JPEG thumbnail.
 
-- [ ] **Step 1: Confirm FFmpeg remains available**
+- [x] **Step 1: Confirm FFmpeg remains available**
 
-Run `command -v ffmpeg && command -v ffprobe`. Expected: both executables resolve from Task 2.
+Run `/opt/homebrew/opt/ffmpeg-full/bin/ffmpeg -hide_banner -filters | grep subtitles` and `/opt/homebrew/opt/ffmpeg-full/bin/ffprobe -version`. Expected: the subtitle filter and inspection executable resolve from Task 2.
 
-- [ ] **Step 2: Create deterministic ASS captions**
+- [x] **Step 2: Create deterministic ASS captions**
 
 Create `W001_captions.ass` with `Hiragino Sans GB`, white bold text, black outline, bottom-center placement, and these events adjusted only if the raw clip is shorter than eight seconds:
 
@@ -199,12 +199,12 @@ Create `W001_captions.ass` with `Hiragino Sans GB`, white bold text, black outli
 0:00:05.00–0:00:08.00  这么高，谁够得到？
 ```
 
-- [ ] **Step 3: Encode the browser-ready MP4**
+- [x] **Step 3: Encode the browser-ready MP4**
 
 Run from the W001 asset directory:
 
 ```bash
-ffmpeg -y -i W001_ltx_raw_v1.mp4 \
+/opt/homebrew/opt/ffmpeg-full/bin/ffmpeg -y -i W001_ltx_raw_v1.mp4 \
   -vf "subtitles=W001_captions.ass:fontsdir=/System/Library/Fonts" \
   -c:v libx264 -crf 20 -preset medium -pix_fmt yuv420p \
   -c:a aac -b:a 160k -movflags +faststart W001_game_cut_v1.mp4
@@ -212,22 +212,22 @@ ffmpeg -y -i W001_ltx_raw_v1.mp4 \
 
 If the raw file has no audio stream, replace the audio flags with `-an`; do not synthesize unrelated audio merely to fill the track.
 
-- [ ] **Step 4: Extract the thumbnail**
+- [x] **Step 4: Extract the thumbnail**
 
 Run:
 
 ```bash
-ffmpeg -y -ss 0.5 -i W001_game_cut_v1.mp4 -frames:v 1 -q:v 2 W001_thumbnail_v1.jpg
+/opt/homebrew/opt/ffmpeg-full/bin/ffmpeg -y -ss 0.5 -i W001_game_cut_v1.mp4 -frames:v 1 -q:v 2 W001_thumbnail_v1.jpg
 ```
 
 Expected: a portrait JPEG showing both the bride and the unstable truss.
 
-- [ ] **Step 5: Validate the final assets**
+- [x] **Step 5: Validate the final assets**
 
 Run:
 
 ```bash
-ffprobe -v error -show_entries format=duration:stream=codec_name,width,height,pix_fmt -of json W001_game_cut_v1.mp4
+/opt/homebrew/opt/ffmpeg-full/bin/ffprobe -v error -show_entries format=duration:stream=codec_name,width,height,pix_fmt -of json W001_game_cut_v1.mp4
 file W001_keyframe_v1.png W001_ltx_raw_v1.mp4 W001_game_cut_v1.mp4 W001_thumbnail_v1.jpg
 ```
 
@@ -242,11 +242,11 @@ Expected: duration below 15 seconds, portrait dimensions, H.264 video, `yuv420p`
 - Consumes: approved prompts, task ID, API response status, ffprobe output, and visual review findings.
 - Produces: a credential-free record sufficient to reproduce or critique the test.
 
-- [ ] **Step 1: Write generation notes**
+- [x] **Step 1: Write generation notes**
 
 Record the exact image prompt and video prompt, RunningHub app ID, task ID, submission count, generated duration and dimensions, packaging command, and a short pass/fail note for each acceptance criterion. Never include the API Key, authorization header, signed upload URL, or signed result URL.
 
-- [ ] **Step 2: Scan for leaked credentials**
+- [x] **Step 2: Scan for leaked credentials**
 
 Run:
 
@@ -257,11 +257,11 @@ test -z "$RUNNINGHUB_API_KEY" || ! rg -F "$RUNNINGHUB_API_KEY" '刷到你了/ass
 
 Expected: no matches. Also verify `git diff --check` exits 0.
 
-- [ ] **Step 3: Visually review the final video and thumbnail**
+- [x] **Step 3: Visually review the final video and thumbnail**
 
 Extract a contact sheet or representative frames and inspect them. Confirm first-second accident readability, five-second story comprehension, non-graphic handling, stable identity, useful motion, correct captions, and absence of logos or watermarks.
 
-- [ ] **Step 4: Commit the completed test assets**
+- [x] **Step 4: Commit the completed test assets**
 
 ```bash
 git add '刷到你了/assets/video-tests/W001' 'docs/superpowers/plans/2026-07-18-w001-runninghub-video-test.md'

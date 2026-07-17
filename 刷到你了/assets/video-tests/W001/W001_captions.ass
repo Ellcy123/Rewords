@@ -1,0 +1,17 @@
+[Script Info]
+Title: W001 婚礼灯架事故
+ScriptType: v4.00+
+PlayResX: 832
+PlayResY: 1536
+ScaledBorderAndShadow: yes
+WrapStyle: 0
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Main,Hiragino Sans GB,52,&H00FFFFFF,&H000000FF,&HCC000000,&H66000000,-1,0,0,0,100,100,0,0,1,4,1,2,52,52,150,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.00,0:00:02.20,Main,,0,0,0,,婚礼开始第 7 秒，新娘死亡
+Dialogue: 0,0:00:02.20,0:00:05.00,Main,,0,0,0,,婚礼未完成
+Dialogue: 0,0:00:05.00,0:00:08.00,Main,,0,0,0,,这么高，谁够得到？
