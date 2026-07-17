@@ -1,0 +1,72 @@
+<style>
+  .content-grid { display:grid; grid-template-columns:repeat(3,minmax(230px,1fr)); gap:22px; margin-top:24px; }
+  .content-card { cursor:pointer; border:2px solid transparent; border-radius:22px; padding:15px; background:rgba(255,255,255,.035); transition:.2s ease; }
+  .content-card:hover { transform:translateY(-3px); background:rgba(255,255,255,.06); }
+  .content-card.selected { border-color:#ff2f64; box-shadow:0 0 0 4px rgba(255,47,100,.12); }
+  .triptych { display:grid; grid-template-columns:repeat(3,1fr); gap:5px; height:290px; padding:9px; border-radius:18px; background:#09090b; overflow:hidden; }
+  .frame { position:relative; overflow:hidden; border-radius:10px; color:#fff; }
+  .frame:after { content:""; position:absolute; inset:0; background:linear-gradient(transparent 50%,rgba(0,0,0,.78)); }
+  .tag { position:absolute; z-index:3; left:7px; bottom:8px; right:5px; font-size:9px; font-weight:800; line-height:1.3; text-shadow:0 1px 4px #000; }
+  .person { position:absolute; left:50%; top:29%; width:52%; height:50%; transform:translateX(-50%); border-radius:45% 45% 12% 12%; }
+  .head { position:absolute; z-index:2; left:50%; top:18%; width:36px; height:43px; transform:translateX(-50%); border-radius:45%; background:#e9bb9d; }
+  .wedding { background:linear-gradient(145deg,#f6d8e6,#8c6880 55%,#2e2432); }
+  .wedding .person { background:linear-gradient(#eee 0 18%,#fff 19%); }
+  .palace { background:linear-gradient(145deg,#b74337,#4c1520 58%,#160c17); }
+  .palace .person { background:linear-gradient(#c69a37 0 14%,#972c3d 15%); width:62%; }
+  .lab { background:linear-gradient(145deg,#95b9cb,#395c6b 58%,#17262c); }
+  .lab .person { background:linear-gradient(#fff 0 18%,#568597 19%); }
+  .live .frame { filter:contrast(1.06) saturate(.92); }
+  .live .frame:before { content:""; position:absolute; z-index:3; inset:0; opacity:.13; background:repeating-linear-gradient(0deg,transparent 0 2px,#fff 3px 3px); }
+  .live .head { box-shadow:inset -9px -4px 12px rgba(80,25,30,.16); }
+  .illustrated .frame { border:2px solid rgba(255,255,255,.4); filter:saturate(1.22); }
+  .illustrated .head { border:2px solid #261a1c; box-shadow:4px 4px 0 rgba(20,12,20,.24); }
+  .illustrated .person { border:2px solid #261a1c; box-shadow:5px 5px 0 rgba(20,12,20,.22); }
+  .mixed .wedding { filter:contrast(1.06) saturate(.92); }
+  .mixed .palace { filter:saturate(1.3) contrast(1.08); border:2px solid rgba(255,222,150,.35); }
+  .mixed .palace .head,.mixed .palace .person { border:1.5px solid #321820; }
+  .mixed .lab:before { content:"REC"; position:absolute; z-index:4; top:7px; left:7px; padding:3px 5px; border-radius:4px; background:#e9364b; font-size:8px; font-weight:900; }
+  .card-title { margin:14px 2px 4px; font-size:16px; font-weight:850; }
+  .card-note { margin:0 2px; min-height:62px; font-size:12px; line-height:1.5; opacity:.72; }
+  .badge { display:inline-block; margin-top:9px; padding:5px 8px; border-radius:8px; color:#fff; background:rgba(255,47,100,.18); font-size:10px; font-weight:750; }
+  @media (max-width:900px) { .content-grid { grid-template-columns:1fr; } .content-card { max-width:390px; margin:auto; width:100%; } }
+</style>
+
+<h2>视频内容用什么美术语言？</h2>
+<p class="subtitle">UI 已确定高度还原短视频平台。现在选择视频画面本身的表现方式，它会直接影响可信度、成本和角色一致性。</p>
+
+<div class="content-grid">
+  <div class="content-card live" data-choice="a-ai-live-action" onclick="toggleSelect(this)">
+    <div class="triptych">
+      <div class="frame wedding"><div class="head"></div><div class="person"></div><div class="tag">婚礼事故<br>真人短剧感</div></div>
+      <div class="frame palace"><div class="head"></div><div class="person"></div><div class="tag">王妃翻墙<br>竖屏古偶感</div></div>
+      <div class="frame lab"><div class="head"></div><div class="person"></div><div class="tag">知识测评<br>真人 UGC</div></div>
+    </div>
+    <div class="card-title">A · 全部拟真人</div>
+    <p class="card-note">最接近真的短视频平台，沉浸感最高；但人物跨节点一致、动作连续性和批量制作最难。</p>
+    <span class="badge">真实感最高</span>
+  </div>
+
+  <div class="content-card illustrated" data-choice="b-motion-comic" onclick="toggleSelect(this)">
+    <div class="triptych">
+      <div class="frame wedding"><div class="head"></div><div class="person"></div><div class="tag">婚礼事故<br>动态漫画</div></div>
+      <div class="frame palace"><div class="head"></div><div class="person"></div><div class="tag">王妃翻墙<br>动态漫画</div></div>
+      <div class="frame lab"><div class="head"></div><div class="person"></div><div class="tag">知识测评<br>动态漫画</div></div>
+    </div>
+    <div class="card-title">B · 统一动态漫画</div>
+    <p class="card-note">角色稳定、迭代最快，也方便夸张笑点；但三棵内容树看起来像同一部作品，削弱“刷到陌生频道”的感觉。</p>
+    <span class="badge">成本最可控</span>
+  </div>
+
+  <div class="content-card mixed" data-choice="c-channel-hybrid" onclick="toggleSelect(this)">
+    <div class="triptych">
+      <div class="frame wedding"><div class="head"></div><div class="person"></div><div class="tag">婚礼短剧<br>精致拟真人</div></div>
+      <div class="frame palace"><div class="head"></div><div class="person"></div><div class="tag">古装短剧<br>夸张短剧感</div></div>
+      <div class="frame lab"><div class="head"></div><div class="person"></div><div class="tag">知识博主<br>低成本 UGC</div></div>
+    </div>
+    <div class="card-title">C · 分频道混合</div>
+    <p class="card-note">每个账号故意采用不同画质、镜头和包装，像真实推荐流；通过统一 UI 和关键角色保持整体一致。</p>
+    <span class="badge">推荐 · 最符合玩法</span>
+  </div>
+</div>
+
+<p style="margin-top:22px;font-size:13px;opacity:.66">我的推荐是 C。婚礼线负责情绪可信，古装线负责硬广荒诞，知识线故意保留低成本自媒体质感。</p>

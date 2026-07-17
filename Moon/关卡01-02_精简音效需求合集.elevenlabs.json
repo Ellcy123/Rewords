@@ -1,0 +1,113 @@
+{
+  "project": "Moon",
+  "level": "关卡01-02",
+  "style": "whimsical toy theater puzzle game, wooden props, hanging ladder, moon scenery prop, curtain, wall clock, paper, fabric, rope, clockwork, gentle slapstick comedy",
+  "notes": "合集清单用于一次性生成两关音效并刷新完整 manifest。分关需求仍以关卡01_精简音效需求.elevenlabs.json 与 关卡02_精简音效需求.elevenlabs.json 为准。",
+  "cues": [
+    {
+      "id": "door_knock",
+      "level": "level01",
+      "priority": "core",
+      "duration_seconds": 0.9,
+      "purpose_cn": "开场提示：小演员在门外只敲一下木门，提醒玩家先处理门。",
+      "prompt": "One isolated wooden door thud only. A single medium-volume impact on a solid wooden theater door, then silence. No rhythm, no tapping, no second hit, no repeated knocks, no footsteps, no music."
+    },
+    {
+      "id": "door_wrong_hit",
+      "level": "level01",
+      "priority": "core",
+      "duration_seconds": 1.3,
+      "purpose_cn": "门错误反馈：木门磕碰/拍到小演员，不强调旋转声。",
+      "prompt": "A solid wooden stage door gives a short awkward bump and bonks a small puppet, one or two dry wooden clunks with soft harmless slapstick impact, no spinning whoosh, no pain, no gore"
+    },
+    {
+      "id": "door_open",
+      "level": "level01",
+      "priority": "core",
+      "duration_seconds": 1.1,
+      "purpose_cn": "门锚点改到左侧后的正确反馈：木门正常打开。",
+      "prompt": "A solid wooden theater door opens correctly on a side hinge, warm wood creak, subtle hinge movement, tiny latch click at the end, satisfying but modest, close perspective, no music"
+    },
+    {
+      "id": "ladder_wobble_fail",
+      "level": "level01",
+      "priority": "core",
+      "duration_seconds": 1.4,
+      "purpose_cn": "梯子默认中点锚点错误反馈：下压、翘起、回弹，说明中点不是可用铰链。",
+      "prompt": "A suspended wooden ladder held by a center rope presses down, wobbles, and springs back, rope creak, small wood rattles, comic failed puzzle action, gentle and readable"
+    },
+    {
+      "id": "ladder_wrong_hit",
+      "level": "level01",
+      "priority": "core",
+      "duration_seconds": 1.6,
+      "purpose_cn": "梯子左端错误锚点反馈：梯子扫到小演员，小演员落进纸箱。",
+      "prompt": "A wooden ladder swings in a broad arc on a rope pivot, airy whoosh, soft slapstick bonk on a puppet, then a funny tumble into empty cardboard boxes, harmless toy theater comedy"
+    },
+    {
+      "id": "ladder_land",
+      "level": "level01",
+      "priority": "core",
+      "duration_seconds": 1.1,
+      "purpose_cn": "梯子右端正确锚点反馈：梯子落成可爬斜梯。",
+      "prompt": "A hanging wooden ladder rotates into the correct ramp position and lands on a small stage floor, satisfying soft thunk, rope settling, tiny wood creak, warm puzzle success"
+    },
+    {
+      "id": "moon_wobble",
+      "level": "level02",
+      "priority": "core",
+      "duration_seconds": 1.7,
+      "purpose_cn": "月亮布景反馈：原地晃、撞错方向、正确偏到旁边都可复用。",
+      "prompt": "A big lightweight moon scenery prop with a weighted base wobbles like a roly-poly toy, soft fabric scrape, rounded wooden base sway, tiny prop rattles, playful backstage comedy"
+    },
+    {
+      "id": "clock_tick_loop",
+      "level": "level02",
+      "priority": "core",
+      "duration_seconds": 4.0,
+      "loop": true,
+      "purpose_cn": "挂钟环境循环音，强调本关的钟表机关存在感。",
+      "prompt": "A small wall clock ticking in a quiet toy theater backstage, delicate mechanical tick tock, warm wooden room tone, subtle and seamless loop, no melody"
+    },
+    {
+      "id": "clock_pivot_turn",
+      "level": "level02",
+      "priority": "core",
+      "duration_seconds": 1.2,
+      "purpose_cn": "钟面锚点调整后，挂钟支架转向睡着演员。",
+      "prompt": "A large wall clock on a small bracket pivots toward a sleeping puppet, soft metal hinge, wooden support creak, gentle clockwork shift, precise and readable"
+    },
+    {
+      "id": "minute_hand_jam",
+      "level": "level02",
+      "priority": "core",
+      "duration_seconds": 0.9,
+      "purpose_cn": "分针锚点错误时卡住/轻抖，提示需要先回到钟表圆心。",
+      "prompt": "A long clock minute hand tries to move from the wrong pivot and jams, tiny mechanical click clack, soft rattle, failed action, toy clock close-up, no music"
+    },
+    {
+      "id": "wake_slap_switch",
+      "level": "level02",
+      "priority": "core",
+      "duration_seconds": 1.4,
+      "purpose_cn": "分针以下端为轴拍醒演员，同时演员弹起、开关盒弹起启动。",
+      "prompt": "A long clock hand snaps like a tiny paddle and bonks a sleeping puppet on the hat, bright harmless slapstick pop, puppet springs awake with cloth rustle, spring-loaded switch box clicks on"
+    },
+    {
+      "id": "curtain_bunch_fail",
+      "level": "level02",
+      "priority": "core",
+      "duration_seconds": 1.4,
+      "purpose_cn": "幕布默认中间锚点错误：被拉成一团，堵住入口。",
+      "prompt": "A theater curtain pulled from the wrong middle anchor bunches into a soft cloth knot, fabric whoomp, rope strain, pulley squeak, comic blockage, gentle toy theater sound"
+    },
+    {
+      "id": "curtain_slide_open",
+      "level": "level02",
+      "priority": "core",
+      "duration_seconds": 1.7,
+      "purpose_cn": "幕布左侧正确锚点：沿轨道顺利拉开，露出入口。",
+      "prompt": "A theater curtain slides open correctly along a rail, smooth fabric swish, soft pulley glide, warm reveal, satisfying puzzle success, small stage ambience"
+    }
+  ]
+}

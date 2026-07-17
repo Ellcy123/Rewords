@@ -1,0 +1,185 @@
+{
+  "project": "Wrong Pivot",
+  "source_spec": "/Users/m4/.codex/skills/elevenlabs-sfx/references/wrong-pivot-level01-02-sfx.json",
+  "generated_at": "2026-07-05T04:27:37.696044+00:00",
+  "model_id": "eleven_text_to_sound_v2",
+  "default_output_format": "mp3_44100_128",
+  "cues": [
+    {
+      "id": "anchor_snap",
+      "level": "global",
+      "priority": "core",
+      "file": "global__anchor_snap.mp3",
+      "path": "WrongPivot/audio/sfx/global__anchor_snap.mp3",
+      "duration_seconds": 0.7,
+      "loop": false,
+      "status": "existing",
+      "prompt": "A tiny magical UI snap for selecting a glowing anchor point, soft glass click with a warm toy theater sparkle, short and clean, no melody"
+    },
+    {
+      "id": "wrong_soft_clank",
+      "level": "global",
+      "priority": "core",
+      "file": "global__wrong_soft_clank.mp3",
+      "path": "WrongPivot/audio/sfx/global__wrong_soft_clank.mp3",
+      "duration_seconds": 0.9,
+      "loop": false,
+      "status": "generated",
+      "prompt": "A gentle wrong-answer clank from a wooden stage mechanism, soft springy rebound, comic not harsh, small toy theater prop"
+    },
+    {
+      "id": "success_chime",
+      "level": "global",
+      "priority": "core",
+      "file": "global__success_chime.mp3",
+      "path": "WrongPivot/audio/sfx/global__success_chime.mp3",
+      "duration_seconds": 1.1,
+      "loop": false,
+      "status": "generated",
+      "prompt": "A subtle success cue for a puzzle step, tiny music box chime with soft wooden resonance, warm theatrical, not flashy"
+    },
+    {
+      "id": "door_knock",
+      "level": "level01",
+      "priority": "core",
+      "file": "level01__door_knock.mp3",
+      "path": "WrongPivot/audio/sfx/level01__door_knock.mp3",
+      "duration_seconds": 1.2,
+      "loop": false,
+      "status": "generated",
+      "prompt": "Two gentle knocks on a small wooden theater door, hollow toy prop sound, comic timing, clean short transient"
+    },
+    {
+      "id": "door_spin_whoosh",
+      "level": "level01",
+      "priority": "core",
+      "file": "level01__door_spin_whoosh.mp3",
+      "path": "WrongPivot/audio/sfx/level01__door_spin_whoosh.mp3",
+      "duration_seconds": 1.0,
+      "loop": false,
+      "status": "generated",
+      "prompt": "A light wooden door spinning around its center like a toy rotating door, quick airy whoosh with tiny hinge rattles, slapstick setup"
+    },
+    {
+      "id": "slap_comedy_double",
+      "level": "level01",
+      "priority": "core",
+      "file": "level01__slap_comedy_double.mp3",
+      "path": "WrongPivot/audio/sfx/level01__slap_comedy_double.mp3",
+      "duration_seconds": 0.9,
+      "loop": false,
+      "status": "generated",
+      "prompt": "Two quick soft comedy slaps from a stage prop hitting a puppet, pap pap, harmless slapstick, bright and cartoonish, no pain"
+    },
+    {
+      "id": "door_open_creak",
+      "level": "level01",
+      "priority": "core",
+      "file": "level01__door_open_creak.mp3",
+      "path": "WrongPivot/audio/sfx/level01__door_open_creak.mp3",
+      "duration_seconds": 1.1,
+      "loop": false,
+      "status": "generated",
+      "prompt": "A small wooden theater door opening correctly on a side hinge, soft creak, gentle click at the end, satisfying"
+    },
+    {
+      "id": "ladder_wobble",
+      "level": "level01",
+      "priority": "core",
+      "file": "level01__ladder_wobble.mp3",
+      "path": "WrongPivot/audio/sfx/level01__ladder_wobble.mp3",
+      "duration_seconds": 1.3,
+      "loop": false,
+      "status": "generated",
+      "prompt": "A suspended wooden ladder pressed down at the middle and wobbling back, rope creak, wooden rattle, comic failed puzzle action"
+    },
+    {
+      "id": "ladder_land_thunk",
+      "level": "level01",
+      "priority": "core",
+      "file": "level01__ladder_land_thunk.mp3",
+      "path": "WrongPivot/audio/sfx/level01__ladder_land_thunk.mp3",
+      "duration_seconds": 1.0,
+      "loop": false,
+      "status": "generated",
+      "prompt": "A wooden ladder rotates into the correct ramp position and lands on the floor, satisfying soft thunk with rope settling"
+    },
+    {
+      "id": "moon_wobble",
+      "level": "level02",
+      "priority": "core",
+      "file": "level02__moon_wobble.mp3",
+      "path": "WrongPivot/audio/sfx/level02__moon_wobble.mp3",
+      "duration_seconds": 1.6,
+      "loop": false,
+      "status": "generated",
+      "prompt": "A big lightweight moon stage prop with a weighted base wobbles like a roly-poly toy, soft wood, fabric, and low rounded sway"
+    },
+    {
+      "id": "clock_tick_loop",
+      "level": "level02",
+      "priority": "core",
+      "file": "level02__clock_tick_loop.mp3",
+      "path": "WrongPivot/audio/sfx/level02__clock_tick_loop.mp3",
+      "duration_seconds": 4.0,
+      "loop": true,
+      "status": "generated",
+      "prompt": "A small wall clock ticking in a quiet toy theater backstage, delicate mechanical tick tock, warm wood room tone, seamless loop"
+    },
+    {
+      "id": "minute_hand_jam",
+      "level": "level02",
+      "priority": "core",
+      "file": "level02__minute_hand_jam.mp3",
+      "path": "WrongPivot/audio/sfx/level02__minute_hand_jam.mp3",
+      "duration_seconds": 0.8,
+      "loop": false,
+      "status": "generated",
+      "prompt": "A long clock minute hand tries to move from the wrong pivot and jams, tiny mechanical kadak click, soft rattle, failed action"
+    },
+    {
+      "id": "wake_slap",
+      "level": "level02",
+      "priority": "core",
+      "file": "level02__wake_slap.mp3",
+      "path": "WrongPivot/audio/sfx/level02__wake_slap.mp3",
+      "duration_seconds": 0.9,
+      "loop": false,
+      "status": "generated",
+      "prompt": "A long clock hand snaps like a tiny paddle and bonks a sleeping puppet on the hat, bright harmless slapstick pop, very funny, no pain"
+    },
+    {
+      "id": "switch_release_click",
+      "level": "level02",
+      "priority": "core",
+      "file": "level02__switch_release_click.mp3",
+      "path": "WrongPivot/audio/sfx/level02__switch_release_click.mp3",
+      "duration_seconds": 0.8,
+      "loop": false,
+      "status": "generated",
+      "prompt": "A backstage switch box releases and clicks on, spring-loaded lever pop, small mechanical click, toy theater prop"
+    },
+    {
+      "id": "curtain_bunch_soft",
+      "level": "level02",
+      "priority": "core",
+      "file": "level02__curtain_bunch_soft.mp3",
+      "path": "WrongPivot/audio/sfx/level02__curtain_bunch_soft.mp3",
+      "duration_seconds": 1.4,
+      "loop": false,
+      "status": "generated",
+      "prompt": "A stage curtain pulled from the wrong middle anchor bunches into a soft cloth knot, fabric whoomp, rope strain, comic blockage"
+    },
+    {
+      "id": "curtain_slide_open",
+      "level": "level02",
+      "priority": "core",
+      "file": "level02__curtain_slide_open.mp3",
+      "path": "WrongPivot/audio/sfx/level02__curtain_slide_open.mp3",
+      "duration_seconds": 1.7,
+      "loop": false,
+      "status": "generated",
+      "prompt": "A theater curtain slides open correctly along a rail, smooth fabric swish, pulley glide, warm reveal, satisfying puzzle success"
+    }
+  ]
+}

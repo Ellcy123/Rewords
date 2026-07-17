@@ -1,0 +1,65 @@
+{
+  "project": "Moon",
+  "level": "关卡02-月亮幕布与挂钟",
+  "style": "whimsical toy theater backstage puzzle game, moon scenery prop, curtain, wall clock, paper, fabric, clockwork, gentle slapstick comedy",
+  "notes": "精简版：月亮的默认/错误/正确尽量共用一个月亮晃动音效；叫醒演员与开关启动合并成一个重点音效；幕布保留失败和成功两种读法。",
+  "cues": [
+    {
+      "id": "moon_wobble",
+      "level": "level02",
+      "priority": "core",
+      "duration_seconds": 1.7,
+      "purpose_cn": "月亮布景反馈：原地晃、撞错方向、正确偏到旁边都可复用。",
+      "prompt": "A big lightweight moon scenery prop with a weighted base wobbles like a roly-poly toy, soft fabric scrape, rounded wooden base sway, tiny prop rattles, playful backstage comedy"
+    },
+    {
+      "id": "clock_tick_loop",
+      "level": "level02",
+      "priority": "core",
+      "duration_seconds": 4.0,
+      "loop": true,
+      "purpose_cn": "挂钟环境循环音，强调本关的钟表机关存在感。",
+      "prompt": "A small wall clock ticking in a quiet toy theater backstage, delicate mechanical tick tock, warm wooden room tone, subtle and seamless loop, no melody"
+    },
+    {
+      "id": "clock_pivot_turn",
+      "level": "level02",
+      "priority": "core",
+      "duration_seconds": 1.2,
+      "purpose_cn": "钟面锚点调整后，挂钟支架转向睡着演员。",
+      "prompt": "A large wall clock on a small bracket pivots toward a sleeping puppet, soft metal hinge, wooden support creak, gentle clockwork shift, precise and readable"
+    },
+    {
+      "id": "minute_hand_jam",
+      "level": "level02",
+      "priority": "core",
+      "duration_seconds": 0.9,
+      "purpose_cn": "分针锚点错误时卡住/轻抖，提示需要先回到钟表圆心。",
+      "prompt": "A long clock minute hand tries to move from the wrong pivot and jams, tiny mechanical click clack, soft rattle, failed action, toy clock close-up, no music"
+    },
+    {
+      "id": "wake_slap_switch",
+      "level": "level02",
+      "priority": "core",
+      "duration_seconds": 1.4,
+      "purpose_cn": "分针以下端为轴拍醒演员，同时演员弹起、开关盒弹起启动。",
+      "prompt": "A long clock hand snaps like a tiny paddle and bonks a sleeping puppet on the hat, bright harmless slapstick pop, puppet springs awake with cloth rustle, spring-loaded switch box clicks on"
+    },
+    {
+      "id": "curtain_bunch_fail",
+      "level": "level02",
+      "priority": "core",
+      "duration_seconds": 1.4,
+      "purpose_cn": "幕布默认中间锚点错误：被拉成一团，堵住入口。",
+      "prompt": "A theater curtain pulled from the wrong middle anchor bunches into a soft cloth knot, fabric whoomp, rope strain, pulley squeak, comic blockage, gentle toy theater sound"
+    },
+    {
+      "id": "curtain_slide_open",
+      "level": "level02",
+      "priority": "core",
+      "duration_seconds": 1.7,
+      "purpose_cn": "幕布左侧正确锚点：沿轨道顺利拉开，露出入口。",
+      "prompt": "A theater curtain slides open correctly along a rail, smooth fabric swish, soft pulley glide, warm reveal, satisfying puzzle success, small stage ambience"
+    }
+  ]
+}

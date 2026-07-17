@@ -1,0 +1,56 @@
+{
+  "project": "Moon",
+  "level": "关卡01-开演前的门与梯子",
+  "style": "whimsical toy theater puzzle game, small puppet stage, wooden door, hanging ladder, rope, cardboard, gentle slapstick comedy",
+  "notes": "精简版：只保留能支撑教学、错误反馈、正确反馈的核心音效。小演员的反应声尽量合并进机关音效里，不单独拆太多文件。",
+  "cues": [
+    {
+      "id": "door_knock",
+      "level": "level01",
+      "priority": "core",
+      "duration_seconds": 0.9,
+      "purpose_cn": "开场提示：小演员在门外只敲一下木门，提醒玩家先处理门。",
+      "prompt": "One isolated wooden door thud only. A single medium-volume impact on a solid wooden theater door, then silence. No rhythm, no tapping, no second hit, no repeated knocks, no footsteps, no music."
+    },
+    {
+      "id": "door_wrong_hit",
+      "level": "level01",
+      "priority": "core",
+      "duration_seconds": 1.3,
+      "purpose_cn": "门错误反馈：木门磕碰/拍到小演员，不强调旋转声。",
+      "prompt": "A solid wooden stage door gives a short awkward bump and bonks a small puppet, one or two dry wooden clunks with soft harmless slapstick impact, no spinning whoosh, no pain, no gore"
+    },
+    {
+      "id": "door_open",
+      "level": "level01",
+      "priority": "core",
+      "duration_seconds": 1.1,
+      "purpose_cn": "门锚点改到左侧后的正确反馈：木门正常打开。",
+      "prompt": "A solid wooden theater door opens correctly on a side hinge, warm wood creak, subtle hinge movement, tiny latch click at the end, satisfying but modest, close perspective, no music"
+    },
+    {
+      "id": "ladder_wobble_fail",
+      "level": "level01",
+      "priority": "core",
+      "duration_seconds": 1.4,
+      "purpose_cn": "梯子默认中点锚点错误反馈：下压、翘起、回弹，说明中点不是可用铰链。",
+      "prompt": "A suspended wooden ladder held by a center rope presses down, wobbles, and springs back, rope creak, small wood rattles, comic failed puzzle action, gentle and readable"
+    },
+    {
+      "id": "ladder_wrong_hit",
+      "level": "level01",
+      "priority": "core",
+      "duration_seconds": 1.6,
+      "purpose_cn": "梯子左端错误锚点反馈：梯子扫到小演员，小演员落进纸箱。",
+      "prompt": "A wooden ladder swings in a broad arc on a rope pivot, airy whoosh, soft slapstick bonk on a puppet, then a funny tumble into empty cardboard boxes, harmless toy theater comedy"
+    },
+    {
+      "id": "ladder_land",
+      "level": "level01",
+      "priority": "core",
+      "duration_seconds": 1.1,
+      "purpose_cn": "梯子右端正确锚点反馈：梯子落成可爬斜梯。",
+      "prompt": "A hanging wooden ladder rotates into the correct ramp position and lands on a small stage floor, satisfying soft thunk, rope settling, tiny wood creak, warm puzzle success"
+    }
+  ]
+}

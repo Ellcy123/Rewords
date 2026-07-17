@@ -1,0 +1,197 @@
+{
+  "project": "Moon",
+  "source_spec": "Moon/关卡01_精简音效需求.elevenlabs.json, Moon/关卡02_精简音效需求.elevenlabs.json, Moon/关卡03_精简音效需求.elevenlabs.json",
+  "generated_at": "2026-07-05T05:50:00+00:00",
+  "notes": "door_knock is a local synthesized WAV to guarantee one audible knock. Other cues are ElevenLabs generated MP3.",
+  "cues": [
+    {
+      "id": "door_knock",
+      "level": "level01",
+      "file": "level01__door_knock.wav",
+      "path": "Moon/audio/sfx/level01__door_knock.wav",
+      "duration_seconds": 0.72,
+      "loop": false,
+      "status": "local_synth"
+    },
+    {
+      "id": "door_wrong_hit",
+      "level": "level01",
+      "file": "level01__door_wrong_hit.mp3",
+      "path": "Moon/audio/sfx/level01__door_wrong_hit.mp3",
+      "duration_seconds": 1.3,
+      "loop": false,
+      "status": "generated"
+    },
+    {
+      "id": "door_open",
+      "level": "level01",
+      "file": "level01__door_open.mp3",
+      "path": "Moon/audio/sfx/level01__door_open.mp3",
+      "duration_seconds": 1.1,
+      "loop": false,
+      "status": "generated"
+    },
+    {
+      "id": "ladder_wobble_fail",
+      "level": "level01",
+      "file": "level01__ladder_wobble_fail.mp3",
+      "path": "Moon/audio/sfx/level01__ladder_wobble_fail.mp3",
+      "duration_seconds": 1.4,
+      "loop": false,
+      "status": "generated"
+    },
+    {
+      "id": "ladder_wrong_hit",
+      "level": "level01",
+      "file": "level01__ladder_wrong_hit.mp3",
+      "path": "Moon/audio/sfx/level01__ladder_wrong_hit.mp3",
+      "duration_seconds": 1.6,
+      "loop": false,
+      "status": "generated"
+    },
+    {
+      "id": "ladder_land",
+      "level": "level01",
+      "file": "level01__ladder_land.mp3",
+      "path": "Moon/audio/sfx/level01__ladder_land.mp3",
+      "duration_seconds": 1.1,
+      "loop": false,
+      "status": "generated"
+    },
+    {
+      "id": "moon_wobble",
+      "level": "level02",
+      "file": "level02__moon_wobble.mp3",
+      "path": "Moon/audio/sfx/level02__moon_wobble.mp3",
+      "duration_seconds": 1.7,
+      "loop": false,
+      "status": "generated"
+    },
+    {
+      "id": "clock_tick_loop",
+      "level": "level02",
+      "file": "level02__clock_tick_loop.mp3",
+      "path": "Moon/audio/sfx/level02__clock_tick_loop.mp3",
+      "duration_seconds": 4.0,
+      "loop": true,
+      "status": "generated"
+    },
+    {
+      "id": "clock_pivot_turn",
+      "level": "level02",
+      "file": "level02__clock_pivot_turn.mp3",
+      "path": "Moon/audio/sfx/level02__clock_pivot_turn.mp3",
+      "duration_seconds": 1.2,
+      "loop": false,
+      "status": "generated"
+    },
+    {
+      "id": "minute_hand_jam",
+      "level": "level02",
+      "file": "level02__minute_hand_jam.mp3",
+      "path": "Moon/audio/sfx/level02__minute_hand_jam.mp3",
+      "duration_seconds": 0.9,
+      "loop": false,
+      "status": "generated"
+    },
+    {
+      "id": "wake_slap_switch",
+      "level": "level02",
+      "file": "level02__wake_slap_switch.mp3",
+      "path": "Moon/audio/sfx/level02__wake_slap_switch.mp3",
+      "duration_seconds": 1.4,
+      "loop": false,
+      "status": "generated"
+    },
+    {
+      "id": "curtain_bunch_fail",
+      "level": "level02",
+      "file": "level02__curtain_bunch_fail.mp3",
+      "path": "Moon/audio/sfx/level02__curtain_bunch_fail.mp3",
+      "duration_seconds": 1.4,
+      "loop": false,
+      "status": "generated"
+    },
+    {
+      "id": "curtain_slide_open",
+      "level": "level02",
+      "file": "level02__curtain_slide_open.mp3",
+      "path": "Moon/audio/sfx/level02__curtain_slide_open.mp3",
+      "duration_seconds": 1.7,
+      "loop": false,
+      "status": "generated"
+    },
+    {
+      "id": "triangle_lift_fail",
+      "level": "level03",
+      "file": "level03__triangle_lift_fail.mp3",
+      "path": "Moon/audio/sfx/level03__triangle_lift_fail.mp3",
+      "duration_seconds": 1.1,
+      "loop": false,
+      "status": "generated"
+    },
+    {
+      "id": "triangle_roll_fulcrum",
+      "level": "level03",
+      "file": "level03__triangle_roll_fulcrum.mp3",
+      "path": "Moon/audio/sfx/level03__triangle_roll_fulcrum.mp3",
+      "duration_seconds": 2.0,
+      "loop": false,
+      "status": "generated"
+    },
+    {
+      "id": "tape_retract_jump_fail",
+      "level": "level03",
+      "file": "level03__tape_retract_jump_fail.mp3",
+      "path": "Moon/audio/sfx/level03__tape_retract_jump_fail.mp3",
+      "duration_seconds": 1.3,
+      "loop": false,
+      "status": "generated"
+    },
+    {
+      "id": "tape_slide_onto_plank",
+      "level": "level03",
+      "file": "level03__tape_slide_onto_plank.mp3",
+      "path": "Moon/audio/sfx/level03__tape_slide_onto_plank.mp3",
+      "duration_seconds": 1.6,
+      "loop": false,
+      "status": "generated"
+    },
+    {
+      "id": "sandbag_weak_creak",
+      "level": "level03",
+      "file": "level03__sandbag_weak_creak.mp3",
+      "path": "Moon/audio/sfx/level03__sandbag_weak_creak.mp3",
+      "duration_seconds": 1.3,
+      "loop": false,
+      "status": "generated"
+    },
+    {
+      "id": "sandbag_swing_dirt_fall",
+      "level": "level03",
+      "file": "level03__sandbag_swing_dirt_fall.mp3",
+      "path": "Moon/audio/sfx/level03__sandbag_swing_dirt_fall.mp3",
+      "duration_seconds": 2.2,
+      "loop": false,
+      "status": "generated"
+    },
+    {
+      "id": "seesaw_launch_switch",
+      "level": "level03",
+      "file": "level03__seesaw_launch_switch.mp3",
+      "path": "Moon/audio/sfx/level03__seesaw_launch_switch.mp3",
+      "duration_seconds": 1.5,
+      "loop": false,
+      "status": "generated"
+    },
+    {
+      "id": "tape_rebound_bonk_finale",
+      "level": "level03",
+      "file": "level03__tape_rebound_bonk_finale.mp3",
+      "path": "Moon/audio/sfx/level03__tape_rebound_bonk_finale.mp3",
+      "duration_seconds": 1.8,
+      "loop": false,
+      "status": "generated"
+    }
+  ]
+}

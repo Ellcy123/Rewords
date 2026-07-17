@@ -1,0 +1,155 @@
+{
+  "basePath": "Moon/audio/sfx/",
+  "musicBasePath": "Moon/audio/music/",
+  "bgm": {
+    "level01_bgm": {
+      "level": "level01",
+      "file": "level01__stage_door_taps.mp3",
+      "loop": true,
+      "volume": 0.55,
+      "duration_seconds": 106.8
+    },
+    "level02_bgm": {
+      "level": "level02",
+      "file": "level02__backstage_moon_puzzle.mp3",
+      "loop": true,
+      "volume": 0.55,
+      "duration_seconds": 79.8
+    },
+    "level03_bgm": {
+      "level": "level03",
+      "file": "level03__trapdoor_tinker.mp3",
+      "loop": true,
+      "volume": 0.55,
+      "duration_seconds": 79.992
+    }
+  },
+  "sfx": {
+    "door_knock": {
+      "level": "level01",
+      "file": "level01__door_knock.wav",
+      "loop": false,
+      "volume": 1.0
+    },
+    "door_wrong_hit": {
+      "level": "level01",
+      "file": "level01__door_wrong_hit.mp3",
+      "loop": false,
+      "volume": 1.0
+    },
+    "door_open": {
+      "level": "level01",
+      "file": "level01__door_open.mp3",
+      "loop": false,
+      "volume": 0.9
+    },
+    "ladder_wobble_fail": {
+      "level": "level01",
+      "file": "level01__ladder_wobble_fail.mp3",
+      "loop": false,
+      "volume": 0.95
+    },
+    "ladder_wrong_hit": {
+      "level": "level01",
+      "file": "level01__ladder_wrong_hit.mp3",
+      "loop": false,
+      "volume": 1.0
+    },
+    "ladder_land": {
+      "level": "level01",
+      "file": "level01__ladder_land.mp3",
+      "loop": false,
+      "volume": 0.95
+    },
+    "moon_wobble": {
+      "level": "level02",
+      "file": "level02__moon_wobble.mp3",
+      "loop": false,
+      "volume": 0.95
+    },
+    "clock_tick_loop": {
+      "level": "level02",
+      "file": "level02__clock_tick_loop.mp3",
+      "loop": true,
+      "volume": 0.35
+    },
+    "clock_pivot_turn": {
+      "level": "level02",
+      "file": "level02__clock_pivot_turn.mp3",
+      "loop": false,
+      "volume": 0.85
+    },
+    "minute_hand_jam": {
+      "level": "level02",
+      "file": "level02__minute_hand_jam.mp3",
+      "loop": false,
+      "volume": 0.9
+    },
+    "wake_slap_switch": {
+      "level": "level02",
+      "file": "level02__wake_slap_switch.mp3",
+      "loop": false,
+      "volume": 1.0
+    },
+    "curtain_bunch_fail": {
+      "level": "level02",
+      "file": "level02__curtain_bunch_fail.mp3",
+      "loop": false,
+      "volume": 0.95
+    },
+    "curtain_slide_open": {
+      "level": "level02",
+      "file": "level02__curtain_slide_open.mp3",
+      "loop": false,
+      "volume": 0.95
+    },
+    "triangle_lift_fail": {
+      "level": "level03",
+      "file": "level03__triangle_lift_fail.mp3",
+      "loop": false,
+      "volume": 0.9
+    },
+    "triangle_roll_fulcrum": {
+      "level": "level03",
+      "file": "level03__triangle_roll_fulcrum.mp3",
+      "loop": false,
+      "volume": 0.95
+    },
+    "tape_retract_jump_fail": {
+      "level": "level03",
+      "file": "level03__tape_retract_jump_fail.mp3",
+      "loop": false,
+      "volume": 0.95
+    },
+    "tape_slide_onto_plank": {
+      "level": "level03",
+      "file": "level03__tape_slide_onto_plank.mp3",
+      "loop": false,
+      "volume": 0.95
+    },
+    "sandbag_weak_creak": {
+      "level": "level03",
+      "file": "level03__sandbag_weak_creak.mp3",
+      "loop": false,
+      "volume": 0.9
+    },
+    "sandbag_swing_dirt_fall": {
+      "level": "level03",
+      "file": "level03__sandbag_swing_dirt_fall.mp3",
+      "loop": false,
+      "volume": 1.0
+    },
+    "seesaw_launch_switch": {
+      "level": "level03",
+      "file": "level03__seesaw_launch_switch.mp3",
+      "loop": false,
+      "volume": 1.0
+    },
+    "tape_rebound_bonk_finale": {
+      "level": "level03",
+      "file": "level03__tape_rebound_bonk_finale.mp3",
+      "loop": false,
+      "volume": 1.0
+    }
+  }
+}
