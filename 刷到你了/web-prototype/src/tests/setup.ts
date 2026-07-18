@@ -16,3 +16,15 @@ Object.defineProperty(window, 'matchMedia', {
     dispatchEvent: () => false,
   }),
 })
+
+Object.defineProperty(HTMLMediaElement.prototype, 'play', {
+  configurable: true,
+  writable: true,
+  value: () => Promise.resolve(),
+})
+
+Object.defineProperty(HTMLMediaElement.prototype, 'pause', {
+  configurable: true,
+  writable: true,
+  value: () => undefined,
+})

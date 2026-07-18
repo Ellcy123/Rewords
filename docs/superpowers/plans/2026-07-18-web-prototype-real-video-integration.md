@@ -1,6 +1,6 @@
 # Web Prototype Real Video Integration Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Merge the complete `feature/shuadaonile-web-prototype` history into `main`, integrate W001 and W101 raw live-action videos through typed node media configuration, and open a verified local test URL.
 
@@ -49,11 +49,11 @@
 - Consumes: the preserved feature branch and current main assets.
 - Produces: a main checkout containing both the prototype and source video assets.
 
-- [ ] **Step 1: Remove only the stale worktree registration**
+- [x] **Step 1: Remove only the stale worktree registration**
 
 Run `git worktree prune --verbose`, then `git worktree list --porcelain`. Expected: `/private/tmp/rewords-shuadaonile-web-prototype` no longer appears; the feature branch and commits remain.
 
-- [ ] **Step 2: Merge the prototype history into main**
+- [x] **Step 2: Merge the prototype history into main**
 
 Run:
 
@@ -63,11 +63,11 @@ git merge --no-ff feature/shuadaonile-web-prototype -m "merge: bring web prototy
 
 Expected: a clean merge commit; `刷到你了/web-prototype/package.json` and its complete `src/` tree exist while W001/W101 source assets remain unchanged.
 
-- [ ] **Step 3: Install the locked dependencies**
+- [x] **Step 3: Install the locked dependencies**
 
 From `刷到你了/web-prototype`, run `npm ci`. Expected: dependencies install from `package-lock.json` without modifying it.
 
-- [ ] **Step 4: Verify the merged baseline before media changes**
+- [x] **Step 4: Verify the merged baseline before media changes**
 
 Run `npm test`, `npm run typecheck`, and `npm run build`. Expected: all existing tests pass, typecheck exits 0, and Vite produces the Sites build output.
 
@@ -83,7 +83,7 @@ Run `npm test`, `npm run typecheck`, and `npm run build`. Expected: all existing
 - Consumes: existing `VideoNode` definitions and W001/W101 caption timelines.
 - Produces: `CaptionCue`, `VideoMedia`, optional `VideoNode.media`, and content validation errors.
 
-- [ ] **Step 1: Write failing media configuration tests**
+- [x] **Step 1: Write failing media configuration tests**
 
 Add tests to `src/tests/content.test.ts` that assert:
 
@@ -119,11 +119,11 @@ it('rejects invalid and overlapping media captions', () => {
 })
 ```
 
-- [ ] **Step 2: Run the focused content test and verify red state**
+- [x] **Step 2: Run the focused content test and verify red state**
 
 Run `npm test -- --run src/tests/content.test.ts`. Expected: TypeScript/test failures because `media` does not exist and W001/W101 are not configured.
 
-- [ ] **Step 3: Add media types**
+- [x] **Step 3: Add media types**
 
 Add to `src/content/types.ts`:
 
@@ -146,7 +146,7 @@ export interface VideoMedia {
 
 Add `media?: VideoMedia` to `VideoNode`.
 
-- [ ] **Step 4: Configure W001 and W101**
+- [x] **Step 4: Configure W001 and W101**
 
 Add these exact `media` values in `src/content/nodes.ts`:
 
@@ -174,11 +174,11 @@ media: {
 }
 ```
 
-- [ ] **Step 5: Validate media configuration**
+- [x] **Step 5: Validate media configuration**
 
 In `validateContent`, for each node with media, validate non-empty `src` and `poster`, each cue's finite numeric range and non-empty text, `end <= node.duration`, cue ordering, and non-overlap. Emit the exact messages asserted by the test.
 
-- [ ] **Step 6: Run the focused test and verify green state**
+- [x] **Step 6: Run the focused test and verify green state**
 
 Run `npm test -- --run src/tests/content.test.ts`. Expected: all content tests pass.
 
@@ -193,7 +193,7 @@ Run `npm test -- --run src/tests/content.test.ts`. Expected: all content tests p
 - Consumes: `VideoNode.media`, `active`, and playback context `paused`.
 - Produces: synchronized `<video>`, current caption overlay, and automatic CSS fallback.
 
-- [ ] **Step 1: Write failing StoryStage media tests**
+- [x] **Step 1: Write failing StoryStage media tests**
 
 Create `src/tests/story-stage-media.test.tsx` with tests that render `StoryStage` inside `PlaybackProvider` and assert:
 
@@ -223,11 +223,11 @@ it('keeps unconfigured nodes on the CSS story stage', () => {
 
 Also mock `HTMLMediaElement.prototype.play` and `pause`, and assert active/unpaused calls `play`, while inactive or paused calls `pause`.
 
-- [ ] **Step 2: Run the focused StoryStage test and verify red state**
+- [x] **Step 2: Run the focused StoryStage test and verify red state**
 
 Run `npm test -- --run src/tests/story-stage-media.test.tsx`. Expected: failure because `StoryStage` still renders only CSS beats.
 
-- [ ] **Step 3: Implement video playback and fallback**
+- [x] **Step 3: Implement video playback and fallback**
 
 In `StoryStage.tsx`:
 
@@ -243,11 +243,11 @@ In `StoryStage.tsx`:
 - render its text with `data-caption-style={cue.style}`;
 - preserve the existing click-to-toggle behavior and pause badge.
 
-- [ ] **Step 4: Add video and caption styles**
+- [x] **Step 4: Add video and caption styles**
 
 In `src/styles/stage.css`, add `.story-video` as an absolute full-stage element with `width:100%`, `height:100%`, `object-fit:cover`, and a black background. Add `.media-caption` above the bottom interaction safe area with centered white bold text, dark stroke/shadow, and style-specific accents that do not cover the existing product/gift controls.
 
-- [ ] **Step 5: Run focused media tests and verify green state**
+- [x] **Step 5: Run focused media tests and verify green state**
 
 Run `npm test -- --run src/tests/story-stage-media.test.tsx src/tests/video-card.test.tsx`. Expected: all tests pass.
 
@@ -261,15 +261,15 @@ Run `npm test -- --run src/tests/story-stage-media.test.tsx src/tests/video-card
 - Consumes: verified source MP4/JPEG files and completed React integration.
 - Produces: a static-build-compatible prototype, a running local server, and synchronized main.
 
-- [ ] **Step 1: Copy the four selected media files**
+- [x] **Step 1: Copy the four selected media files**
 
 Copy W001/W101 raw MP4s and thumbnails from `刷到你了/assets/video-tests/{W001,W101}/` to the exact `public/media` names in the file structure. Do not copy burned-caption W001 media.
 
-- [ ] **Step 2: Verify media integrity**
+- [x] **Step 2: Verify media integrity**
 
 Use `cmp` to confirm each public copy is byte-identical to its source. Use `ffprobe` to require both videos to be H.264, 832×1536, about 8.041667 seconds, and 24 fps. Use `file` for both JPEGs.
 
-- [ ] **Step 3: Run all automated verification**
+- [x] **Step 3: Run all automated verification**
 
 From `刷到你了/web-prototype`, run:
 
@@ -281,11 +281,11 @@ npm run build
 
 Expected: all tests pass, typecheck exits 0, and build exits 0 with all four `/media` assets present in output.
 
-- [ ] **Step 4: Mark the plan complete and run repository checks**
+- [x] **Step 4: Mark the plan complete and run repository checks**
 
-Replace all `- [ ]` with `- [x]`. Run `git diff --check`, confirm no changes under source `assets/video-tests`, and confirm `.DS_Store` is unstaged.
+Replace all `- [x]` with `- [x]`. Run `git diff --check`, confirm no changes under source `assets/video-tests`, and confirm `.DS_Store` is unstaged.
 
-- [ ] **Step 5: Commit the integration**
+- [x] **Step 5: Commit the integration**
 
 Stage only the prototype changes, public media, and this plan. Commit with:
 
@@ -293,10 +293,10 @@ Stage only the prototype changes, public media, and this plan. Commit with:
 git commit -m "feat: play real wedding videos in prototype"
 ```
 
-- [ ] **Step 6: Start and open the local test URL**
+- [x] **Step 6: Start and open the local test URL**
 
 Run `npm run dev -- --host 127.0.0.1 --port 4173`, keep the process alive, wait for `http://127.0.0.1:4173/` to return HTTP 200, and open that URL in the available browser. Verify W001 loads without a media 404 or console error, swipe/keyboard navigation works, and W101 appears after the configured ladder trigger.
 
-- [ ] **Step 7: Push and verify synchronization**
+- [x] **Step 7: Push and verify synchronization**
 
 Push `main` to `origin/main`. Verify `git rev-parse HEAD` equals `git rev-parse origin/main`, the server remains running, and the only unrelated worktree entry is the pre-existing untracked `.DS_Store`.

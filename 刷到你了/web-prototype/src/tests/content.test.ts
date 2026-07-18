@@ -57,4 +57,34 @@ describe('validateContent', () => {
     expect(story).toContain('新娘活下来了')
     expect(story).toContain('私会维修工')
   })
+
+  it('configures W001 and W101 with raw videos and synchronized captions', () => {
+    expect(NODE_BY_ID.W001.media?.src).toBe('/media/W001_ltx_raw_v1.mp4')
+    expect(NODE_BY_ID.W001.media?.captions).toEqual([
+      { start: 0, end: 2.2, text: '婚礼开始第 7 秒，新娘死亡', style: 'result' },
+      { start: 2.2, end: 5, text: '婚礼未完成', style: 'explanation' },
+      { start: 5, end: 8, text: '这么高，谁够得到？', style: 'comment' },
+    ])
+    expect(NODE_BY_ID.W101.media?.src).toBe('/media/W101_ltx_raw_v1.mp4')
+    expect(NODE_BY_ID.W101.media?.captions.at(-1)?.end).toBe(8)
+  })
+
+  it('rejects invalid and overlapping media captions', () => {
+    const invalid = fakeNode('W001')
+    invalid.media = {
+      src: '',
+      poster: '/media/poster.jpg',
+      captions: [
+        { start: 2, end: 1, text: '', style: 'result' },
+        { start: 0.5, end: 11, text: 'overlap', style: 'comment' },
+      ],
+    }
+    expect(validateContent({ items: [], nodes: [invalid], triggers: [] })).toEqual(expect.arrayContaining([
+      'invalid media src: W001',
+      'invalid caption range: W001:0',
+      'empty caption text: W001:0',
+      'caption exceeds duration: W001:1',
+      'overlapping captions: W001:0:1',
+    ]))
+  })
 })

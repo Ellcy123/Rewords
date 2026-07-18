@@ -6,6 +6,20 @@ export type NodeId =
 export type ItemId = 'ladder' | 'technician' | 'recorder' | 'projector'
 export type Channel = 'wedding' | 'costume' | 'knowledge'
 export type ResultKind = 'main' | 'resource' | 'wrong' | 'completion'
+export type CaptionStyle = 'result' | 'explanation' | 'comment'
+
+export interface CaptionCue {
+  start: number
+  end: number
+  text: string
+  style: CaptionStyle
+}
+
+export interface VideoMedia {
+  src: string
+  poster: string
+  captions: CaptionCue[]
+}
 
 export interface StoryBeat {
   at: number
@@ -48,6 +62,7 @@ export interface VideoNode {
   selectableItemIds: ItemId[]
   resultKind: ResultKind
   visualMotif: string
+  media?: VideoMedia
   onCompleteUnlock?: NodeId
 }
 
