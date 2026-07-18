@@ -1,0 +1,47 @@
+.tutorial-cue.tutorial-cue {
+  position: absolute;
+  z-index: 28;
+  top: 55%;
+  bottom: auto;
+  left: 50%;
+  width: max-content;
+  max-width: 82%;
+  padding: 10px 15px;
+  border: 1px solid rgba(255, 255, 255, .12);
+  border-radius: 99px;
+  background: rgba(24, 23, 29, .88);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  pointer-events: none;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, .42);
+  backdrop-filter: blur(10px);
+  animation-name: tutorial-float-up;
+  animation-duration: 2.4s;
+  animation-timing-function: ease-out;
+  animation-iteration-count: 1;
+  animation-fill-mode: forwards;
+}
+
+@keyframes tutorial-float-up {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 12px) scale(.96);
+  }
+
+  14% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+
+  62% {
+    opacity: 1;
+    transform: translate(-50%, -24px) scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -72px) scale(.98);
+  }
+}
