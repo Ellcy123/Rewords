@@ -1,6 +1,6 @@
 # W101 Anime Contrast Style Test Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Produce and verify one project-bound 9:16 W101 anime keyframe using a high-contrast cyan-blue, orange-red, and restrained magenta palette.
 
@@ -37,11 +37,11 @@
 - Consumes: the approved W101 keyframe as a composition and narrative reference.
 - Produces: one portrait PNG suitable for visual review and later image-to-video testing.
 
-- [ ] **Step 1: Inspect the local reference at original detail**
+- [x] **Step 1: Inspect the local reference at original detail**
 
 Use `view_image` on `W101_keyframe_v1.png`. Lock the bride at lower center, complete ladder at left, groomsman near its top, black truss overhead, and alarmed guests as compositional invariants.
 
-- [ ] **Step 2: Run one built-in style-transfer generation**
+- [x] **Step 2: Run one built-in style-transfer generation**
 
 Use this prompt:
 
@@ -60,11 +60,11 @@ Constraints: full ladder visible from both feet to upper contact point; one brid
 Avoid: photorealism, 3D render, soft pastel anime, muddy colors, neon nightclub lighting, excessive magenta, text, subtitles, UI, logo, watermark, blood, injury, extra limbs, duplicate people, malformed ladder.
 ```
 
-- [ ] **Step 3: Persist the generated image in the project**
+- [x] **Step 3: Persist the generated image in the project**
 
 Create `刷到你了/assets/style-tests/W101/` and copy the selected built-in output to `W101_anime_contrast_v1.png`. Leave the generator-owned original in place.
 
-- [ ] **Step 4: Normalize without stretching**
+- [x] **Step 4: Normalize without stretching**
 
 Run `sips -g pixelWidth -g pixelHeight`. If the image is not exact 9:16, center-crop it to the largest exact 9:16 rectangle that preserves the bride, ladder feet, groomsman, and truss.
 
@@ -78,15 +78,15 @@ Run `sips -g pixelWidth -g pixelHeight`. If the image is not exact 9:16, center-
 - Consumes: the selected normalized PNG.
 - Produces: one visually approved asset and one synchronized Git commit.
 
-- [ ] **Step 1: Inspect the final PNG visually**
+- [x] **Step 1: Inspect the final PNG visually**
 
 Use `view_image` at original detail. Require: native cel-shaded anime appearance; strong cyan/orange contrast; restrained magenta; ivory gown; complete ladder; readable repair action; threatening overhead truss; no text or prohibited content.
 
-- [ ] **Step 2: Allow one targeted correction only when necessary**
+- [x] **Step 2: Allow one targeted correction only when necessary**
 
 If a required invariant fails, edit the first output with one prompt that names only the failed invariant while preserving all passed qualities. Do not create extra variants merely for preference exploration.
 
-- [ ] **Step 3: Run file and repository checks**
+- [x] **Step 3: Run file and repository checks**
 
 Run:
 
@@ -99,11 +99,11 @@ git status --short
 
 Expected: valid RGB/RGBA portrait PNG at exact 9:16; no modified video-test asset; only the style-test file, this plan, and the pre-existing untracked `.DS_Store` appear.
 
-- [ ] **Step 4: Mark the plan complete**
+- [x] **Step 4: Mark the plan complete**
 
-Replace every remaining `- [ ]` in this plan with `- [x]`, then rerun `git diff --check`.
+Replace every remaining `- [x]` in this plan with `- [x]`, then rerun `git diff --check`.
 
-- [ ] **Step 5: Commit only the style test and plan**
+- [x] **Step 5: Commit only the style test and plan**
 
 ```bash
 git add docs/superpowers/plans/2026-07-18-w101-anime-contrast-style-test.md \
@@ -111,6 +111,6 @@ git add docs/superpowers/plans/2026-07-18-w101-anime-contrast-style-test.md \
 git commit -m "feat: add W101 anime contrast style test"
 ```
 
-- [ ] **Step 6: Push and verify synchronization**
+- [x] **Step 6: Push and verify synchronization**
 
 Run `git push origin main`, verify `git rev-parse HEAD` equals `git rev-parse origin/main`, and confirm `.DS_Store` remains untracked.
