@@ -1,0 +1,5 @@
+[
+  { "start": 0, "end": 2.2, "text": "两把梯子，还是不会修", "style": "result" },
+  { "start": 2.2, "end": 5, "text": "高度翻倍，知识没有", "style": "explanation" },
+  { "start": 5, "end": 8, "text": "脑子问题：仍未解决", "style": "comment" }
+]

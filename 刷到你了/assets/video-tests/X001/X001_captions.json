@@ -1,0 +1,5 @@
+[
+  { "start": 0, "end": 2.2, "text": "师傅到了，还是够不着", "style": "result" },
+  { "start": 2.2, "end": 5, "text": "专业到了，高度没到", "style": "explanation" },
+  { "start": 5, "end": 8, "text": "现场不具备登高条件", "style": "comment" }
+]

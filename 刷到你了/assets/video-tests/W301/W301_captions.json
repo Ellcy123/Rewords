@@ -1,0 +1,5 @@
+[
+  { "start": 0, "end": 2.2, "text": "证据录到了", "style": "result" },
+  { "start": 2.2, "end": 5, "text": "后排看不见，现场听不清", "style": "explanation" },
+  { "start": 5, "end": 8, "text": "证据没问题，屏幕有问题", "style": "comment" }
+]

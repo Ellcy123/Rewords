@@ -1,0 +1,5 @@
+[
+  { "start": 0, "end": 2.2, "text": "师傅开始维修这段感情", "style": "result" },
+  { "start": 2.2, "end": 5, "text": "深度服务，指的是吊顶深度", "style": "explanation" },
+  { "start": 5, "end": 8, "text": "感情温度 16 度，建议检修", "style": "comment" }
+]
