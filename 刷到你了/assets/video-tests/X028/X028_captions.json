@@ -1,0 +1,5 @@
+[
+  { "start": 0, "end": 2.2, "text": "电脑没变快，变成冰箱了", "style": "result" },
+  { "start": 2.2, "end": 5, "text": "两位师傅，双空调对吹", "style": "explanation" },
+  { "start": 5, "end": 8, "text": "本期结论：能冷藏，不能跑分", "style": "comment" }
+]

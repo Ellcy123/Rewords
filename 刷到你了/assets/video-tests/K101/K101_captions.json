@@ -1,0 +1,5 @@
+[
+  { "start": 0, "end": 2.2, "text": "梯子连接成功", "style": "result" },
+  { "start": 2.2, "end": 5, "text": "知识区的梯子，当然是 VPN", "style": "explanation" },
+  { "start": 5, "end": 8, "text": "翻了半天，先精准投放我", "style": "comment" }
+]

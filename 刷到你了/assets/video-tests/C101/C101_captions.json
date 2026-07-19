@@ -1,0 +1,5 @@
+[
+  { "start": 0, "end": 2.2, "text": "国师抵赖，被录下来了", "style": "result" },
+  { "start": 2.2, "end": 5, "text": "证据太小，满朝文武看不清", "style": "explanation" },
+  { "start": 5, "end": 8, "text": "把证据投到影壁上", "style": "comment" }
+]

@@ -1,0 +1,5 @@
+[
+  { "start": 0, "end": 2.2, "text": "结论：电脑先冻关机了", "style": "result" },
+  { "start": 2.2, "end": 5, "text": "你要的是散热，不是把电脑送走", "style": "explanation" },
+  { "start": 5, "end": 8, "text": "关键数据在墙外", "style": "comment" }
+]
