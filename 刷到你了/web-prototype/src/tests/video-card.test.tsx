@@ -61,6 +61,7 @@ describe('video product card', () => {
   })
 
   it('offers an explicit sound control for mobile playback', () => {
+    const play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue()
     render(
       <PlaybackProvider>
         <VideoCard node={NODE_BY_ID.W001} active />
@@ -69,9 +70,12 @@ describe('video product card', () => {
 
     const video = screen.getByLabelText('婚礼灯架事故视频') as HTMLVideoElement
     expect(video.muted).toBe(true)
+    play.mockClear()
     fireEvent.click(screen.getByRole('button', { name: '开启声音' }))
     expect(screen.getByRole('button', { name: '关闭声音' })).toBeTruthy()
     expect(video.muted).toBe(false)
+    expect(play).toHaveBeenCalledTimes(1)
+    play.mockRestore()
   })
 
   it('keeps a sound-button tap out of the feed swipe gesture', () => {

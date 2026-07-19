@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useState, type MouseEvent } from 'react'
 import { Bookmark, Heart, MessageCircle, Share2, ShoppingCart, Sparkles, Volume2, VolumeX } from 'lucide-react'
 import type { CaptionCue, VideoNode } from '../content/types'
 import { ITEM_BY_ID } from '../content/items'
@@ -22,6 +22,14 @@ export function VideoCard({ node, active, onProduct, onGift, onComments }: Props
     (cue: CaptionCue | null) => setCaptionState({ nodeId: node.id, cue }),
     [node.id],
   )
+  const handleSoundToggle = (event: MouseEvent<HTMLButtonElement>) => {
+    const video = event.currentTarget.closest('.video-card')?.querySelector('video')
+    if (video) {
+      video.muted = !muted
+      if (muted) void video.play().catch(() => undefined)
+    }
+    toggleSound()
+  }
 
   return (
     <article className={`video-card channel-${node.channel}`} data-node-id={node.id}>
@@ -36,7 +44,7 @@ export function VideoCard({ node, active, onProduct, onGift, onComments }: Props
           className="sound-toggle"
           aria-label={muted ? '开启声音' : '关闭声音'}
           onPointerDown={event => event.stopPropagation()}
-          onClick={toggleSound}
+          onClick={handleSoundToggle}
         >
           {muted ? <VolumeX /> : <Volume2 />}
           <small>{muted ? '声音' : '有声'}</small>
