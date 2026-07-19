@@ -47,4 +47,5 @@ describe('StoryStage formal video media', () => {
     view.rerender(<PlaybackProvider><StoryStage node={NODE_BY_ID.W001} active={false} /></PlaybackProvider>)
     expect(pause).toHaveBeenCalled()
   })
+
 })

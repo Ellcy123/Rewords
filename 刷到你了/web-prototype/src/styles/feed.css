@@ -96,6 +96,23 @@
   line-height: 1.22;
 }
 
+.media-caption {
+  position: static;
+  display: block;
+  margin: 0 0 5px;
+  color: #fff;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.42;
+  letter-spacing: 0;
+  -webkit-text-stroke: 0;
+  text-shadow: 0 1px 3px #000, 0 2px 10px rgba(0, 0, 0, .75);
+}
+
+.media-caption[data-caption-style="explanation"] { color: #f4f1f5; }
+.media-caption[data-caption-style="comment"] { color: #ffe270; }
+
 .video-copy p {
   margin: 0;
   color: #f0edf2;

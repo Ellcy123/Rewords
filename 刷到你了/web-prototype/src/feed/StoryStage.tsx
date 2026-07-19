@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import type { VideoNode } from '../content/types'
+import type { CaptionCue, VideoNode } from '../content/types'
 import { usePlayback } from './PlaybackContext'
 
 interface StageProps {
   node: VideoNode
   active: boolean
+  onCaptionChange?: (caption: CaptionCue | null) => void
 }
 
 interface FallbackProps extends StageProps {
@@ -42,8 +43,8 @@ function FallbackStoryStage({ node, active, paused, toggle }: FallbackProps) {
   )
 }
 
-export function StoryStage({ node, active }: StageProps) {
-  const { paused, toggle } = usePlayback()
+export function StoryStage({ node, active, onCaptionChange }: StageProps) {
+  const { muted, paused, toggle } = usePlayback()
   const videoRef = useRef<HTMLVideoElement>(null)
   const [currentTime, setCurrentTime] = useState(0)
   const [mediaFailed, setMediaFailed] = useState(false)
@@ -64,11 +65,15 @@ export function StoryStage({ node, active }: StageProps) {
     }
   }, [active, media, mediaFailed, paused])
 
+  const caption = media && !mediaFailed
+    ? media.captions.find(cue => cue.start <= currentTime && currentTime < cue.end) ?? null
+    : null
+
+  useEffect(() => { onCaptionChange?.(caption) }, [caption, onCaptionChange])
+
   if (!media || mediaFailed) {
     return <FallbackStoryStage node={node} active={active} paused={paused} toggle={toggle} />
   }
-
-  const caption = media.captions.find(cue => cue.start <= currentTime && currentTime < cue.end)
 
   return (
     <button className={`story-stage story-stage--media motif-${node.visualMotif}`} aria-label="暂停或继续视频" onClick={toggle}>
@@ -80,12 +85,12 @@ export function StoryStage({ node, active }: StageProps) {
         poster={media.poster}
         playsInline
         loop
-        muted
+        muted={muted}
         preload="metadata"
         onTimeUpdate={event => setCurrentTime(event.currentTarget.currentTime)}
         onError={() => setMediaFailed(true)}
       />
-      {caption && (
+      {caption && !onCaptionChange && (
         <strong className="media-caption" data-caption-style={caption.style}>
           {caption.text}
         </strong>

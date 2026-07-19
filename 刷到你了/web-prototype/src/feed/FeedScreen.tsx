@@ -58,7 +58,10 @@ export function FeedScreen() {
   }
 
   return (
-    <PlaybackProvider>
+    <PlaybackProvider
+      muted={state.muted}
+      onMutedChange={muted => dispatch({ type: 'SET_MUTED', muted })}
+    >
       <main className="phone-shell">
         <VideoFeed
           nodes={nodes}
