@@ -20,9 +20,10 @@ describe('video product card', () => {
   })
 
   it('keeps commerce controls away from the bottom navigation', () => {
+    const fallbackNode = { ...NODE_BY_ID.C001, media: undefined }
     render(
       <PlaybackProvider>
-        <VideoCard node={NODE_BY_ID.C001} active onProduct={vi.fn()} onGift={vi.fn()} />
+        <VideoCard node={fallbackNode} active onProduct={vi.fn()} onGift={vi.fn()} />
       </PlaybackProvider>,
     )
 

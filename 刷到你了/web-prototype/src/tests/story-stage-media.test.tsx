@@ -35,7 +35,8 @@ describe('StoryStage formal video media', () => {
   })
 
   it('keeps unconfigured nodes on the CSS story stage', () => {
-    render(<PlaybackProvider><StoryStage node={NODE_BY_ID.C001} active /></PlaybackProvider>)
+    const unconfigured = { ...NODE_BY_ID.C001, media: undefined }
+    render(<PlaybackProvider><StoryStage node={unconfigured} active /></PlaybackProvider>)
     expect(screen.queryByLabelText('王妃翻墙私逃视频')).toBeNull()
     expect(screen.getByText(NODE_BY_ID.C001.beats[0].text)).toBeTruthy()
   })

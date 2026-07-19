@@ -20,6 +20,15 @@ function fakeNode(id: string): VideoNode {
     selectableItemIds: [],
     resultKind: 'main',
     visualMotif: 'test',
+    media: {
+      src: `/media/${id}_ltx_raw_v1.mp4`,
+      poster: `/media/${id}_thumbnail_v1.jpg`,
+      captions: [
+        { start: 0, end: 2, text: '测试结果', style: 'result' },
+        { start: 2, end: 5, text: '测试解释', style: 'explanation' },
+        { start: 5, end: 8, text: '测试评论', style: 'comment' },
+      ],
+    },
   }
 }
 
@@ -58,15 +67,22 @@ describe('validateContent', () => {
     expect(story).toContain('私会维修工')
   })
 
-  it('configures W001 and W101 with raw videos and synchronized captions', () => {
-    expect(NODE_BY_ID.W001.media?.src).toBe('/media/W001_ltx_raw_v1.mp4')
-    expect(NODE_BY_ID.W001.media?.captions).toEqual([
-      { start: 0, end: 2.2, text: '婚礼开始第 7 秒，新娘死亡', style: 'result' },
-      { start: 2.2, end: 5, text: '婚礼未完成', style: 'explanation' },
-      { start: 5, end: 8, text: '这么高，谁够得到？', style: 'comment' },
-    ])
-    expect(NODE_BY_ID.W101.media?.src).toBe('/media/W101_ltx_raw_v1.mp4')
-    expect(NODE_BY_ID.W101.media?.captions.at(-1)?.end).toBe(8)
+  it('configures browser media for every demo node', () => {
+    expect(NODES).toHaveLength(15)
+    for (const node of NODES) {
+      expect(node.media?.src).toBe(`/media/${node.id}_ltx_raw_v1.mp4`)
+      expect(node.media?.poster).toBe(`/media/${node.id}_thumbnail_v1.jpg`)
+      expect(node.media?.captions).toHaveLength(3)
+      expect(node.media?.captions[0].start).toBe(0)
+      expect(node.media?.captions.at(-1)?.end).toBe(8)
+    }
+  })
+
+  it('rejects nodes without media', () => {
+    const missingMedia = fakeNode('W001')
+    delete missingMedia.media
+    expect(validateContent({ items: [], nodes: [missingMedia], triggers: [] }))
+      .toContain('missing media: W001')
   })
 
   it('rejects invalid and overlapping media captions', () => {

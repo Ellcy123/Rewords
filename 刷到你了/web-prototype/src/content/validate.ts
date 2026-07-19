@@ -27,7 +27,9 @@ export function validateContent(catalog: ContentCatalog): string[] {
 
   for (const node of catalog.nodes) {
     if (node.duration < 1 || node.duration > 15) errors.push(`invalid duration: ${node.id}`)
-    if (node.media) {
+    if (!node.media) {
+      errors.push(`missing media: ${node.id}`)
+    } else {
       if (!node.media.src.trim()) errors.push(`invalid media src: ${node.id}`)
       if (!node.media.poster.trim()) errors.push(`invalid media poster: ${node.id}`)
       node.media.captions.forEach((cue, index) => {

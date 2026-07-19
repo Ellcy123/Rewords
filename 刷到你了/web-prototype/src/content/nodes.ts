@@ -1,4 +1,5 @@
 import type { Channel, CommentDefinition, NodeId, ResultKind, StoryBeat, VideoNode } from './types'
+import { MEDIA_BY_NODE_ID } from './media'
 
 const comments = (...texts: string[]): CommentDefinition[] => texts.map((text, index) => ({
   id: String(index + 1), author: ['热心路人', '今日围观', '时间线观察员'][index] ?? '网友', text, likes: [8421, 3360, 1908][index] ?? 99, pinned: index === 0,
@@ -7,35 +8,17 @@ const comments = (...texts: string[]): CommentDefinition[] => texts.map((text, i
 const beats = (...entries: Array<[number, string, string?]>): StoryBeat[] => entries.map(([at, text, detail]) => ({ at, text, detail }))
 
 function node(id: NodeId, channel: Channel, account: string, title: string, headline: string, summary: string, subtitle: string, duration: number, storyBeats: StoryBeat[], resultKind: ResultKind, visualMotif: string, extra: Partial<VideoNode> = {}): VideoNode {
-  return { id, channel, account, title, headline, summary, subtitle, duration, beats: storyBeats, comments: comments('这个结果我是真没想到', '先别划走，线索在后面', '平台到底给我推荐了什么'), selectableItemIds: [], resultKind, visualMotif, ...extra }
+  return { id, channel, account, title, headline, summary, subtitle, duration, beats: storyBeats, comments: comments('这个结果我是真没想到', '先别划走，线索在后面', '平台到底给我推荐了什么'), selectableItemIds: [], resultKind, visualMotif, media: MEDIA_BY_NODE_ID[id], ...extra }
 }
 
 export const NODES: VideoNode[] = [
   node('W001', 'wedding', '@婚礼事故实录', '婚礼灯架事故', '婚礼开始第 7 秒，新娘死亡', '灯架突然坠落，伴郎够不到四米高的松动卡扣。', '“这么高谁够得到？”', 12,
     beats([0, '婚礼开始第 7 秒，新娘死亡', '“我愿——”被撞击声打断'], [2, '婚礼未完成', '救护灯扫过空舞台'], [5, '事故倒放', '四米高的卡扣正在滑脱'], [9, '差一点够到', '伴郎踮脚仍碰不到灯架']), 'main', 'falling-rig', {
       selectableItemIds: ['ladder', 'technician'],
-      media: {
-        src: '/media/W001_ltx_raw_v1.mp4',
-        poster: '/media/W001_thumbnail_v1.jpg',
-        captions: [
-          { start: 0, end: 2.2, text: '婚礼开始第 7 秒，新娘死亡', style: 'result' },
-          { start: 2.2, end: 5, text: '婚礼未完成', style: 'explanation' },
-          { start: 5, end: 8, text: '这么高，谁够得到？', style: 'comment' },
-        ],
-      },
     }),
   node('W101', 'wedding', '@婚礼事故实录', '有梯子但不会修', '有梯子，新娘还是死了', '伴郎够到了灯架，却把承重卡扣拧错方向。', '够得到，不等于修得了。', 10,
     beats([0, '有梯子，新娘还是死了'], [1, '伴郎终于够到卡扣', '“松了是吧？拧紧就行。”'], [4, '真正的安全扣弹开'], [7, '他解决了身高，没有解决专业']), 'main', 'wrong-bolt', {
       selectableItemIds: ['technician', 'ladder'],
-      media: {
-        src: '/media/W101_ltx_raw_v1.mp4',
-        poster: '/media/W101_thumbnail_v1.jpg',
-        captions: [
-          { start: 0, end: 2.2, text: '有梯子，新娘还是死了', style: 'result' },
-          { start: 2.2, end: 5, text: '他解决了身高，没有解决专业', style: 'explanation' },
-          { start: 5, end: 8, text: '够得到，不等于会修', style: 'comment' },
-        ],
-      },
     }),
   node('W300', 'wedding', '@首席伴娘', '婚礼当天私会维修工？', '新娘婚礼当天私会维修工？', '空调师傅救下新娘，伴娘却把感谢救命的握手剪成暧昧偷拍视频。', '新娘活下来了，婚礼却被一段恶意剪辑叫停。', 14,
     beats([0, '空调师傅踩上梯子修好灯架'], [2, '这一次，新娘活下来了', '婚礼继续'], [5, '新娘握手感谢维修工', '伴娘举起了手机'], [8, '新娘婚礼当天私会维修工？', '前后内容被恶意剪掉'], [11, '“有完整证据吗？”']), 'main', 'rumor-cut', { selectableItemIds: ['recorder', 'technician'] }),
