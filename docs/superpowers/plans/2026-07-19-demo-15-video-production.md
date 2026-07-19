@@ -106,7 +106,14 @@ for (const entry of manifest.entries) {
   if (!entry.title?.trim()) fail(`missing title: ${entry.id}`)
   if (!entry.keyframePrompt?.trim()) fail(`missing keyframePrompt: ${entry.id}`)
   if (!entry.videoPrompt?.trim()) fail(`missing videoPrompt: ${entry.id}`)
-  if (entry.reference !== null) await access(resolve(project, entry.reference))
+  if (entry.reference !== null) {
+    try {
+      await access(resolve(project, entry.reference))
+    } catch (error) {
+      const referenceId = entry.reference.match(/^assets\/video-tests\/([A-Z][0-9]{3})\/\1_keyframe_v1\.png$/)?.[1]
+      if (error?.code !== 'ENOENT' || !referenceId || !ids.includes(referenceId)) throw error
+    }
+  }
   if (!Array.isArray(entry.captions) || entry.captions.length !== 3) fail(`invalid captions: ${entry.id}`)
   const expectedStyles = ['result', 'explanation', 'comment']
   let previousEnd = 0

@@ -1,0 +1,175 @@
+{
+  "webappId": "2031277395491164161",
+  "duration": 8,
+  "entries": [
+    {
+      "id": "W300",
+      "channel": "wedding",
+      "title": "婚礼当天私会维修工？",
+      "reference": "assets/video-tests/W001/W001_keyframe_v1.png",
+      "keyframePrompt": "Edit the supplied W001 reference into the next moment of the same modern Chinese wedding. Preserve the same bride identity, white wedding dress, warm ivory venue, black overhead lighting truss, lighting direction, and polished realistic Chinese mobile short-drama look. The bride stands at center shaking hands in gratitude with the same young air-conditioning technician in a pale gray rolled-sleeve shirt. A bridesmaid slightly behind them secretly films vertically on a phone, while the groom has just noticed her screen. Make the rescue context, innocent handshake, covert filming, and groom's suspicion readable without text. Vertical 9:16, coherent people and object geometry, clear foreground action, safe space above the bottom interaction area. No generated text, subtitles, UI, brands, logos, watermark, blood, injury, direct body impact, malformed hands, duplicate main character, or impossible prop geometry.",
+      "videoPrompt": "Continue naturally from this exact wedding frame. The bridesmaid secretly records the bride thanking the technician, then turns her phone toward the groom. The groom reacts with suspicion and confronts the bride; the bride releases the handshake and urgently explains while nearby guests turn toward her. The camera pulls backward as the wedding music and celebration visibly stop, ending with the bride isolated at center stage. Preserve the same bride, technician, bridesmaid, groom, venue, costumes and warm lighting. Polished realistic Chinese mobile short-drama cinematography, coherent motion, one continuous shot. No text, subtitles, UI, brand, logo, watermark, violence, injury, blood, or malformed hands.",
+      "captions": [
+        { "start": 0, "end": 2.2, "text": "新娘活下来了，婚礼却死了", "style": "result" },
+        { "start": 2.2, "end": 5, "text": "救命的握手，被剪成了私会", "style": "explanation" },
+        { "start": 5, "end": 8, "text": "前后内容呢？有证据吗？", "style": "comment" }
+      ]
+    },
+    {
+      "id": "W301",
+      "channel": "wedding",
+      "title": "证据就在笔里但没人看见",
+      "reference": "assets/video-tests/W001/W001_keyframe_v1.png",
+      "keyframePrompt": "Edit the supplied W001 reference into the same modern Chinese wedding after the rumor. Preserve the same bride identity, white wedding dress, warm ivory venue, black lighting truss, and polished realistic Chinese mobile short-drama look. The bride holds a tiny black recorder with a thumbnail-sized video screen high above her head. Front-row guests crowd close and squint while back-row guests look confused. A large decorative wedding screen remains visible far behind her. Make the contrast between the complete tiny evidence and the unused large screen immediately clear without readable text. Vertical 9:16, coherent people and object geometry, clear foreground action, safe space above the bottom interaction area. No generated text, subtitles, UI, brands, logos, watermark, blood, injury, direct body impact, malformed hands, duplicate main character, or impossible prop geometry.",
+      "videoPrompt": "Continue naturally from this exact wedding frame. The bride plays the tiny recorder and raises it higher for the whole room. Front-row guests squeeze closer while the back rows gesture that they cannot see or hear. The bride checks the recorder, tries once more, and the camera smoothly pulls back until the tiny device and the distant unused wedding screen share the same composition. Preserve the same bride, guests, venue, recorder and warm lighting. Polished realistic Chinese mobile short-drama cinematography, coherent motion, one continuous shot. No legible generated text, subtitles, UI, brand, logo, watermark, violence, injury, blood, or malformed hands.",
+      "captions": [
+        { "start": 0, "end": 2.2, "text": "证据录到了", "style": "result" },
+        { "start": 2.2, "end": 5, "text": "后排看不见，现场听不清", "style": "explanation" },
+        { "start": 5, "end": 8, "text": "证据没问题，屏幕有问题", "style": "comment" }
+      ]
+    },
+    {
+      "id": "W400",
+      "channel": "wedding",
+      "title": "证据上大屏婚礼完成",
+      "reference": "assets/video-tests/W001/W001_keyframe_v1.png",
+      "keyframePrompt": "Edit the supplied W001 reference into the successful ending of the same modern Chinese wedding. Preserve the same bride identity, white wedding dress, warm ivory venue, black lighting truss, and polished realistic Chinese mobile short-drama look. The bride confidently holds a microphone in front of a large wedding screen showing a clean nonverbal split-screen comparison of a cropped handshake and the full rescue context. Guests turn toward the exposed bridesmaid below the screen. Flower petals are ready above and the bride visibly controls the room. Vertical 9:16, coherent people and object geometry, clear foreground action, safe space above the bottom interaction area. No generated words, subtitles, UI, brands, logos, watermark, blood, injury, direct body impact, malformed hands, duplicate main character, or impossible prop geometry.",
+      "videoPrompt": "Continue naturally from this exact wedding frame. The large screen begins showing the cropped clip beside the full rescue context. Guests compare both views and turn toward the bridesmaid. The bride raises the microphone, calmly dismisses the rumor, then gestures for the ceremony to continue. Warm wedding lights return, guests celebrate and flower petals fall as the camera lifts slightly for a victorious ending. Preserve the same bride, bridesmaid, guests, screen, venue and costumes. Polished realistic Chinese mobile short-drama cinematography, coherent motion, one continuous shot. No legible generated text, subtitles, UI, brand, logo, watermark, violence, injury, blood, or malformed hands.",
+      "captions": [
+        { "start": 0, "end": 2.2, "text": "完整证据已经上大屏", "style": "result" },
+        { "start": 2.2, "end": 5, "text": "剪辑版与完整原片同时播放", "style": "explanation" },
+        { "start": 5, "end": 8, "text": "造谣的下线，婚礼继续", "style": "comment" }
+      ]
+    },
+    {
+      "id": "X001",
+      "channel": "wedding",
+      "title": "师傅到了但没有梯子",
+      "reference": "assets/video-tests/W001/W001_keyframe_v1.png",
+      "keyframePrompt": "Edit the supplied W001 reference into the same dangerous wedding moment. Preserve the same bride identity, white wedding dress, warm ivory venue, overhead black lighting truss, and polished realistic Chinese mobile short-drama look. The young technician in a pale gray rolled-sleeve shirt stands directly below the high loose truss, aiming a handheld laser distance meter upward. The wall corner is visibly empty with no ladder anywhere. The bride looks up from below the danger while guests search the empty space. Make professional knowledge and impossible reach readable at first glance. Vertical 9:16, coherent people and object geometry, clear foreground action, safe space above the bottom interaction area. No generated text, subtitles, UI, brands, logos, watermark, blood, injury, direct body impact, malformed hands, duplicate main character, or impossible prop geometry.",
+      "videoPrompt": "Continue naturally from this exact wedding frame. The technician measures the truss height, gestures that he understands the reversed latch, then reaches upward and clearly cannot touch it. Guests search the empty wall corner for a ladder. The metal truss suddenly creaks and tilts; the bride, technician and guests recoil as the camera rapidly pulls back and ends in a strong white flash before impact. Preserve the same bride, technician, venue and truss. Polished realistic Chinese mobile short-drama cinematography, coherent motion, one continuous shot. No injury, blood, body impact, text, subtitles, UI, logo, brand or watermark.",
+      "captions": [
+        { "start": 0, "end": 2.2, "text": "师傅到了，还是够不着", "style": "result" },
+        { "start": 2.2, "end": 5, "text": "专业到了，高度没到", "style": "explanation" },
+        { "start": 5, "end": 8, "text": "现场不具备登高条件", "style": "comment" }
+      ]
+    },
+    {
+      "id": "X004",
+      "channel": "wedding",
+      "title": "两把梯子还是不会修",
+      "reference": "assets/video-tests/W101/W101_keyframe_v1.png",
+      "keyframePrompt": "Edit the supplied W101 reference while preserving the same bride identity, warm ivory wedding venue, black overhead truss and polished realistic Chinese mobile short-drama look. Place two complete structurally plausible silver extension ladders on opposite sides of the truss, each visible from rubber feet to top contact. Two young groomsmen stand safely near the ladder tops and prepare to operate the left and right load-bearing pins at the same time. The bride watches below in alarm. Make the symmetrical but dangerously wrong repair decision obvious. Vertical 9:16, coherent people and object geometry, clear foreground action, safe space above the bottom interaction area. No generated text, subtitles, UI, brands, logos, watermark, blood, injury, direct body impact, malformed hands, duplicate main character, extra limbs, or impossible ladder geometry.",
+      "videoPrompt": "Continue naturally from this exact wedding frame. The two groomsmen look at each other, nod with false confidence, and simultaneously pull the left and right load-bearing pins. The heavy truss immediately drops while both men grip their stable ladders in panic. The bride and guests jump backward; the camera pulls away quickly and ends in a strong white flash before any impact. Keep both ladders complete and continuously visible. Preserve the same bride, groomsmen, venue, lighting and truss. Polished realistic Chinese mobile short-drama cinematography, coherent motion, one continuous shot. No injury, blood, body impact, text, subtitles, UI, logo, brand or watermark.",
+      "captions": [
+        { "start": 0, "end": 2.2, "text": "两把梯子，还是不会修", "style": "result" },
+        { "start": 2.2, "end": 5, "text": "高度翻倍，知识没有", "style": "explanation" },
+        { "start": 5, "end": 8, "text": "脑子问题：仍未解决", "style": "comment" }
+      ]
+    },
+    {
+      "id": "X012",
+      "channel": "wedding",
+      "title": "空调师傅改修感情",
+      "reference": "assets/video-tests/W001/W001_keyframe_v1.png",
+      "keyframePrompt": "Edit the supplied W001 reference into an absurd relationship-repair livestream on the same wedding stage. Preserve the same bride identity, white dress, warm venue and the young technician in a pale gray rolled-sleeve shirt. The bride and technician sit behind a simple consultation table. He holds a temperature gun toward an unhappy couple seated opposite, while several wedding guests queue for advice. A paper repair order is visible but has no readable generated text. Keep the tone sincere, comic and non-romantic between bride and technician. Vertical 9:16, polished realistic Chinese mobile short-drama cinematography, coherent people and object geometry, safe space above the bottom interaction area. No generated text, subtitles, UI, brands, logos, watermark, blood, injury, malformed hands, duplicate main character, or impossible props.",
+      "videoPrompt": "Continue naturally from this exact wedding-stage consultation frame. The technician first raises a repair order and nervously explains its misunderstood wording. He then aims the temperature gun between the unhappy couple and reads the result with professional seriousness. The bride rapidly writes a service order as more wedding guests line up for relationship repair. End with the technician and bride operating an unexpectedly busy but clearly platonic advice desk. Preserve the same bride, technician, venue and costumes. Polished realistic Chinese mobile short-drama cinematography, coherent motion, one continuous shot. No legible generated text, subtitles, UI, brand, logo, watermark, violence, injury, blood, romance between bride and technician, or malformed hands.",
+      "captions": [
+        { "start": 0, "end": 2.2, "text": "师傅开始维修这段感情", "style": "result" },
+        { "start": 2.2, "end": 5, "text": "深度服务，指的是吊顶深度", "style": "explanation" },
+        { "start": 5, "end": 8, "text": "感情温度 16 度，建议检修", "style": "comment" }
+      ]
+    },
+    {
+      "id": "X016",
+      "channel": "wedding",
+      "title": "证据翻录成了电音",
+      "reference": "assets/video-tests/W001/W001_keyframe_v1.png",
+      "keyframePrompt": "Edit the supplied W001 reference into the same wedding stage becoming an accidental electronic-music performance. Preserve the same bride identity, white dress, venue and recognizable warm wedding architecture. Place two small black recorder devices facing each other on a table in the foreground. The bride leans over the devices to operate them while guests gather and colored party lights begin replacing the warm wedding lighting. Make the audio-feedback setup visually readable without generated words. Vertical 9:16, polished realistic Chinese mobile short-drama cinematography, coherent people and object geometry, safe space above the bottom interaction area. No generated text, subtitles, UI, brands, logos, watermark, blood, injury, malformed hands, duplicate main character, or impossible props.",
+      "videoPrompt": "Continue naturally from this exact wedding frame. The first recorder plays while the second records and immediately plays back, creating a visible rhythmic feedback loop through pulsing indicator lights. Guests begin nodding to the beat as the wedding lighting shifts into colorful dance-floor mode. The bride stops trying to explain, takes control of a small mixer and confidently turns the broken evidence into an electronic performance. Preserve the same bride, guests, two recorders and venue. Polished realistic Chinese mobile short-drama cinematography, coherent motion, one continuous shot. No legible generated text, subtitles, UI, brand, logo, watermark, violence, injury, blood, or malformed hands.",
+      "captions": [
+        { "start": 0, "end": 2.2, "text": "证据被录成了第二遍", "style": "result" },
+        { "start": 2.2, "end": 5, "text": "真相没放大，回声放大了", "style": "explanation" },
+        { "start": 5, "end": 8, "text": "热门单曲：《我剪剪剪的》", "style": "comment" }
+      ]
+    },
+    {
+      "id": "C001",
+      "channel": "costume",
+      "title": "王妃翻墙私逃",
+      "reference": null,
+      "keyframePrompt": "Create the anchor frame for a vertical Chinese palace short drama. A young Chinese princess consort in distinctive red-and-gold historical robes is caught astride the top of a tall palace wall; one embroidered shoe has fallen near the emperor below. A composed male imperial adviser stands aside denying involvement. A complete modern silver extension ladder is visibly leaned against the ancient wall from both rubber feet to the upper contact point. Palace guards and a cold-palace courtyard frame the accusation. Premium realistic vertical costume-drama cinematography with warm lantern light, readable faces and plausible architecture. Vertical 9:16, coherent people and object geometry, clear foreground action, safe space above the bottom interaction area. No generated text, subtitles, UI, brands, logos, watermark, blood, injury, direct body impact, malformed hands, duplicate main character, extra limbs, or impossible ladder geometry.",
+      "videoPrompt": "Continue naturally from this exact palace-wall frame. The princess consort carefully tries to descend and points at the imperial adviser. He immediately steps backward and denies giving the order while the emperor questions her. Guards look between them. The camera briefly reveals the complete modern extension ladder against the ancient wall, then returns to her frustrated expression. Preserve the same princess consort, adviser, emperor, guards, robes, wall, ladder and lantern lighting. Polished realistic Chinese vertical costume-drama cinematography, coherent motion, one continuous shot. No text, subtitles, UI, brand, logo, watermark, violence, fall, injury, blood, or malformed hands.",
+      "captions": [
+        { "start": 0, "end": 2.2, "text": "王妃翻墙私逃，被抓现行", "style": "result" },
+        { "start": 2.2, "end": 5, "text": "国师：娘娘有证据吗？", "style": "explanation" },
+        { "start": 5, "end": 8, "text": "三丈宫墙，一梯到顶", "style": "comment" }
+      ]
+    },
+    {
+      "id": "C101",
+      "channel": "costume",
+      "title": "金銮殿播放录音",
+      "reference": "assets/video-tests/C001/C001_keyframe_v1.png",
+      "keyframePrompt": "Edit the supplied C001 reference into the imperial throne hall while preserving the exact same young princess consort identity, red-and-gold robes, adviser identity and premium realistic vertical costume-drama look. The princess consort raises a tiny modern black video recorder toward assembled court officials. Front-row officials crowd close and squint, the back rows cannot see, and the emperor points firmly toward a broad illuminated palace screen wall. Make tiny valid evidence versus a large unused display surface immediately readable without words. Vertical 9:16, coherent people and object geometry, clear foreground action, safe space above the bottom interaction area. No generated text, subtitles, UI, brands, logos, watermark, blood, injury, malformed hands, duplicate main character, or impossible props.",
+      "videoPrompt": "Continue naturally from this exact throne-hall frame. The princess consort plays the tiny recorder and raises it for the court. Front officials crowd around while back officials gesture that they cannot see or hear. The imperial adviser tries to dismiss the device. The emperor strikes the table, then points decisively toward the broad palace screen wall as the camera shifts from the tiny recorder to the large surface. Preserve the same princess consort, emperor, adviser, officials, robes and hall. Polished realistic Chinese vertical costume-drama cinematography, coherent motion, one continuous shot. No legible generated text, subtitles, UI, brand, logo, watermark, violence, injury, blood, or malformed hands.",
+      "captions": [
+        { "start": 0, "end": 2.2, "text": "国师抵赖，被录下来了", "style": "result" },
+        { "start": 2.2, "end": 5, "text": "证据太小，满朝文武看不清", "style": "explanation" },
+        { "start": 5, "end": 8, "text": "把证据投到影壁上", "style": "comment" }
+      ]
+    },
+    {
+      "id": "X021",
+      "channel": "costume",
+      "title": "王妃成了宫墙跑酷教练",
+      "reference": "assets/video-tests/C001/C001_keyframe_v1.png",
+      "keyframePrompt": "Edit the supplied C001 reference while preserving the exact same young princess consort identity, red-and-gold robes, palace-wall setting and premium realistic vertical costume-drama look. The princess consort lands safely from a low controlled vault in the foreground. Behind her, several palace maids each carry a complete modern silver extension ladder, and guards have become harmless course obstacles. Show an energetic but safe palace parkour class with plausible ladder geometry and no dangerous fall. Vertical 9:16, coherent people and object geometry, clear foreground action, safe space above the bottom interaction area. No generated text, subtitles, UI, brands, logos, watermark, blood, injury, direct body impact, malformed hands, duplicate main character, extra limbs, or impossible ladder geometry.",
+      "videoPrompt": "Continue naturally from this exact palace-training frame. The princess consort lands safely, quickly arranges three complete ladders into a training course and signals the palace maids to begin. The maids climb and cross one at a time while guards harmlessly hold scoring boards and react with surprise. The camera tracks the princess consort confidently coaching the absurd royal sports lesson. Preserve the same princess consort, robes, maids, guards, palace wall and ladders. Polished realistic Chinese vertical costume-drama cinematography, coherent motion, one continuous shot. No text, subtitles, UI, brand, logo, watermark, dangerous fall, violence, injury, blood, or malformed hands.",
+      "captions": [
+        { "start": 0, "end": 2.2, "text": "冷宫王妃，转行跑酷教练", "style": "result" },
+        { "start": 2.2, "end": 5, "text": "不逃，计时", "style": "explanation" },
+        { "start": 5, "end": 8, "text": "三丈宫墙，七天结业", "style": "comment" }
+      ]
+    },
+    {
+      "id": "K001",
+      "channel": "knowledge",
+      "title": "空调开十六度电脑会变快吗",
+      "reference": null,
+      "keyframePrompt": "Create the anchor frame for a vertical Chinese low-budget but very confident science-account video. A recognizable young Chinese woman knowledge blogger sits at a desk in a modest cool-blue technology studio. Her open laptop is covered with believable frost and has just gone black. A young air-conditioning technician in a pale gray rolled-sleeve shirt stands beside it holding a remote, while strong cold air lifts loose papers. The blogger remains completely serious about the absurd experiment. Photoreal polished Chinese mobile short-video style, practical room detail, clear laptop, blogger and technician. Vertical 9:16, coherent people and object geometry, clear foreground action, safe space above the bottom interaction area. No generated text, subtitles, UI, brands, logos, watermark, blood, injury, malformed hands, duplicate main character, or impossible frost geometry.",
+      "videoPrompt": "Continue naturally from this exact studio frame. Frost spreads lightly across the laptop and the screen shuts off. The knowledge blogger inspects it with grave scientific focus while the technician shakes his head and points from the air conditioner to the frozen computer. She restarts the laptop; an abstract unbranded blocked-access symbol appears and she looks disappointed but thoughtful. Papers continue moving in the cold airflow. Preserve the same blogger, technician, studio, desk and laptop. Polished realistic Chinese mobile knowledge-video cinematography, coherent motion, one continuous shot. No legible generated text, subtitles, UI, brand, logo, watermark, violence, injury, blood, or malformed hands.",
+      "captions": [
+        { "start": 0, "end": 2.2, "text": "结论：电脑先冻关机了", "style": "result" },
+        { "start": 2.2, "end": 5, "text": "你要的是散热，不是把电脑送走", "style": "explanation" },
+        { "start": 5, "end": 8, "text": "关键数据在墙外", "style": "comment" }
+      ]
+    },
+    {
+      "id": "K101",
+      "channel": "knowledge",
+      "title": "梯子变成 VPN",
+      "reference": "assets/video-tests/K001/K001_keyframe_v1.png",
+      "keyframePrompt": "Edit the supplied K001 reference while preserving the exact same young woman blogger identity, cool-blue studio, desk and laptop. The laptop is now thawed and shows an abstract unbranded green connection symbol over an opened data page. A huge image-only pop-up featuring a sleek black recorder with a tiny camera lens covers most of the useful data. The blogger sits in the same position, initially hopeful but already noticing the absurd advertisement. No physical ladder or wall appears. Vertical 9:16, polished realistic Chinese mobile knowledge-video style, coherent people and object geometry, safe space above the bottom interaction area. No generated words, subtitles, recognizable real VPN interface, brands, logos, watermark, blood, injury, malformed hands, duplicate main character, or impossible props.",
+      "videoPrompt": "Continue naturally from this exact studio frame. The abstract green connection symbol activates and the blocked page opens, revealing useful charts for half a second. A large image-only recorder advertisement instantly expands over the data. The blogger leans forward with excitement, then freezes, slowly looks into the camera and reacts with exhausted disbelief. Keep the laptop interface unbranded and unreadable. Preserve the same blogger, studio, desk and computer. Polished realistic Chinese mobile knowledge-video cinematography, coherent motion, one continuous shot. No legible generated text, subtitles, real VPN branding, UI imitation, logo, watermark, violence, injury, blood, or malformed hands.",
+      "captions": [
+        { "start": 0, "end": 2.2, "text": "梯子连接成功", "style": "result" },
+        { "start": 2.2, "end": 5, "text": "知识区的梯子，当然是 VPN", "style": "explanation" },
+        { "start": 5, "end": 8, "text": "翻了半天，先精准投放我", "style": "comment" }
+      ]
+    },
+    {
+      "id": "X028",
+      "channel": "knowledge",
+      "title": "两位师傅把电脑冻成冰箱",
+      "reference": "assets/video-tests/K001/K001_keyframe_v1.png",
+      "keyframePrompt": "Edit the supplied K001 reference while preserving the exact same young woman blogger identity, cool-blue studio, desk and laptop. Two young air-conditioning technicians in distinct pale work shirts stand on the left and right, directing two temporary air-conditioning units toward the heavily frosted laptop. The blogger holds a cold bottled drink just removed from beside the laptop, treating the computer like a tiny refrigerator. Keep both technicians, both airflow sources and the laptop clearly separated and geometrically plausible. Vertical 9:16, polished realistic Chinese mobile knowledge-video style, coherent people and object geometry, safe space above the bottom interaction area. No generated text, subtitles, UI, brands, logos, watermark, blood, injury, malformed hands, duplicate blogger, extra limbs, or impossible frost geometry.",
+      "videoPrompt": "Continue naturally from this exact studio frame. Both technicians turn up their separate temporary air conditioners and cold airflow reaches the laptop from both sides. Frost thickens while the blogger checks for a benchmark, then gives up and removes a chilled drink from beside the laptop. The two technicians stop the airflow and begin trying to thaw the machine as the camera pulls back on the absurd digital refrigerator experiment. Preserve the same blogger, two technicians, studio, laptop and two airflow sources. Polished realistic Chinese mobile knowledge-video cinematography, coherent motion, one continuous shot. No text, subtitles, UI, brand, logo, watermark, violence, injury, blood, or malformed hands.",
+      "captions": [
+        { "start": 0, "end": 2.2, "text": "电脑没变快，变成冰箱了", "style": "result" },
+        { "start": 2.2, "end": 5, "text": "两位师傅，双空调对吹", "style": "explanation" },
+        { "start": 5, "end": 8, "text": "本期结论：能冷藏，不能跑分", "style": "comment" }
+      ]
+    }
+  ]
+}
