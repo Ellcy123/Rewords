@@ -1,0 +1,27 @@
+{
+  "name": "shuadainile-ai-server",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run src/tests"
+  },
+  "dependencies": {
+    "express": "5.2.1",
+    "express-rate-limit": "8.6.0",
+    "openai": "6.48.0",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@types/express": "5.0.6",
+    "@types/node": "26.1.1",
+    "@types/supertest": "7.2.1",
+    "supertest": "7.2.2",
+    "tsx": "4.23.1",
+    "typescript": "7.0.2",
+    "vitest": "4.1.10"
+  }
+}
