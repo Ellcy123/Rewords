@@ -11,9 +11,10 @@
 ## Global Constraints
 
 - 本计划只实现一名人物“阿曜”、一个人物任务、一组 PK 是/否节点、一条关系派生视频和一个 AI 来信结局。
-- 纵切片固定因果链为 `W001 + 梯子 → W101 + 空调师傅 → W300 → E001 → 私聊取证任务 → E201 小黄车录音笔 → W300 + 录音笔 → W301 + 投影服务 → W400 → AI 来信`。
+- 纵切片固定因果链为 `W001 + 梯子 → W101 + 空调师傅 → W300 与 E001 → 私聊取证任务 → E201 小黄车录音笔 → C001 + 录音笔 → C101 小黄车投影服务，同时 W300 + 录音笔 → W301 → W301 + 投影服务 → W400 → AI 来信`。`C001` 与 `W300` 的两次录音笔投放顺序可以互换。
 - `E201` 的录音笔同时满足“阿曜完整取证”与“新娘婚礼现场完整取证”；它不是 AI 临时生成的商品。
 - `K101` 只保留知识线索，不再售卖录音笔；录音笔唯一首次来源改为 `E201`。
+- 视频资产处理必须遵循 `刷到你了/14_MVP视频资产变更与制作清单_V0.1.md`：14 条旧视频复用，`K101` 改版，四个 E 节点新增。
 - AI 不得直接修改金币、背包、节点、任务阶段、关系证据或结局资格；它只能返回允许的枚举信号，确定性规则层决定是否采纳。
 - AI 不得新增人物、商品、任务、关系事实、共同记忆或主线结果。
 - PK 两个选择都能继续游戏；上票与不上票写入不同的隐藏关系证据，但不显示好感度数值。
@@ -32,13 +33,13 @@
 3. 玩家点进 `E001`，看到 PK 最后 30 秒，选择“上票”或“不上票”，随后收到阿曜主动私信。
 4. 玩家自由回复；阿曜的表达能反映选择差异，但人物任务始终是“找回未剪辑的完整证据并公开回应”。
 5. 最迟第三次有效对话后，解锁 `E201`；阿曜在视频中说明自己从开播前录到下播后，视频挂载录音笔。
-6. 玩家从 `E201` 购买录音笔，把它用于 `W300`，得到 `W301`；再从既有 `C101` 购买投影服务并完成 `W400`。
+6. 玩家从 `E201` 购买两支录音笔：一支用于 `C001` 生成 `C101` 并购买投影服务，一支用于 `W300` 得到 `W301`；两次投放顺序可互换，最终以投影服务完成 `W400`。
 7. 系统根据 PK 选择、聊天证据、任务完成和婚礼结果生成并保存一封阿曜来信；刷新后内容不变，玩家仍可继续给阿曜发消息。
 8. 关闭 AI 服务重复上述流程，使用兜底回复仍能完整通关。
 
 ## Delivery Order and Estimate
 
-按一名前端/全栈开发者估算，首个可试玩内部版本为 9–12 人日；视频素材生产不计入此估算。
+按一名前端/全栈开发者估算，首个可试玩内部版本为 9–12 人日；正式视频生产另计 2–4 个内容制作人日。动态分镜属于开发估算，正式视频必须在阶段 B 验证闭环后再投入。
 
 | 阶段 | 对应任务 | 可独立验收结果 | 估算 |
 | --- | --- | --- | --- |
@@ -166,6 +167,7 @@ interface VideoNode {
 - Modify: `刷到你了/web-prototype/src/content/media.ts`
 - Modify: `刷到你了/web-prototype/src/content/triggers.ts`
 - Modify: `刷到你了/web-prototype/src/content/validate.ts`
+- Modify: `刷到你了/web-prototype/src/tests/story-stage-media.test.tsx`
 - Test: `刷到你了/web-prototype/src/tests/moments.test.ts`
 - Test: `刷到你了/web-prototype/src/tests/relationship-task.test.ts`
 
@@ -196,14 +198,17 @@ interface RelationshipEvidence {
   - `E201`: 阿曜完整取证回应，唯一挂载 `recorder`，完整观看后通过 `onCompleteDiscoverItemId` 发现该物品。
 - [ ] **Step 4: Add the trigger** so first resolving `W101` with `technician` unlocks both `W300` and `E001`; do not require a fixed order between browsing `W300` and `E001`.
 - [ ] **Step 5: Mark all E nodes `mediaMode: 'storyboard'`** and change `MEDIA_BY_NODE_ID` to a partial map; validation permits missing MP4 only for explicit storyboard nodes.
-- [ ] **Step 6: Run** the two new tests plus `content.test.ts` and `trigger.test.ts`; expected exit 0.
-- [ ] **Step 7: Commit** `feat(relationship): add ayao evidence task content`.
+- [ ] **Step 6: Stop serving the old `K101_ltx_raw_v1.mp4`** because it visibly advertises the recorder. Until `K101_ltx_raw_v2.mp4` exists, mark `K101` as storyboard and render the revised “完整上下文/原始数据” beats from the asset specification.
+- [ ] **Step 7: Add media tests** proving E nodes never request nonexistent MP4 files, `K101` never falls back to v1, and all other 14 existing nodes retain their current media paths.
+- [ ] **Step 8: Run** the two new tests plus `content.test.ts`, `trigger.test.ts` and `story-stage-media.test.tsx`; expected exit 0.
+- [ ] **Step 9: Commit** `feat(relationship): add ayao evidence task content`.
 
 ### Task 3: 升级存档并让规则层掌握全部状态
 
 **Files:**
 - Modify: `刷到你了/web-prototype/src/engine/state.ts`
 - Modify: `刷到你了/web-prototype/src/engine/reducer.ts`
+- Modify: `刷到你了/web-prototype/src/destiny/CompletionOverlay.tsx`
 - Modify: `刷到你了/web-prototype/src/engine/persistence.ts`
 - Modify: `刷到你了/web-prototype/src/engine/selectors.ts`
 - Create: `刷到你了/web-prototype/src/messages/types.ts`
@@ -251,11 +256,12 @@ interface GameStateV4 {
 - 首次点赞 3 条不同视频：奖励 10，只能领取一次。
 - 首次收藏 2 条不同视频：奖励 10，只能领取一次。
 - 上票花费 30，不上票花费 0。
+- 主线固定需要两支录音笔：一支解锁 `C101`，一支解决 `W300`；经济测试不得只按一支计算。
 - 删除当前每次 `NODE_VIEWED` 自动 `+5` 的无限收入。
-- 保留一个仅在余额不足以购买当前必需主线物品时显示的“平台体验补助”；一次补到刚好可买，不公开第二货币，不可重复刷取。
+- 保留“平台体验补助”：仅在结算当前缺少且未解决依赖仍需要的物品时抵扣差额，不把补助加入余额。背包已有物品、购买可选误投物品或主线已不需要该物品时不补贴；错误投放消耗必要物品后可以再次补贴重新购买，但每次只完成一笔结算，无法套取可打赏金币。
 
-- [ ] **Step 1: Write failing economy tests** for unique-action counting, single claims, no repeated view income, conditional subsidy, and both PK routes retaining a complete-route solution.
-- [ ] **Step 2: Implement task catalog and ledger entries**; ledger reason enums are `main_reward | activity_reward | moment_spend | item_purchase | solvency_subsidy`.
+- [ ] **Step 1: Write failing economy tests** for unique-action counting, single claims, no repeated view income, checkout-only subsidy, and both PK routes retaining a complete-route solution that purchases two recorders plus the projector service. Prove subsidy never increases spendable balance, cannot buy optional stock, and can restore a required item consumed by a wrong branch.
+- [ ] **Step 2: Implement task catalog and ledger entries**; ledger reason enums are `main_reward | activity_reward | moment_spend | item_purchase | solvency_subsidy`. A subsidized purchase records gross price, player-paid amount and subsidy amount in the same transaction.
 - [ ] **Step 3: Show activity progress and claim buttons in “我的”** without exposing relationship evidence.
 - [ ] **Step 4: Run reducer and complete-route tests**; expected exit 0 for support and hold-back parameterized routes.
 - [ ] **Step 5: Commit** `feat(economy): add finite activity rewards and solvency guard`.
@@ -364,12 +370,14 @@ interface ChatResponse {
 - Test: `刷到你了/web-prototype/src/tests/complete-route.test.ts`
 - Test: `刷到你了/web-prototype/src/tests/ai-main-loop.test.tsx`
 
-- [ ] **Step 1: Write the failing end-to-end test** covering both PK choices and an AI-unavailable branch. Assert `E201` stays locked before task commitment, then unlocks once, recorder can only be discovered/bought there, and using it at `W300` yields `W301`.
+- [ ] **Step 1: Write the failing end-to-end test** covering both PK choices and an AI-unavailable branch. Assert `E201` stays locked before task commitment, then unlocks once, recorder can only be discovered/bought there, one recorder used at `C001` yields `C101`, a second used at `W300` yields `W301`, and either投放顺序 works.
 - [ ] **Step 2: Add the world-memory feedback** after `W300 + recorder`: `ayao_evidence_method_helped_bride`. Make it available to later chat and ending, but never let the model invent it before the trigger occurs.
 - [ ] **Step 3: Remove the recorder product from `K101`** while retaining a clue that complete context is stronger than a clipped fragment; confirm no dead product button remains.
 - [ ] **Step 4: Preserve the existing projector source at `C101`** and the established `W301 + projector → W400` completion.
-- [ ] **Step 5: Run the focused end-to-end, complete-route, content and trigger tests**; expected all parameterized routes pass.
-- [ ] **Step 6: Commit** `feat(loop): return relationship video item to bride story`.
+- [ ] **Step 5: Before playing `W301`, show a 1.5–2 second rewrite transition** reading `把录音笔送回握手发生之前`, so the player understands why a newly purchased device can record the earlier `W300` scene.
+- [ ] **Step 6: Preserve all six existing wrong-result videos.** Explicitly test that an extra recorder bought after `E201` can still trigger `W301 + recorder → X016` without consuming the player’s only solvency path.
+- [ ] **Step 7: Run the focused end-to-end, complete-route, content and trigger tests**; expected all parameterized routes pass.
+- [ ] **Step 8: Commit** `feat(loop): return relationship video item to bride story`.
 
 ### Task 9: 生成一次性 AI 情感结局并开放后日谈
 
@@ -426,8 +434,9 @@ interface EndingResponse {
   - `npm run typecheck` — exit 0.
   - `npm run build` — exit 0.
 - [ ] **Step 5: Manually play the Acceptance Scenario at mobile viewport 390×844** with AI server on and off. Record pass/fail for message scroll, keyboard overlap, unread badge, insufficient-coins state, E201 product purchase, ending persistence and post-ending chat.
-- [ ] **Step 6: Run** `git diff --check` and `git status --short`; expected no whitespace errors and only intended files.
-- [ ] **Step 7: Commit** `docs: add ai relationship loop runbook`.
+- [ ] **Step 6: Run the video asset gate** from `刷到你了/14_MVP视频资产变更与制作清单_V0.1.md`: confirm 14 existing videos still play, old `K101_v1` is never requested, five revised/new nodes use marked storyboards or approved new media, E101/E102 branch correctly, and the rewrite transition appears before W301.
+- [ ] **Step 7: Run** `git diff --check` and `git status --short`; expected no whitespace errors and only intended files.
+- [ ] **Step 8: Commit** `docs: add ai relationship loop runbook`.
 
 ---
 
@@ -444,6 +453,7 @@ The MVP is ready for user testing only when all statements below are true:
 - With the AI server offline, the same complete route and ending still work.
 - With the AI server online, browser bundles and network payloads contain no OpenAI key.
 - Ending reload is idempotent and post-ending chat does not reopen or mutate the finished mainline.
+- No runtime path requests the contradictory `K101_ltx_raw_v1.mp4`; revised/new nodes satisfy the asset gate in document 14.
 
 ## Deliberately Deferred After MVP
 
