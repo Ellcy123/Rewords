@@ -1,33 +1,29 @@
 import OpenAI from 'openai'
+import type { Response, ResponseCreateParamsNonStreaming } from 'openai/resources/responses/responses'
 import type { ChatModelClient, StructuredResponseRequest } from './chatService.js'
 
-interface ResponsesApi {
-  create(request: {
-    model: string
-    instructions: string
-    input: string
-    text: {
-      format: {
-        type: 'json_schema'
-        name: string
-        strict: true
-        schema: Record<string, unknown>
-      }
-    }
-  }): Promise<{ output_text: string }>
+export interface OpenAIResponsesClient {
+  responses: {
+    create(request: ResponseCreateParamsNonStreaming): Promise<Pick<Response, 'output_text'>>
+  }
 }
 
-export interface OpenAIResponsesClient {
-  responses: ResponsesApi
+function createSdkResponsesClient(apiKey: string): OpenAIResponsesClient {
+  const client = new OpenAI({ apiKey })
+  return {
+    responses: {
+      create: request => client.responses.create(request),
+    },
+  }
 }
 
 export function createOpenAIChatModel(
   apiKey: string,
-  client: OpenAIResponsesClient = new OpenAI({ apiKey }) as unknown as OpenAIResponsesClient,
+  client: OpenAIResponsesClient = createSdkResponsesClient(apiKey),
 ): ChatModelClient {
   return {
     async generate(request: StructuredResponseRequest): Promise<string> {
-      const response = await client.responses.create({
+      const responseRequest = {
         model: request.model,
         instructions: request.instructions,
         input: request.input,
@@ -39,7 +35,8 @@ export function createOpenAIChatModel(
             schema: request.schema,
           },
         },
-      })
+      } satisfies ResponseCreateParamsNonStreaming
+      const response = await client.responses.create(responseRequest)
       return response.output_text
     },
   }

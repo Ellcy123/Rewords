@@ -1,13 +1,19 @@
 import { z } from 'zod'
 import { buildAllowedContext } from './allowedContext.js'
-import { ChatResponseJsonSchema, ChatResponseSchema, type ChatRequest, type ChatResponse } from './contracts.js'
+import {
+  ChatResponseJsonSchema,
+  parseChatResponseForRequest,
+  type ChatRequest,
+  type ChatResponse,
+} from './contracts.js'
 import { createYanxinPrompt } from './prompts/yanxin.js'
+import type { ResponseFormatTextJSONSchemaConfig } from 'openai/resources/responses/responses'
 
 export interface StructuredResponseRequest {
   model: string
   instructions: string
   input: string
-  schema: Record<string, unknown>
+  schema: ResponseFormatTextJSONSchemaConfig['schema']
 }
 
 export interface ChatModelClient {
@@ -36,9 +42,9 @@ async function withTimeout<T>(operation: Promise<T>, timeoutMs: number): Promise
   }
 }
 
-function parseProviderOutput(output: unknown): ChatResponse {
+function parseProviderOutput(request: ChatRequest, output: unknown): ChatResponse {
   const candidate = typeof output === 'string' ? JSON.parse(output) : output
-  return ChatResponseSchema.parse(candidate)
+  return parseChatResponseForRequest(request, candidate)
 }
 
 export async function generateYanxinChat(
@@ -58,7 +64,7 @@ export async function generateYanxinChat(
       }),
       schema: ChatResponseJsonSchema,
     }), timeoutMs)
-    return parseProviderOutput(output)
+    return parseProviderOutput(request, output)
   } catch (error) {
     if (error instanceof ProviderUnavailableError) throw error
     if (error instanceof z.ZodError || error instanceof SyntaxError) {
