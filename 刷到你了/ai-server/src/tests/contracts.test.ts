@@ -73,20 +73,44 @@ describe('chat contracts', () => {
     }).success).toBe(false)
   })
 
+  it('accepts Script=Han characters including 〇 and extension-plane Han', () => {
+    expect(ChatResponseSchema.safeParse({
+      replyText: '〇',
+      taskSignals: [],
+      tone: 'serious',
+    }).success).toBe(true)
+    expect(ChatResponseSchema.safeParse({
+      replyText: nonBmpHan,
+      taskSignals: [],
+      tone: 'serious',
+    }).success).toBe(true)
+  })
+
   it.each([
     ['coin grant', '我已经给你增加一百金币。'],
+    ['coin transfer', '我转你一百金币。'],
     ['short coin gift', '我送你一百金币。'],
     ['coin deduction', '我已经为你扣除三十金币。'],
     ['direct video unlock', '视频已经为你解锁。'],
+    ['directly opened video', '我给你开了视频。'],
     ['node id', 'E201已经开放。'],
     ['invented drone product', '我送你一架无人机。'],
+    ['non-whitelisted product sale', '我卖给你一部手机。'],
   ])('rejects a reply that makes a %s claim', (_name, replyText) => {
     expect(ChatResponseSchema.safeParse({ replyText, taskSignals: [], tone: 'serious' }).success).toBe(false)
   })
 
-  it('allows natural discussion of coins without a state-change claim', () => {
+  it('rejects all replies that mention coins, including natural discussion', () => {
     expect(ChatResponseSchema.safeParse({
       replyText: '金币够不够先自己算清楚。',
+      taskSignals: [],
+      tone: 'serious',
+    }).success).toBe(false)
+  })
+
+  it('allows an explicit recorder in an otherwise transactional reply', () => {
+    expect(ChatResponseSchema.safeParse({
+      replyText: '我卖给你一支录音笔。',
       taskSignals: [],
       tone: 'serious',
     }).success).toBe(true)
@@ -117,6 +141,12 @@ describe('chat contracts', () => {
     ['hold-back choice with support memory', { ...validRequest, momentChoice: 'hold_back', allowedMemoryIds: ['yanxin_pk_choice_support'] }],
     ['both PK memories', { ...validRequest, allowedMemoryIds: ['yanxin_pk_choice_support', 'yanxin_pk_choice_hold_back'] }],
     ['ending without wedding completion', { ...validRequest, taskStage: 'published', postEnding: true }],
+    ['ending outside published stage', {
+      ...validRequest,
+      taskStage: 'locked',
+      allowedMemoryIds: ['bride_wedding_result_completed'],
+      postEnding: true,
+    }],
     ['evidence completion before published', { ...validRequest, taskStage: 'committed', allowedMemoryIds: ['yanxin_evidence_task_completed'] }],
     ['bride-helped memory without wedding completion', { ...validRequest, taskStage: 'published', allowedMemoryIds: ['yanxin_evidence_method_helped_bride'] }],
   ])('rejects inconsistent browser-authoritative context: %s', (_name, request) => {

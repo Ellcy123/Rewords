@@ -20,9 +20,10 @@ export const AllowedMemoryIds = [
 const AllowedMemoryIdSchema = z.enum(AllowedMemoryIds)
 
 const ChinesePunctuation = new Set(Array.from('，。！？、；：…（）《》“”‘’—'))
+const HanCharacterPattern = /^\p{Script=Han}$/u
 const NodeIdPattern = /[A-Z]\d{3}/i
-const CoinStateChangePattern = /(?:赠送|送给|送上|送|增加|加上|扣除|扣掉|减少|发放|奖励|退还).{0,12}金币|金币.{0,12}(?:已|已经|会|将|被|为你|给你).{0,8}(?:增加|加上|扣除|扣掉|减少|发放|赠送|送给|送|奖励|退还)/
-const DirectUnlockClaimPattern = /(?:节点|视频|内容|入口).{0,12}(?:已|已经|会|将|被|为你|给你).{0,8}(?:解锁|开放|开启|打开)|(?:我|已|已经|会|将|现在|马上|为你|给你).{0,12}(?:解锁|开放|开启|打开).{0,12}(?:节点|视频|内容|入口)/
+const DirectContentAccessClaimPattern = /(?:节点|视频|内容|入口).{0,12}(?:开(?:通|放|启|了)?|打开|解锁)|(?:我|为你|给你|已|已经|会|将|现在|马上).{0,12}(?:开(?:通|放|启|了)?|打开|解锁).{0,12}(?:节点|视频|内容|入口)/
+const TransactionOrGiftPattern = /购买|出售|卖给|送给|送你|赠送|换成|商品/
 
 function codePointLength(value: string): number {
   return Array.from(value).length
@@ -45,11 +46,7 @@ function codePointString(minimum: number, maximum: number, label: string) {
 }
 
 function isHanCharacter(character: string): boolean {
-  const codePoint = character.codePointAt(0) ?? 0
-  return (codePoint >= 0x3400 && codePoint <= 0x4DBF)
-    || (codePoint >= 0x4E00 && codePoint <= 0x9FFF)
-    || (codePoint >= 0xF900 && codePoint <= 0xFAFF)
-    || (codePoint >= 0x20000 && codePoint <= 0x2EBEF)
+  return HanCharacterPattern.test(character)
 }
 
 function isChineseReplyText(value: string): boolean {
@@ -57,9 +54,10 @@ function isChineseReplyText(value: string): boolean {
 }
 
 function isForbiddenDomainClaim(value: string): boolean {
-  return NodeIdPattern.test(value)
-    || CoinStateChangePattern.test(value)
-    || DirectUnlockClaimPattern.test(value)
+  return value.includes('金币')
+    || NodeIdPattern.test(value)
+    || DirectContentAccessClaimPattern.test(value)
+    || (TransactionOrGiftPattern.test(value) && !value.includes('录音笔'))
     || value.includes('无人机')
 }
 
@@ -100,6 +98,9 @@ export const ChatRequestSchema = z.object({
   }
   if (hasSupportChoice && hasHoldBackChoice) {
     addIssue(['allowedMemoryIds'], 'both PK choice memories cannot be present')
+  }
+  if (request.postEnding && request.taskStage !== 'published') {
+    addIssue(['taskStage'], 'postEnding requires published stage')
   }
   if (request.postEnding && !hasWeddingCompletion) {
     addIssue(['allowedMemoryIds'], 'postEnding requires wedding completion memory')
