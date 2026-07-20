@@ -65,6 +65,9 @@ export function validateContent(catalog: ContentCatalog): string[] {
   for (const trigger of catalog.triggers) {
     if (!nodeIds.has(trigger.targetNodeId)) errors.push(`unknown target node: ${trigger.targetNodeId}`)
     if (!nodeIds.has(trigger.resultNodeId)) errors.push(`unknown result node: ${trigger.resultNodeId}`)
+    for (const nodeId of trigger.additionalUnlockNodeIds ?? []) {
+      if (!nodeIds.has(nodeId)) errors.push(`unknown additional unlock node: ${nodeId}`)
+    }
     if (!itemIds.has(trigger.itemId)) errors.push(`unknown trigger item: ${trigger.itemId}`)
     if (trigger.discoverItemId && !itemIds.has(trigger.discoverItemId)) {
       errors.push(`unknown discovered item: ${trigger.discoverItemId}`)

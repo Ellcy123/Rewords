@@ -70,18 +70,21 @@ describe('validateContent', () => {
   })
 
   it('rejects duplicate node ids and dangling trigger references', () => {
+    const trigger = fakeTrigger('missing', 'ladder', 'also-missing')
+    trigger.additionalUnlockNodeIds = ['missing-extra' as NodeId]
     const errors = validateContent({
       items: [],
       nodes: [fakeNode('W001'), fakeNode('W001')],
-      triggers: [fakeTrigger('missing', 'ladder', 'also-missing')],
+      triggers: [trigger],
     })
     expect(errors).toContain('duplicate node id: W001')
     expect(errors).toContain('unknown target node: missing')
     expect(errors).toContain('unknown result node: also-missing')
+    expect(errors).toContain('unknown additional unlock node: missing-extra')
   })
 
   it('accepts the complete prototype catalog', () => {
-    expect(NODES).toHaveLength(15)
+    expect(NODES).toHaveLength(19)
     expect(ITEMS.map(item => item.id)).toEqual(['ladder', 'technician', 'recorder', 'projector'])
     expect(validateContent({ items: ITEMS, nodes: NODES, triggers: TRIGGERS })).toEqual([])
   })
@@ -95,14 +98,19 @@ describe('validateContent', () => {
   })
 
   it('configures browser media for every demo node', () => {
-    expect(NODES).toHaveLength(15)
-    for (const node of NODES) {
+    expect(NODES).toHaveLength(19)
+    const videoNodes = NODES.filter(node => node.mediaMode === 'video')
+    const storyboardNodes = NODES.filter(node => node.mediaMode === 'storyboard')
+    expect(videoNodes).toHaveLength(14)
+    expect(storyboardNodes.map(node => node.id)).toEqual(['K101', 'E001', 'E101', 'E102', 'E201'])
+    for (const node of videoNodes) {
       expect(node.media?.src).toBe(`/media/${node.id}_ltx_raw_v1.mp4`)
       expect(node.media?.poster).toBe(`/media/${node.id}_thumbnail_v1.jpg`)
       expect(node.media?.captions).toHaveLength(3)
       expect(node.media?.captions[0].start).toBe(0)
       expect(node.media?.captions.at(-1)?.end).toBe(8)
     }
+    for (const node of storyboardNodes) expect(node.media).toBeUndefined()
   })
 
   it('rejects nodes without media', () => {

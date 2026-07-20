@@ -78,6 +78,7 @@ export interface TriggerDefinition {
   resultNodeId: NodeId
   kind: ResultKind
   discoverItemId?: ItemId
+  additionalUnlockNodeIds?: NodeId[]
 }
 
 export interface ContentCatalog {

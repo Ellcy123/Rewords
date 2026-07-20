@@ -33,13 +33,21 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       const interactiveResult = !wrong && NODE_BY_ID[trigger.resultNodeId].selectableItemIds.length > 0
       const resolvedNodeIds = wrong ? state.resolvedNodeIds : appendUnique(state.resolvedNodeIds, action.targetNodeId)
       const activeFeed = wrong ? state.feedNodeIds : state.feedNodeIds.filter(id => id !== action.targetNodeId)
+      const unlockedNodeIds = (trigger.additionalUnlockNodeIds ?? []).reduce(
+        (list, id) => appendUnique(list, id),
+        appendUnique(state.unlockedNodeIds, trigger.resultNodeId),
+      )
+      const feedNodeIds = (trigger.additionalUnlockNodeIds ?? []).reduce(
+        (list, id) => appendUnique(list, id),
+        wrong ? state.feedNodeIds : appendUnique(activeFeed, trigger.resultNodeId),
+      )
       return {
         ...state,
         inventory: { ...state.inventory, [action.itemId]: state.inventory[action.itemId] - 1 },
         triggeredKeys: [...state.triggeredKeys, key],
         resolvedNodeIds,
-        unlockedNodeIds: appendUnique(state.unlockedNodeIds, trigger.resultNodeId),
-        feedNodeIds: wrong ? state.feedNodeIds : appendUnique(activeFeed, trigger.resultNodeId),
+        unlockedNodeIds,
+        feedNodeIds,
         destinyNodeIds: wrong ? appendUnique(state.destinyNodeIds, trigger.resultNodeId) : state.destinyNodeIds,
         discoveredItemIds: trigger.discoverItemId ? appendUnique(state.discoveredItemIds, trigger.discoverItemId) : state.discoveredItemIds,
         currentNodeId: interactiveResult ? trigger.resultNodeId : state.currentNodeId,

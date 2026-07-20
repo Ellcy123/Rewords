@@ -47,6 +47,8 @@ describe('game reducer', () => {
     expect(result.currentNodeId).toBe('W300')
     expect(result.pendingResultNodeId).toBeNull()
     expect(result.feedNodeIds).toContain('W300')
+    expect(result.unlockedNodeIds).toContain('E001')
+    expect(result.feedNodeIds).toContain('E001')
   })
 
   it('completes on W400 result', () => {
