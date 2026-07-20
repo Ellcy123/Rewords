@@ -13,6 +13,7 @@
 - 本计划只实现一名人物“炎鑫”、一个人物任务、一组 PK 是/否节点、一条关系派生视频和一个 AI 来信结局。
 - 纵切片固定因果链为 `W001 + 梯子 → W101 + 空调师傅 → W300 与 E001 → 私聊取证任务 → E201 小黄车录音笔 → C001 + 录音笔 → C101 小黄车投影服务，同时 W300 + 录音笔 → W301 → W301 + 投影服务 → W400 → AI 来信`。`C001` 与 `W300` 的两次录音笔投放顺序可以互换。
 - `E201` 的录音笔同时满足“炎鑫完整取证”与“新娘婚礼现场完整取证”；它不是 AI 临时生成的商品。
+- 两支录音笔必须在 `E201` 小黄车中分别购买，每支 30，产生两笔独立交易；不得改成一次购买的双支套装。
 - `K101` 只保留知识线索，不再售卖录音笔；录音笔唯一首次来源改为 `E201`。
 - 视频资产处理必须遵循 `刷到你了/14_MVP视频资产变更与制作清单_V0.1.md`：14 条旧视频复用，`K101` 改版，四个 E 节点新增。
 - AI 不得直接修改金币、背包、节点、任务阶段、关系证据或结局资格；它只能返回允许的枚举信号，确定性规则层决定是否采纳。
@@ -20,6 +21,8 @@
 - PK 两个选择都能继续游戏；上票与不上票写入不同的隐藏关系证据，但不显示好感度数值。
 - 聊天不是关键词解谜。连续两轮表达与任务相关但模型未返回有效信号时，规则层自动推进到下一任务阶段。
 - AI 服务失败、达到 8 秒超时、限流或结构化输出校验失败后，必须在 1 秒内切换本地角色兜底；主线永不依赖一次成功的模型请求。
+- MVP 私聊采用最小软时间：AI 回复在准备完成后轻微延迟显示，人物任务有进展时由炎鑫主动发一条报备；不显示在线、直播中、办事中、休息中、输入中、倒计时或复杂日程。
+- 软时间不得形成现实时间门槛。普通回复最晚在请求完成后 2 秒内显示，主动报备最晚在生成后 4 秒内显示；关闭页面期间到期的消息在下次启动时立即补发，主线仍可连续测试。
 - OpenAI API key 只存在于 `ai-server` 环境变量，绝不写入 Vite 变量、浏览器代码、日志、存档或测试快照。
 - Demo 可以信任浏览器提交的游戏上下文，不提供商业发行级反作弊；服务端仍会按 schema 白名单裁剪上下文和输出。
 - 结束来信只生成一次并持久化；刷新页面不得重生成。结局后聊天继续使用 `postEnding: true` 的上下文，但不会再解锁主线内容。
@@ -30,21 +33,21 @@
 
 1. 新存档进入 `W001`，按现有玩法购买梯子并正确改命，解锁 `W101`。
 2. 使用空调师傅解决 `W101` 后，`W300` 与娱乐节点 `E001` 同时进入推荐流。
-3. 玩家点进 `E001`，看到 PK 最后 30 秒，选择“上票”或“不上票”，随后收到炎鑫主动私信。
-4. 玩家自由回复；炎鑫的表达能反映选择差异，但人物任务始终是“找回未剪辑的完整证据并公开回应”。
-5. 最迟第三次有效对话后，解锁 `E201`；炎鑫在视频中说明自己从开播前录到下播后，视频挂载录音笔。
-6. 玩家从 `E201` 购买两支录音笔：一支用于 `C001` 生成 `C101` 并购买投影服务，一支用于 `W300` 得到 `W301`；两次投放顺序可互换，最终以投影服务完成 `W400`。
+3. 玩家点进 `E001`，看到 PK 最后 30 秒，选择“上票”或“不上票”；炎鑫的首条主动私信经过轻微延迟到达，不显示人物状态或倒计时。
+4. 玩家自由回复；回复经过轻微延迟出现，炎鑫的表达能反映选择差异，但人物任务始终是“找回未剪辑的完整证据并公开回应”。
+5. 最迟第三次有效对话后，炎鑫在玩家没有继续追问时主动报备设备测试进展；报备送达时解锁 `E201`，视频说明自己从开播前录到下播后并挂载录音笔。
+6. 玩家在 `E201` 完成两次独立的 30 金币购买：一支用于 `C001` 生成 `C101` 并购买投影服务，一支用于 `W300` 得到 `W301`；两次投放顺序可互换，最终以投影服务完成 `W400`。
 7. 系统根据 PK 选择、聊天证据、任务完成和婚礼结果生成并保存一封炎鑫来信；刷新后内容不变，玩家仍可继续给炎鑫发消息。
 8. 关闭 AI 服务重复上述流程，使用兜底回复仍能完整通关。
 
 ## Delivery Order and Estimate
 
-按一名前端/全栈开发者估算，首个可试玩内部版本为 9–12 人日；正式视频生产另计 2–4 个内容制作人日。动态分镜属于开发估算，正式视频必须在阶段 B 验证闭环后再投入。
+按一名前端/全栈开发者估算，首个可试玩内部版本为 10–13 人日；正式视频生产另计 2–4 个内容制作人日。动态分镜属于开发估算，正式视频必须在阶段 B 验证闭环后再投入。
 
 | 阶段 | 对应任务 | 可独立验收结果 | 估算 |
 | --- | --- | --- | --- |
 | A. 确定性骨架 | Task 1–4 | 不接 AI 也能跑通 PK、人物任务、E201、录音笔和经济保底 | 3–4 人日 |
-| B. 可玩界面 | Task 5–6 | 可从 PK 进入私信，使用人工回复完成关系视频解锁 | 2 人日 |
+| B. 可玩界面 | Task 5–6 | 可从 PK 进入私信，软时间投递与主动报备可驱动关系视频解锁 | 3 人日 |
 | C. 原生 AI | Task 7 | 服务端安全调用模型，人物自由回复并返回受控任务信号 | 2–3 人日 |
 | D. 结局与回归 | Task 8–10 | 主线回收、一次性 AI 来信、AI 开关双路线全部通过 | 2–3 人日 |
 
@@ -63,6 +66,7 @@
 - `刷到你了/web-prototype/src/messages/types.ts`
 - `刷到你了/web-prototype/src/messages/character.ts`
 - `刷到你了/web-prototype/src/messages/fallbackReplies.ts`
+- `刷到你了/web-prototype/src/messages/delivery.ts`
 - `刷到你了/web-prototype/src/messages/aiClient.ts`
 - `刷到你了/web-prototype/src/messages/MessageSheet.tsx`
 - `刷到你了/web-prototype/src/relationship/taskEngine.ts`
@@ -72,6 +76,7 @@
 - `刷到你了/web-prototype/src/styles/relationship.css`
 - `刷到你了/web-prototype/src/tests/moments.test.ts`
 - `刷到你了/web-prototype/src/tests/relationship-task.test.ts`
+- `刷到你了/web-prototype/src/tests/message-delivery.test.ts`
 - `刷到你了/web-prototype/src/tests/ai-client.test.ts`
 - `刷到你了/web-prototype/src/tests/message-flow.test.tsx`
 - `刷到你了/web-prototype/src/tests/ending.test.ts`
@@ -211,9 +216,12 @@ interface RelationshipEvidence {
 - Modify: `刷到你了/web-prototype/src/destiny/CompletionOverlay.tsx`
 - Modify: `刷到你了/web-prototype/src/engine/persistence.ts`
 - Modify: `刷到你了/web-prototype/src/engine/selectors.ts`
+- Modify: `刷到你了/web-prototype/src/game/GameProvider.tsx`
 - Create: `刷到你了/web-prototype/src/messages/types.ts`
+- Create: `刷到你了/web-prototype/src/messages/delivery.ts`
 - Test: `刷到你了/web-prototype/src/tests/reducer.test.ts`
 - Test: `刷到你了/web-prototype/src/tests/persistence.test.ts`
+- Test: `刷到你了/web-prototype/src/tests/message-delivery.test.ts`
 
 **State additions:**
 
@@ -224,19 +232,34 @@ interface GameStateV4 {
   characterTasks: Record<CharacterTaskId, { stage: CharacterTaskStage; relevantTurns: number }>
   resolvedMomentIds: MomentId[]
   messages: ChatMessage[]
+  pendingChatDeliveries: PendingChatDelivery[]
   sharedMemories: SharedMemory[]
   claimedActivityTaskIds: ActivityTaskId[]
   ledger: EconomyEntry[]
   ending: null | { id: string; letter: string; generatedAt: string; futureClaimId: string }
 }
+
+type ChatDeliveryKind = 'reply' | 'proactive_report'
+
+interface PendingChatDelivery {
+  id: string
+  kind: ChatDeliveryKind
+  message: ChatMessage
+  deliverAt: number
+  taskSignals: TaskSignal[]
+  effect: 'none' | 'unlock_e201'
+}
 ```
 
-- [ ] **Step 1: Add failing migration tests** loading an exact version-3 fixture and asserting all version-4 fields are initialized without changing coins, inventory, current node, resolved nodes or completion.
-- [ ] **Step 2: Add failing reducer tests** for `MOMENT_RESOLVED`, `CHAT_USER_SENT`, `CHAT_REPLY_RECEIVED`, `TASK_SIGNAL_RECEIVED`, `ACTIVITY_TASK_CLAIMED`, `ENDING_SAVED`; repeat each idempotent action and assert no duplicate effects.
-- [ ] **Step 3: Implement version-4 state and migration**; reject malformed stored arrays field-by-field and fall back only that field, not the whole save.
-- [ ] **Step 4: Add selectors** `selectCanOpenYanxinChat`, `selectYanxinTaskStage`, `selectCanViewRelationshipVideo`, `selectCanGenerateEnding`, `selectPostEndingChat`.
-- [ ] **Step 5: Run reducer and persistence tests**; expected exit 0.
-- [ ] **Step 6: Commit** `feat(state): persist relationship loop and ending`.
+- [ ] **Step 1: Add failing migration tests** loading an exact version-3 fixture and asserting all version-4 fields, including `pendingChatDeliveries: []`, are initialized without changing coins, inventory, current node, resolved nodes or completion.
+- [ ] **Step 2: Add failing reducer tests** for `MOMENT_RESOLVED`, `CHAT_USER_SENT`, `CHAT_DELIVERY_SCHEDULED`, `CHAT_DUE_DELIVERIES_FLUSHED`, `TASK_SIGNAL_RECEIVED`, `ACTIVITY_TASK_CLAIMED`, `ENDING_SAVED`; repeat each idempotent action and assert no duplicate messages, effects or unlocks.
+- [ ] **Step 3: Write failing delivery tests** for `scheduleChatDelivery` and `collectDueChatDeliveries`. Use injected timestamps and random values; assert a reply targets 800–2000 ms after its request began but never appears before `readyAt`, a proactive report targets 1500–4000 ms after creation, future deliveries remain pending, and overdue deliveries flush immediately after hydration.
+- [ ] **Step 4: Implement `messages/delivery.ts`** exporting `scheduleChatDelivery(input, random): PendingChatDelivery` and `collectDueChatDeliveries(deliveries, now): { due; pending }`. `input` contains `{ id, kind, message, createdAt, readyAt, taskSignals, effect }`; replies use `max(readyAt, createdAt + sampledReplyDelay)`, proactive reports use `createdAt + sampledReportDelay`. Store epoch milliseconds so local persistence survives reloads; never expose `deliverAt` through UI selectors.
+- [ ] **Step 5: Implement version-4 state and migration**; reject malformed stored arrays field-by-field and fall back only that field, not the whole save.
+- [ ] **Step 6: In `GameProvider`, flush due deliveries on hydration and every 250 ms while the app is open.** Delivery atomically appends the message, applies its whitelisted task signals, and applies `unlock_e201` at most once.
+- [ ] **Step 7: Add selectors** `selectCanOpenYanxinChat`, `selectYanxinTaskStage`, `selectCanViewRelationshipVideo`, `selectCanGenerateEnding`, `selectPostEndingChat`; none returns an online state, status label, countdown or delivery timestamp.
+- [ ] **Step 8: Run reducer, persistence and message-delivery tests**; expected exit 0 with fake timers and no real sleeps.
+- [ ] **Step 9: Commit** `feat(state): persist relationship loop and soft-time messages`.
 
 ### Task 4: 重做试玩经济与稳定赚币任务
 
@@ -256,7 +279,7 @@ interface GameStateV4 {
 - 首次点赞 3 条不同视频：奖励 10，只能领取一次。
 - 首次收藏 2 条不同视频：奖励 10，只能领取一次。
 - 上票花费 30，不上票花费 0。
-- 主线固定需要两支录音笔：一支解锁 `C101`，一支解决 `W300`；经济测试不得只按一支计算。
+- 主线固定需要两支录音笔：一支解锁 `C101`，一支解决 `W300`。玩家必须在 `E201` 以每支 30 金币分别购买两次，经济测试不得按套装或单笔交易计算。
 - 删除当前每次 `NODE_VIEWED` 自动 `+5` 的无限收入。
 - 保留“平台体验补助”：仅在结算当前缺少且未解决依赖仍需要的物品时抵扣差额，不把补助加入余额。背包已有物品、购买可选误投物品或主线已不需要该物品时不补贴；错误投放消耗必要物品后可以再次补贴重新购买，但每次只完成一笔结算，无法套取可打赏金币。
 
@@ -289,11 +312,12 @@ interface GameStateV4 {
 - `support` 后首条主动消息体现“他看见了玩家在关键时刻站出来”，同时表达不希望玩家勉强花钱。
 - `hold_back` 后首条主动消息体现“他注意到玩家没有跟着场面上头”，不会指责或冷处理。
 - 两条路线都自然带出恶意剪辑和寻找完整证据，不使用“任务已解锁”“好感度增加”等游戏化措辞。
+- 设备测试完成后的基础主动报备为：“我试完了，完整那段也发了。你之前说得对，光留最后十秒没用。”该消息由确定性内容层提供，不为报备额外调用模型；模型只影响此前对话如何走到此处。
 
 - [ ] **Step 1: Write the failing UI flow test** from `E001` to choice result to unread-message badge to opening chat; assert no relationship number appears.
 - [ ] **Step 2: Implement `MomentSheet`** with “上票帮他守住最后 30 秒（30）”和“先不跟着场面上头”两个动作，余额不足只禁用上票。
 - [ ] **Step 3: Implement messages navigation** as a new bottom-tab entry; move the existing destiny/records affordance under Profile to keep five primary tabs.
-- [ ] **Step 4: Implement deterministic first contact and three stage-aware fallback replies** in炎鑫语气；fallback returns the same enum signals used by real AI.
+- [ ] **Step 4: Implement deterministic first contact, the fixed progress report, and three stage-aware fallback replies** in炎鑫语气；fallback returns the same enum signals used by real AI. Resolving the PK schedules the first contact as `proactive_report` instead of appending it immediately; reaching `committed` makes the fixed report available to Task 6 for scheduling.
 - [ ] **Step 5: Render E nodes with storyboard styling** and render `E201` product action through the existing product sheet.
 - [ ] **Step 6: Run message-flow, video-card, video-feed, app-flow and tutorial tests**; expected exit 0.
 - [ ] **Step 7: Commit** `feat(ui): connect pk moment to private chat`.
@@ -303,8 +327,10 @@ interface GameStateV4 {
 **Files:**
 - Create: `刷到你了/web-prototype/src/messages/aiClient.ts`
 - Modify: `刷到你了/web-prototype/src/messages/MessageSheet.tsx`
+- Modify: `刷到你了/web-prototype/src/relationship/taskEngine.ts`
 - Modify: `刷到你了/web-prototype/vite.config.ts`
 - Test: `刷到你了/web-prototype/src/tests/ai-client.test.ts`
+- Test: `刷到你了/web-prototype/src/tests/message-delivery.test.ts`
 
 **Browser contract:**
 
@@ -328,11 +354,13 @@ interface ChatResponse {
 
 - [ ] **Step 1: Write failing client tests** for success, abort at 8 seconds, non-2xx response, invalid JSON and invalid signal; all failures must return a typed failure rather than throw into React.
 - [ ] **Step 2: Implement `requestYanxinReply`** calling `POST /api/chat` with `AbortController`; cap recent history at 12 messages and user text at 300 Chinese characters.
-- [ ] **Step 3: In `MessageSheet`, append the user message immediately**, show typing status, then append AI or fallback response. Disable only the send button during the request, not navigation.
-- [ ] **Step 4: Feed returned task signals through `taskEngine`**, never dispatch a node unlock directly from the HTTP response.
-- [ ] **Step 5: Add Vite dev proxy** `/api -> http://127.0.0.1:8787`; do not introduce `VITE_OPENAI_API_KEY`.
-- [ ] **Step 6: Run ai-client and message-flow tests**; expected exit 0.
-- [ ] **Step 7: Commit** `feat(ai): add safe chat adapter with fallback`.
+- [ ] **Step 3: In `MessageSheet`, append the user message immediately and disable only the send button during the request.** Do not render “输入中”、online state, character status, countdown or delivery time.
+- [ ] **Step 4: When AI or fallback output is ready, schedule it as a `reply` delivery** rather than appending immediately. Network latency counts toward the soft delay: set the delivery base to request start and never add more than 2 seconds after a response is ready.
+- [ ] **Step 5: Feed task signals through `taskEngine` only when the scheduled reply is delivered**, never dispatch a node unlock directly from the HTTP response. When the task reaches `committed`, schedule one `proactive_report` with `effect: 'unlock_e201'`; its arrival unlocks E201 even if the player has left the chat tab.
+- [ ] **Step 6: Add fake-timer tests** proving reply delay, fallback delay, one proactive report, background-tab navigation, reload catch-up, no duplicate E201 unlock and absence of status/countdown text.
+- [ ] **Step 7: Add Vite dev proxy** `/api -> http://127.0.0.1:8787`; do not introduce `VITE_OPENAI_API_KEY`.
+- [ ] **Step 8: Run ai-client, message-delivery and message-flow tests**; expected exit 0 with no real sleeps.
+- [ ] **Step 9: Commit** `feat(ai): add safe chat adapter and soft-time delivery`.
 
 ### Task 7: 实现服务端角色生成与结构化信号
 
@@ -433,7 +461,7 @@ interface EndingResponse {
   - `npm test` — all tests pass without live API calls.
   - `npm run typecheck` — exit 0.
   - `npm run build` — exit 0.
-- [ ] **Step 5: Manually play the Acceptance Scenario at mobile viewport 390×844** with AI server on and off. Record pass/fail for message scroll, keyboard overlap, unread badge, insufficient-coins state, E201 product purchase, ending persistence and post-ending chat.
+- [ ] **Step 5: Manually play the Acceptance Scenario at mobile viewport 390×844** with AI server on and off. Record pass/fail for message scroll, keyboard overlap, unread badge, slight reply delay, proactive report after leaving chat, reload catch-up, absence of status/countdown UI, two separate E201 recorder purchases, insufficient-coins state, ending persistence and post-ending chat.
 - [ ] **Step 6: Run the video asset gate** from `刷到你了/14_MVP视频资产变更与制作清单_V0.1.md`: confirm 14 existing videos still play, old `K101_v1` is never requested, five revised/new nodes use marked storyboards or approved new media, E101/E102 branch correctly, and the rewrite transition appears before W301.
 - [ ] **Step 7: Run** `git diff --check` and `git status --short`; expected no whitespace errors and only intended files.
 - [ ] **Step 8: Commit** `docs: add ai relationship loop runbook`.
@@ -450,6 +478,8 @@ The MVP is ready for user testing only when all statements below are true:
 - The relationship-derived product has one deterministic catalog identity and one bride-mainline use; AI never chooses either.
 - Spending on PK cannot permanently block the wedding route.
 - No screen displays affection, trust or pressure as a number or progress bar.
+- Chat replies have a slight delay and task progress can arrive proactively, but no visible character status, typing label, countdown or real-time gate exists.
+- The main route records two separate 30-coin recorder purchases from E201; no bundle shortcut exists.
 - With the AI server offline, the same complete route and ending still work.
 - With the AI server online, browser bundles and network payloads contain no OpenAI key.
 - Ending reload is idempotent and post-ending chat does not reopen or mutate the finished mainline.
