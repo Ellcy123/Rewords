@@ -103,6 +103,49 @@ describe('AI-backed private messages', () => {
     expect(screen.getByText('我不是非要你替我出头。', { exact: false })).toBeTruthy()
   })
 
+  it('reaches E201 through softly delivered offline fallback replies', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(10_000)
+    const fetcher = vi.fn(async () => { throw new Error('ai-server offline') })
+    vi.stubGlobal('fetch', fetcher)
+    const storage = memoryStorage(stateWithChat())
+    render(<App storage={storage} />)
+    openMessages()
+
+    for (const [turn, userText] of ['offline user turn one', 'offline user turn two'].entries()) {
+      const { input, send } = composer()
+      fireEvent.change(input, { target: { value: userText } })
+      fireEvent.click(send)
+      await act(async () => Promise.resolve())
+
+      const beforeDelivery = savedState(storage)
+      expect(beforeDelivery.messages.filter(message => message.role === 'user').map(message => message.text)).toEqual(
+        ['offline user turn one', 'offline user turn two'].slice(0, turn + 1),
+      )
+      expect(beforeDelivery.messages.filter(message => message.role === 'assistant' && message.id.startsWith('yanxin-reply-'))).toHaveLength(turn)
+      expect(beforeDelivery.pendingChatDeliveries.filter(delivery => delivery.kind === 'reply')).toHaveLength(1)
+
+      await act(async () => vi.advanceTimersByTimeAsync(2_250))
+      expect(savedState(storage).messages.filter(message => message.role === 'assistant' && message.id.startsWith('yanxin-reply-'))).toHaveLength(turn + 1)
+    }
+
+    const beforeReport = savedState(storage)
+    expect(beforeReport.characterTasks.YANXIN_UNCUT_EVIDENCE.stage).toBe('committed')
+    expect(beforeReport.pendingChatDeliveries.filter(delivery => delivery.kind === 'proactive_report')).toHaveLength(1)
+    expect(beforeReport.unlockedNodeIds).not.toContain('E201')
+
+    await act(async () => vi.advanceTimersByTimeAsync(4_250))
+    const afterReport = savedState(storage)
+    expect(afterReport.messages.filter(message => message.id === 'yanxin-progress-report')).toHaveLength(1)
+    expect(afterReport.unlockedNodeIds.filter(id => id === 'E201')).toHaveLength(1)
+
+    await act(async () => vi.advanceTimersByTimeAsync(10_000))
+    const settled = savedState(storage)
+    expect(settled.messages.filter(message => message.id === 'yanxin-progress-report')).toHaveLength(1)
+    expect(settled.unlockedNodeIds.filter(id => id === 'E201')).toHaveLength(1)
+    expect(fetcher).toHaveBeenCalledTimes(2)
+  })
+
   it('recovers an in-flight request with one fallback after a reload', async () => {
     vi.useFakeTimers()
     vi.setSystemTime(10_000)

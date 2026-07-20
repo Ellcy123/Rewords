@@ -19,6 +19,12 @@ Added regression coverage in `刷到你了/web-prototype/src/tests/message-ai-fl
 
 Regression sensitivity was also checked with a temporary, uncommitted mutation that removed the reducer's `recordTaskRelevantFallback` call. The empty-signal case then failed exactly where intended after two deliveries (`expected understood`, `received invited`). The original reducer code was restored before the final verification run.
 
+## Phase C offline-route gate addendum
+
+Added one end-to-end offline route test in `刷到你了/web-prototype/src/tests/message-ai-flow.test.tsx`. It stubs every `fetch` call to reject as though the AI server is stopped, starts from an established Yanxin contact in the invited stage, and sends two consecutive user turns. The test proves that each user message is retained immediately, each fallback remains pending until the soft delivery delay elapses, the stage-aware fallback replies reach `committed`, exactly one proactive report is scheduled, and `E201` is absent until that report is delivered and then appears exactly once.
+
+Regression sensitivity was checked with a temporary, uncommitted mutation that discarded fallback task signals after a network failure. The offline route test then failed at its expected commitment assertion (`expected committed`, `received understood`). The original `MessageSheet` code was restored before final verification.
+
 ## Verification
 
 All commands ran from `刷到你了/web-prototype` and completed successfully:
@@ -38,4 +44,20 @@ npm run build
 
 git diff --check
   no whitespace errors
+```
+
+The Phase C addendum was verified afterwards:
+
+```text
+npm test -- --run src/tests/message-ai-flow.test.tsx
+  1 file passed, 7 tests passed
+
+npm test -- --run
+  21 files passed, 136 tests passed
+
+npm run typecheck
+  tsc -b --pretty false completed successfully
+
+npm run build
+  tsc -b && vite build && node scripts/prepare-sites-build.mjs completed successfully
 ```
