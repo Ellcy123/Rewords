@@ -8,7 +8,8 @@ const comments = (...texts: string[]): CommentDefinition[] => texts.map((text, i
 const beats = (...entries: Array<[number, string, string?]>): StoryBeat[] => entries.map(([at, text, detail]) => ({ at, text, detail }))
 
 function node(id: NodeId, channel: Channel, account: string, title: string, headline: string, summary: string, subtitle: string, duration: number, storyBeats: StoryBeat[], resultKind: ResultKind, visualMotif: string, extra: Partial<VideoNode> = {}): VideoNode {
-  return { id, channel, account, title, headline, summary, subtitle, duration, beats: storyBeats, comments: comments('这个结果我是真没想到', '先别划走，线索在后面', '平台到底给我推荐了什么'), selectableItemIds: [], resultKind, visualMotif, media: MEDIA_BY_NODE_ID[id], ...extra }
+  const media = MEDIA_BY_NODE_ID[id]
+  return { id, channel, account, title, headline, summary, subtitle, duration, beats: storyBeats, comments: comments('这个结果我是真没想到', '先别划走，线索在后面', '平台到底给我推荐了什么'), selectableItemIds: [], resultKind, visualMotif, mediaMode: media ? 'video' : 'storyboard', media, ...extra }
 }
 
 export const NODES: VideoNode[] = [
@@ -32,8 +33,8 @@ export const NODES: VideoNode[] = [
     beats([0, '国师抵赖，被录下来了'], [2, '后排大臣：看不见！'], [5, '“投” + “影壁”'], [7, '婚庆大屏投影服务', '古今宴席均可接单']), 'resource', 'palace-ad', { productItemId: 'projector' }),
   node('K001', 'knowledge', '@较真研究所', '空调开十六度电脑会变快吗', '结论：电脑先冻关机了', '博主一本正经测试制冷能否提高电脑性能，海外数据却打不开。', '你要的是散热，不是把电脑送走。', 10,
     beats([0, '结论：电脑先冻关机了'], [1, '空调 16°C 极限跑分'], [4, '师傅：你要的是散热'], [6, '海外权威跑分：ACCESS DENIED'], [8, '同城空调师傅上门一次']), 'resource', 'frozen-laptop', { productItemId: 'technician', selectableItemIds: ['ladder', 'technician'] }),
-  node('K101', 'knowledge', '@较真研究所', '梯子变成 VPN', '梯子连接成功', '知识区把梯子解释为 VPN，页面打开后却先弹出录音笔广告。', '知识区的梯子，当然是 VPN。', 9,
-    beats([0, '梯子连接成功'], [1, '翻的是网络墙'], [3, '海外跑分只露出半秒'], [5, '带摄像头的录音笔', '翻了半天，先精准投放我']), 'resource', 'vpn-popup', { productItemId: 'recorder' }),
+  node('K101', 'knowledge', '@较真研究所', '梯子变成 VPN', '梯子连接成功', '知识区把梯子解释为 VPN，页面打开了，十秒结论却仍然缺少完整上下文。', '翻过去了，不等于看完整了。', 9,
+    beats([0, '梯子连接成功'], [1, '翻的是网络墙'], [3, '海外跑分只露出十秒结论'], [5, '查看原始记录', '完整记录没有保存'], [7, '翻过去了，不等于看完整了']), 'resource', 'vpn-popup'),
   node('X001', 'wedding', '@婚礼事故实录', '师傅到了但没有梯子', '师傅到了，还是够不着', '空调师傅有专业能力，却只能站在灯架下徒手判断。', '专业到了，高度没到。', 9,
     beats([0, '师傅到了，还是够不着'], [2, '“卡扣装反了！”'], [5, '他知道答案，但摸不到问题'], [7, '婚礼再次终止']), 'wrong', 'too-short'),
   node('X004', 'wedding', '@婚礼事故实录', '两把梯子还是不会修', '梯子增加到两把，专业仍然是零', '伴郎搭起双梯，却把错误操作做得更快。', '高度翻倍，知识没有。', 9,

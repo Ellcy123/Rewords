@@ -16,7 +16,7 @@ function media(id: NodeId, captions: CaptionCue[]): VideoMedia {
   }
 }
 
-export const MEDIA_BY_NODE_ID: Record<NodeId, VideoMedia> = {
+export const MEDIA_BY_NODE_ID: Partial<Record<NodeId, VideoMedia>> = {
   W001: media('W001', cues('婚礼开始第 7 秒，新娘死亡', '婚礼未完成', '这么高，谁够得到？')),
   W101: media('W101', cues('有梯子，新娘还是死了', '他解决了身高，没有解决专业', '够得到，不等于会修')),
   W300: media('W300', cues('新娘活下来了，婚礼却死了', '救命的握手，被剪成了私会', '前后内容呢？有证据吗？')),

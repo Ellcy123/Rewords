@@ -377,6 +377,7 @@ type MomentChoiceId = 'support' | 'hold_back'
 type CharacterTaskId = 'YANXIN_UNCUT_EVIDENCE'
 type CharacterTaskStage = 'locked' | 'invited' | 'understood' | 'committed' | 'published'
 type TaskSignal = 'acknowledge_pressure' | 'offer_evidence_plan' | 'respect_boundary'
+type TaskTransitionEffect = 'schedule_progress_report' | 'mark_published'
 
 interface RelationshipEvidence {
   id: string
@@ -388,7 +389,7 @@ interface RelationshipEvidence {
 ```
 
 - [ ] **Step 1: Write failing pure-function tests**: `support` costs 30 and records `support + boundary_pressure`; `hold_back` costs 0 and records `respect`; resolving twice is idempotent; both choices set the task to `invited`.
-- [ ] **Step 2: Write failing task-engine tests**: only whitelisted signals advance stages; arbitrary model prose does not; two task-relevant fallback turns advance one stage; `committed` unlocks `E201` exactly once; viewing `E201` marks `published`.
+- [ ] **Step 2: Write failing task-engine tests**: only whitelisted signals advance stages; arbitrary model prose does not; two task-relevant fallback turns advance one stage; first entering `committed` emits `schedule_progress_report` exactly once but does not unlock `E201`; viewing an already unlocked `E201` marks `published`.
 - [ ] **Step 3: Add four storyboard nodes**:
   - `E001`: PK 最后 30 秒入口，没有小黄车。
   - `E101`: 上票后的公开结果，没有小黄车。

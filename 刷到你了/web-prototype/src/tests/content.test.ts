@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { ItemId, NodeId, TriggerDefinition, VideoNode } from '../content/types'
 import { validateContent } from '../content/validate'
-import { ITEMS } from '../content/items'
+import { ITEM_BY_ID, ITEMS } from '../content/items'
 import { NODES, NODE_BY_ID } from '../content/nodes'
 import { findTrigger, TRIGGERS } from '../content/triggers'
 
@@ -20,6 +20,7 @@ function fakeNode(id: string): VideoNode {
     selectableItemIds: [],
     resultKind: 'main',
     visualMotif: 'test',
+    mediaMode: 'video',
     media: {
       src: `/media/${id}_ltx_raw_v1.mp4`,
       poster: `/media/${id}_thumbnail_v1.jpg`,
@@ -42,6 +43,32 @@ function fakeTrigger(targetNodeId: string, itemId: string, resultNodeId: string)
 }
 
 describe('validateContent', () => {
+  it('binds the relationship recorder to E201 and the bride mainline', () => {
+    expect(ITEM_BY_ID.recorder.sourceNodeIds).toEqual(['E201'])
+    expect(ITEM_BY_ID.recorder.mainlineUseNodeIds).toContain('W300')
+    expect(ITEM_BY_ID.recorder.requiredForMainline).toBe(true)
+    expect(NODE_BY_ID.K101.productItemId).toBeUndefined()
+  })
+
+  it('rejects a relationship product without a wedding mainline use', () => {
+    const relationshipNode = {
+      ...fakeNode('E201'),
+      channel: 'entertainment' as const,
+      resultKind: 'relationship' as const,
+      mediaMode: 'storyboard' as const,
+      media: undefined,
+      productItemId: 'recorder' as const,
+    }
+    const invalidRecorder = {
+      ...ITEM_BY_ID.recorder,
+      sourceNodeIds: ['E201'] as NodeId[],
+      mainlineUseNodeIds: [] as NodeId[],
+      requiredForMainline: true,
+    }
+    expect(validateContent({ items: [invalidRecorder], nodes: [relationshipNode], triggers: [] }))
+      .toContain('Relationship product recorder has no wedding mainline use')
+  })
+
   it('rejects duplicate node ids and dangling trigger references', () => {
     const errors = validateContent({
       items: [],

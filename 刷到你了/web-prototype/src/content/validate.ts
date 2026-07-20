@@ -27,9 +27,9 @@ export function validateContent(catalog: ContentCatalog): string[] {
 
   for (const node of catalog.nodes) {
     if (node.duration < 1 || node.duration > 15) errors.push(`invalid duration: ${node.id}`)
-    if (!node.media) {
+    if (node.mediaMode === 'video' && !node.media) {
       errors.push(`missing media: ${node.id}`)
-    } else {
+    } else if (node.media) {
       if (!node.media.src.trim()) errors.push(`invalid media src: ${node.id}`)
       if (!node.media.poster.trim()) errors.push(`invalid media poster: ${node.id}`)
       node.media.captions.forEach((cue, index) => {
@@ -43,6 +43,13 @@ export function validateContent(catalog: ContentCatalog): string[] {
           errors.push(`overlapping captions: ${node.id}:${index - 1}:${index}`)
         }
       })
+    }
+    if (node.resultKind === 'relationship' && node.productItemId) {
+      const item = catalog.items.find(candidate => candidate.id === node.productItemId)
+      const hasWeddingMainlineUse = item?.mainlineUseNodeIds.some(id => catalog.nodes.some(candidate => candidate.id === id && candidate.channel === 'wedding'))
+      if (!hasWeddingMainlineUse) {
+        errors.push(`Relationship product ${node.productItemId} has no wedding mainline use`)
+      }
     }
     if (node.resultKind === 'wrong' && node.selectableItemIds.length > 0) {
       errors.push(`wrong result exposes gifts: ${node.id}`)
