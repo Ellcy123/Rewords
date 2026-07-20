@@ -37,7 +37,7 @@ describe('persistence', () => {
     const result = loadGame(storage)
     expect(result.kind).toBe('loaded')
     if (result.kind === 'loaded') {
-      expect(result.state.version).toBe(3)
+      expect(result.state.version).toBe(4)
       expect(result.state.resolvedNodeIds).toEqual(['W001'])
       expect(result.state.feedNodeIds).toEqual(['W101'])
     }
@@ -59,12 +59,76 @@ describe('persistence', () => {
     const result = loadGame(storage)
     expect(result.kind).toBe('loaded')
     if (result.kind === 'loaded') {
-      expect(result.state.version).toBe(3)
+      expect(result.state.version).toBe(4)
       expect(result.state.currentNodeId).toBe('W300')
       expect(result.state.pendingResultNodeId).toBeNull()
       expect(result.state.unlockedNodeIds).toContain('W300')
       expect(result.state.feedNodeIds).toContain('W300')
       expect(JSON.stringify(result.state)).not.toContain('W200')
+    }
+  })
+
+  it('migrates an exact version-3 fixture without changing core progress', () => {
+    const storage = memoryStorage()
+    const legacy = {
+      version: 3,
+      coins: 47,
+      inventory: { ladder: 1, technician: 0, recorder: 1, projector: 0 },
+      discoveredItemIds: ['ladder', 'technician', 'recorder'],
+      unlockedNodeIds: ['W001', 'W101', 'W300'],
+      viewedNodeIds: ['W001'],
+      resolvedNodeIds: ['W001', 'W101'],
+      feedNodeIds: ['W300'],
+      triggeredKeys: ['W001:ladder', 'W101:technician'],
+      destinyNodeIds: [],
+      currentNodeId: 'W300',
+      pendingResultNodeId: null,
+      completed: false,
+      tutorialStep: 'done',
+      muted: true,
+    }
+    storage.setItem(SAVE_KEY, JSON.stringify(legacy))
+    const result = loadGame(storage)
+    expect(result.kind).toBe('loaded')
+    if (result.kind === 'loaded') {
+      expect(result.state).toMatchObject({
+        version: 4,
+        coins: 47,
+        inventory: legacy.inventory,
+        currentNodeId: 'W300',
+        resolvedNodeIds: ['W001', 'W101'],
+        completed: false,
+        relationshipEvidence: [],
+        resolvedMomentIds: [],
+        messages: [],
+        pendingChatDeliveries: [],
+        sharedMemories: [],
+        claimedActivityTaskIds: [],
+        ledger: [],
+        ending: null,
+      })
+    }
+  })
+
+  it('falls back only malformed version-4 array fields', () => {
+    const storage = memoryStorage()
+    const stored = {
+      ...createInitialState(),
+      coins: 61,
+      viewedNodeIds: ['W001'],
+      relationshipEvidence: 'broken',
+      messages: [{ id: 'm1', role: 'assistant', text: '还在。', createdAt: 10 }],
+      pendingChatDeliveries: [{ broken: true }],
+    }
+    storage.setItem(SAVE_KEY, JSON.stringify(stored))
+    const result = loadGame(storage)
+    expect(result.kind).toBe('loaded')
+    if (result.kind === 'loaded') {
+      expect(result.state.coins).toBe(61)
+      expect(result.state.viewedNodeIds).toEqual(['W001'])
+      expect(result.state.relationshipEvidence).toEqual([])
+      expect(result.state.messages).toEqual(stored.messages)
+      expect(result.state.pendingChatDeliveries).toEqual([])
     }
   })
 
