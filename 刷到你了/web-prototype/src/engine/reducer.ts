@@ -12,6 +12,8 @@ import {
   type TaskSignal,
 } from '../relationship/taskEngine'
 import { resolveGift } from './trigger'
+import { ACTIVITY_TASK_BY_ID, getActivityProgress } from '../activity/catalog'
+import { getCheckoutQuote } from './economy'
 import { createInitialState, type ActivityTaskId, type EndingRecord, type GameState, type TutorialStep } from './state'
 
 export type GameAction =
@@ -20,7 +22,8 @@ export type GameAction =
   | { type: 'RESULT_FINISHED'; nodeId: NodeId }
   | { type: 'NODE_VIEWED'; nodeId: NodeId }
   | { type: 'SET_CURRENT_NODE'; nodeId: NodeId }
-  | { type: 'CLAIM_DEMO_COINS' }
+  | { type: 'VIDEO_LIKED'; nodeId: NodeId }
+  | { type: 'VIDEO_FAVORITED'; nodeId: NodeId }
   | { type: 'SET_MUTED'; muted: boolean }
   | { type: 'ADVANCE_TUTORIAL'; step: TutorialStep }
   | { type: 'RESET_GAME' }
@@ -62,6 +65,14 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         unlockedNodeIds: appendUnique(state.unlockedNodeIds, resolution.resultNodeId),
         feedNodeIds: appendUnique(activeFeed, resolution.resultNodeId),
         currentNodeId: resolution.resultNodeId,
+        ledger: resolution.coinCost > 0 ? [...state.ledger, {
+          id: `moment:${resolution.momentId}`,
+          reason: 'moment_spend',
+          amount: -resolution.coinCost,
+          grossAmount: resolution.coinCost,
+          playerPaidAmount: resolution.coinCost,
+          subsidyAmount: 0,
+        }] : state.ledger,
       }
     }
     case 'CHAT_USER_SENT':
@@ -108,13 +119,37 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
     case 'ACTIVITY_TASK_CLAIMED':
       if (state.claimedActivityTaskIds.includes(action.taskId)) return state
-      return { ...state, claimedActivityTaskIds: [...state.claimedActivityTaskIds, action.taskId] }
+      if (getActivityProgress(state, action.taskId) < ACTIVITY_TASK_BY_ID[action.taskId].target) return state
+      return {
+        ...state,
+        coins: state.coins + ACTIVITY_TASK_BY_ID[action.taskId].reward,
+        claimedActivityTaskIds: [...state.claimedActivityTaskIds, action.taskId],
+        ledger: [...state.ledger, {
+          id: `activity:${action.taskId}`,
+          reason: 'activity_reward',
+          amount: ACTIVITY_TASK_BY_ID[action.taskId].reward,
+        }],
+      }
     case 'ENDING_SAVED':
       return state.ending ? state : { ...state, ending: action.ending }
     case 'BUY_ITEM': {
       const item = ITEM_BY_ID[action.itemId]
-      if (!state.discoveredItemIds.includes(action.itemId) || state.coins < item.price) return state
-      return { ...state, coins: state.coins - item.price, inventory: { ...state.inventory, [action.itemId]: state.inventory[action.itemId] + 1 } }
+      const quote = getCheckoutQuote(state, action.itemId)
+      if (!quote.canPurchase) return state
+      const purchaseNumber = state.ledger.filter(entry => entry.id.startsWith(`purchase:${action.itemId}:`)).length + 1
+      return {
+        ...state,
+        coins: state.coins - quote.playerPaidAmount,
+        inventory: { ...state.inventory, [action.itemId]: state.inventory[action.itemId] + 1 },
+        ledger: [...state.ledger, {
+          id: `purchase:${action.itemId}:${purchaseNumber}`,
+          reason: quote.subsidyAmount > 0 ? 'solvency_subsidy' : 'item_purchase',
+          amount: -quote.playerPaidAmount,
+          grossAmount: item.price,
+          playerPaidAmount: quote.playerPaidAmount,
+          subsidyAmount: quote.subsidyAmount,
+        }],
+      }
     }
     case 'GIVE_ITEM': {
       const resolution = resolveGift(state, action.targetNodeId, action.itemId)
@@ -124,6 +159,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       const interactiveResult = !wrong && NODE_BY_ID[trigger.resultNodeId].selectableItemIds.length > 0
       const resolvedNodeIds = wrong ? state.resolvedNodeIds : appendUnique(state.resolvedNodeIds, action.targetNodeId)
       const activeFeed = wrong ? state.feedNodeIds : state.feedNodeIds.filter(id => id !== action.targetNodeId)
+      const mainReward = !wrong
+        && (['W001', 'W101', 'W300'] as NodeId[]).includes(action.targetNodeId)
+        && !state.ledger.some(entry => entry.id === `main:${action.targetNodeId}`)
       const unlockedNodeIds = (trigger.additionalUnlockNodeIds ?? []).reduce(
         (list, id) => appendUnique(list, id),
         appendUnique(state.unlockedNodeIds, trigger.resultNodeId),
@@ -143,6 +181,12 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         discoveredItemIds: trigger.discoverItemId ? appendUnique(state.discoveredItemIds, trigger.discoverItemId) : state.discoveredItemIds,
         currentNodeId: interactiveResult ? trigger.resultNodeId : state.currentNodeId,
         pendingResultNodeId: interactiveResult ? null : trigger.resultNodeId,
+        coins: state.coins + (mainReward ? 10 : 0),
+        ledger: mainReward ? [...state.ledger, {
+          id: `main:${action.targetNodeId}`,
+          reason: 'main_reward',
+          amount: 10,
+        }] : state.ledger,
       }
     }
     case 'RESULT_FINISHED': {
@@ -162,19 +206,24 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       if (state.viewedNodeIds.includes(action.nodeId)) return state
       const viewedNodeIds = [...state.viewedNodeIds, action.nodeId]
       const taskTransition = markRelationshipResponseViewed(state.characterTasks.YANXIN_UNCUT_EVIDENCE, action.nodeId)
+      const discoverItemId = NODE_BY_ID[action.nodeId].onCompleteDiscoverItemId
       return {
         ...state,
         viewedNodeIds,
-        coins: state.coins + 5,
+        discoveredItemIds: discoverItemId ? appendUnique(state.discoveredItemIds, discoverItemId) : state.discoveredItemIds,
         characterTasks: taskTransition.state === state.characterTasks.YANXIN_UNCUT_EVIDENCE
           ? state.characterTasks
           : { ...state.characterTasks, YANXIN_UNCUT_EVIDENCE: taskTransition.state },
       }
     }
+    case 'VIDEO_LIKED':
+      if (state.likedNodeIds.includes(action.nodeId)) return state
+      return { ...state, likedNodeIds: [...state.likedNodeIds, action.nodeId] }
+    case 'VIDEO_FAVORITED':
+      if (state.favoritedNodeIds.includes(action.nodeId)) return state
+      return { ...state, favoritedNodeIds: [...state.favoritedNodeIds, action.nodeId] }
     case 'SET_CURRENT_NODE':
       return state.currentNodeId === action.nodeId ? state : { ...state, currentNodeId: action.nodeId }
-    case 'CLAIM_DEMO_COINS':
-      return { ...state, coins: state.coins + 100 }
     case 'SET_MUTED':
       return { ...state, muted: action.muted }
     case 'ADVANCE_TUTORIAL':

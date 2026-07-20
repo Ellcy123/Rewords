@@ -26,6 +26,11 @@ describe('game reducer', () => {
     expect(result.resolvedNodeIds).toContain('W001')
     expect(result.feedNodeIds).not.toContain('W001')
     expect(result.feedNodeIds).toContain('W101')
+    expect(result.coins).toBe(90)
+    expect(result.ledger).toEqual(expect.arrayContaining([
+      expect.objectContaining({ reason: 'item_purchase', amount: -20 }),
+      expect.objectContaining({ reason: 'main_reward', amount: 10 }),
+    ]))
   })
 
   it('records wrong results without replacing the route and is idempotent', () => {
@@ -59,10 +64,67 @@ describe('game reducer', () => {
     expect(complete.resolvedNodeIds).toContain('W400')
   })
 
-  it('does not buy without coins and can claim demo coins', () => {
-    const empty = { ...createInitialState(), coins: 0 }
-    expect(gameReducer(empty, { type: 'BUY_ITEM', itemId: 'ladder' })).toEqual(empty)
-    expect(gameReducer(empty, { type: 'CLAIM_DEMO_COINS' }).coins).toBe(100)
+  it('uses checkout-only subsidy for one missing dependency without increasing spendable balance', () => {
+    const empty = { ...createInitialState(), coins: 5 }
+    const subsidized = gameReducer(empty, { type: 'BUY_ITEM', itemId: 'ladder' })
+    expect(subsidized.coins).toBe(0)
+    expect(subsidized.inventory.ladder).toBe(1)
+    expect(subsidized.ledger.at(-1)).toMatchObject({
+      reason: 'solvency_subsidy', grossAmount: 20, playerPaidAmount: 5, subsidyAmount: 15,
+    })
+    expect(gameReducer(subsidized, { type: 'BUY_ITEM', itemId: 'ladder' })).toEqual(subsidized)
+
+    const noLongerNeeded = { ...empty, coins: 0, resolvedNodeIds: ['W001' as const] }
+    expect(gameReducer(noLongerNeeded, { type: 'BUY_ITEM', itemId: 'ladder' })).toEqual(noLongerNeeded)
+  })
+
+  it('does not grant infinite view income and claims each finite activity reward once', () => {
+    let state = createInitialState()
+    const initialCoins = state.coins
+    state = gameReducer(state, { type: 'NODE_VIEWED', nodeId: 'W001' })
+    state = gameReducer(state, { type: 'NODE_VIEWED', nodeId: 'C001' })
+    state = gameReducer(state, { type: 'NODE_VIEWED', nodeId: 'K001' })
+    expect(state.coins).toBe(initialCoins)
+    state = gameReducer(state, { type: 'ACTIVITY_TASK_CLAIMED', taskId: 'WATCH_THREE' })
+    expect(state.coins).toBe(initialCoins + 10)
+    expect(gameReducer(state, { type: 'ACTIVITY_TASK_CLAIMED', taskId: 'WATCH_THREE' })).toEqual(state)
+
+    state = gameReducer(state, { type: 'VIDEO_LIKED', nodeId: 'W001' })
+    state = gameReducer(state, { type: 'VIDEO_LIKED', nodeId: 'W001' })
+    state = gameReducer(state, { type: 'VIDEO_LIKED', nodeId: 'C001' })
+    expect(gameReducer(state, { type: 'ACTIVITY_TASK_CLAIMED', taskId: 'LIKE_THREE' })).toEqual(state)
+    state = gameReducer(state, { type: 'VIDEO_LIKED', nodeId: 'K001' })
+    state = gameReducer(state, { type: 'ACTIVITY_TASK_CLAIMED', taskId: 'LIKE_THREE' })
+    expect(state.coins).toBe(initialCoins + 20)
+
+    state = gameReducer(state, { type: 'VIDEO_FAVORITED', nodeId: 'W001' })
+    state = gameReducer(state, { type: 'VIDEO_FAVORITED', nodeId: 'C001' })
+    state = gameReducer(state, { type: 'VIDEO_FAVORITED', nodeId: 'C001' })
+    state = gameReducer(state, { type: 'ACTIVITY_TASK_CLAIMED', taskId: 'FAVORITE_TWO' })
+    expect(state.coins).toBe(initialCoins + 30)
+  })
+
+  it('can subsidize a required item again after a wrong branch consumes it', () => {
+    let state = { ...createInitialState(), coins: 0 }
+    state = gameReducer(state, { type: 'BUY_ITEM', itemId: 'technician' })
+    expect(state.inventory.technician).toBe(1)
+    state = gameReducer(state, { type: 'GIVE_ITEM', targetNodeId: 'W001', itemId: 'technician' })
+    expect(state.inventory.technician).toBe(0)
+    const restored = gameReducer(state, { type: 'BUY_ITEM', itemId: 'technician' })
+    expect(restored.inventory.technician).toBe(1)
+    expect(restored.coins).toBe(0)
+    expect(restored.ledger.filter(entry => entry.reason === 'solvency_subsidy')).toHaveLength(2)
+  })
+
+  it('does not subsidize a third recorder for the optional X016 mistake', () => {
+    const state: ReturnType<typeof createInitialState> = {
+      ...createInitialState(),
+      coins: 0,
+      discoveredItemIds: ['ladder', 'technician', 'recorder'],
+      resolvedNodeIds: ['C001', 'W300'],
+    }
+    expect(gameReducer(state, { type: 'BUY_ITEM', itemId: 'recorder' }))
+      .toEqual(state)
   })
 
   it('recovers only unresolved unlocked nodes', () => {
@@ -131,7 +193,9 @@ describe('game reducer', () => {
   })
 
   it('saves activity claims and an ending at most once', () => {
-    let state = gameReducer(createInitialState(), { type: 'ACTIVITY_TASK_CLAIMED', taskId: 'WATCH_THREE' })
+    let state = createInitialState()
+    state.viewedNodeIds = ['W001', 'C001', 'K001']
+    state = gameReducer(state, { type: 'ACTIVITY_TASK_CLAIMED', taskId: 'WATCH_THREE' })
     state = gameReducer(state, { type: 'ACTIVITY_TASK_CLAIMED', taskId: 'WATCH_THREE' })
     expect(state.claimedActivityTaskIds).toEqual(['WATCH_THREE'])
 

@@ -2,6 +2,7 @@ import { ITEM_BY_ID } from '../content/items'
 import { NODES, NODE_BY_ID } from '../content/nodes'
 import type { ItemDefinition, NodeId, VideoNode } from '../content/types'
 import type { GameState } from './state'
+import { getCheckoutQuote } from './economy'
 
 export const selectDiscoveredItems = (state: GameState): ItemDefinition[] => state.discoveredItemIds.map(id => ITEM_BY_ID[id])
 export const selectOwnedItems = (state: GameState): ItemDefinition[] => state.discoveredItemIds.filter(id => state.inventory[id] > 0).map(id => ITEM_BY_ID[id])
@@ -14,3 +15,4 @@ export const selectYanxinTaskStage = (state: GameState) => state.characterTasks.
 export const selectCanViewRelationshipVideo = (state: GameState): boolean => state.unlockedNodeIds.includes('E201')
 export const selectCanGenerateEnding = (state: GameState): boolean => state.completed && state.ending === null
 export const selectPostEndingChat = (state: GameState): boolean => state.ending !== null
+export const selectItemCheckoutQuote = getCheckoutQuote

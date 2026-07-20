@@ -9,6 +9,7 @@ import type { ItemId, NodeId } from '../content/types'
 import { CompletionOverlay } from '../destiny/CompletionOverlay'
 import { RecordsSheet } from '../destiny/RecordsSheet'
 import { rankFeed } from '../engine/feed'
+import type { CheckoutQuote } from '../engine/economy'
 import { useGame } from '../game/useGame'
 import { BottomNav } from '../shell/BottomNav'
 import { CommentsSheet } from '../shell/CommentsSheet'
@@ -23,6 +24,8 @@ type Overlay =
   | { type: 'gift' | 'comments' | 'replay'; nodeId: NodeId }
   | { type: 'inventory' | 'records' | 'profile' }
 
+interface PurchaseReceipt extends CheckoutQuote { itemId: ItemId }
+
 export function FeedScreen() {
   const { state, dispatch } = useGame()
   const nodes = useMemo(() => {
@@ -36,7 +39,7 @@ export function FeedScreen() {
   const index = Math.max(0, nodes.findIndex(node => node.id === focusNodeId))
   const [overlay, setOverlay] = useState<Overlay | null>(null)
   const [completionOpen, setCompletionOpen] = useState(false)
-  const [purchaseFeedbackItemId, setPurchaseFeedbackItemId] = useState<ItemId | null>(null)
+  const [purchaseReceipt, setPurchaseReceipt] = useState<PurchaseReceipt | null>(null)
   const current = nodes[index] ?? nodes[0]
   const feedLocked = !!overlay || completionOpen || state.pendingResultNodeId !== null
 
@@ -71,6 +74,11 @@ export function FeedScreen() {
           onProduct={node => node.productItemId && setOverlay({ type: 'product', itemId: node.productItemId })}
           onGift={node => setOverlay({ type: 'gift', nodeId: node.id })}
           onComments={node => setOverlay({ type: 'comments', nodeId: node.id })}
+          likedNodeIds={state.likedNodeIds}
+          favoritedNodeIds={state.favoritedNodeIds}
+          onLike={node => dispatch({ type: 'VIDEO_LIKED', nodeId: node.id })}
+          onFavorite={node => dispatch({ type: 'VIDEO_FAVORITED', nodeId: node.id })}
+          onViewed={node => dispatch({ type: 'NODE_VIEWED', nodeId: node.id })}
         />
         {state.pendingResultNodeId === current?.id && (
           <button className="result-continue" onClick={finishResult}>
@@ -88,8 +96,8 @@ export function FeedScreen() {
           <ProductSheet
             item={ITEM_BY_ID[overlay.itemId]}
             onClose={() => setOverlay(overlay.returnToGiftNodeId ? { type: 'gift', nodeId: overlay.returnToGiftNodeId } : null)}
-            onPurchased={item => {
-              setPurchaseFeedbackItemId(item.id)
+            onPurchased={(item, quote) => {
+              setPurchaseReceipt({ itemId: item.id, ...quote })
               setOverlay(overlay.returnToGiftNodeId ? { type: 'gift', nodeId: overlay.returnToGiftNodeId } : null)
             }}
           />
@@ -107,11 +115,13 @@ export function FeedScreen() {
         {overlay?.type === 'records' && <RecordsSheet onClose={() => setOverlay(null)} onReplay={nodeId => setOverlay({ type: 'replay', nodeId })} />}
         {overlay?.type === 'replay' && <ReplayOverlay node={NODE_BY_ID[overlay.nodeId]} onClose={() => setOverlay({ type: 'records' })} />}
         {overlay?.type === 'profile' && <ProfileSheet onClose={() => setOverlay(null)} />}
-        {purchaseFeedbackItemId && (
+        {purchaseReceipt && (
           <PurchaseFeedback
-            item={ITEM_BY_ID[purchaseFeedbackItemId]}
+            item={ITEM_BY_ID[purchaseReceipt.itemId]}
+            paidAmount={purchaseReceipt.playerPaidAmount}
+            subsidyAmount={purchaseReceipt.subsidyAmount}
             onDone={() => {
-              setPurchaseFeedbackItemId(null)
+              setPurchaseReceipt(null)
               dispatch({ type: 'ADVANCE_TUTORIAL', step: 'gift' })
             }}
           />

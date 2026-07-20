@@ -32,6 +32,32 @@ function finishFeedTransition() {
 }
 
 describe('app shell', () => {
+  it('records finite like and favorite progress in the profile', async () => {
+    const user = userEvent.setup()
+    render(<App storage={memoryStorage()} />)
+    const like = screen.getByRole('button', { name: '点赞' })
+    const favorite = screen.getByRole('button', { name: '收藏' })
+    await user.click(like)
+    await user.click(like)
+    await user.click(favorite)
+    expect(like.getAttribute('aria-pressed')).toBe('true')
+    expect(favorite.getAttribute('aria-pressed')).toBe('true')
+    await user.click(screen.getByRole('button', { name: '我的' }))
+    expect(screen.getByText('点赞不同视频 1/3')).toBeTruthy()
+    expect(screen.getByText('收藏不同视频 1/2')).toBeTruthy()
+  })
+
+  it('claims a completed operation task once from the profile', async () => {
+    const user = userEvent.setup()
+    const state = createInitialState()
+    state.viewedNodeIds = ['W001', 'C001', 'K001']
+    render(<App storage={memoryStorage(state)} />)
+    await user.click(screen.getByRole('button', { name: '我的' }))
+    await user.click(screen.getByRole('button', { name: '领取完整看完不同视频 10 金币' }))
+    expect(screen.getByText('已领取', { selector: 'button' })).toBeTruthy()
+    expect(screen.getByText('110')).toBeTruthy()
+  })
+
   it('renders the first short video and navigates by keyboard', async () => {
     render(<App storage={memoryStorage()} />)
     expect(screen.getAllByText('婚礼开始第 7 秒，新娘死亡').length).toBeGreaterThan(0)
@@ -69,6 +95,19 @@ describe('app shell', () => {
     await user.click(screen.getByRole('button', { name: '改命礼物' }))
     await user.click(screen.getByRole('button', { name: '寻找推荐录音笔线索' }))
     expect(screen.getAllByText('“你说的证据，我弄到了。”').length).toBeGreaterThan(0)
+  })
+
+  it('shows checkout-only subsidy without adding it to the visible balance', async () => {
+    const user = userEvent.setup()
+    const state = createInitialState()
+    state.coins = 5
+    state.currentNodeId = 'C001'
+    render(<App storage={memoryStorage(state)} />)
+    await user.click(screen.getByRole('button', { name: /小黄车.*刺客同款多功能梯子/ }))
+    expect(screen.getByText('平台体验补助抵扣 15 金币，本次余额支付 5。')).toBeTruthy()
+    await user.click(screen.getByRole('button', { name: '购买 5 金币' }))
+    expect(screen.getByRole('status', { name: '购买成功：余额支付 5 金币，平台补助 15 金币，梯子已放入背包' })).toBeTruthy()
+    expect(screen.queryByText('领取试玩金币')).toBeNull()
   })
 
   it('enters the combined W300 immediately after giving the technician to W101', async () => {

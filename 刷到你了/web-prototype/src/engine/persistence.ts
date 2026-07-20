@@ -185,6 +185,8 @@ function normalizeState(value: StoredState): GameState {
     discoveredItemIds: validArray(value.discoveredItemIds, isItemId, fresh.discoveredItemIds),
     unlockedNodeIds: nodeIds(value.unlockedNodeIds, fresh.unlockedNodeIds),
     viewedNodeIds: nodeIds(value.viewedNodeIds),
+    likedNodeIds: nodeIds(value.likedNodeIds),
+    favoritedNodeIds: nodeIds(value.favoritedNodeIds),
     resolvedNodeIds: nodeIds(value.resolvedNodeIds),
     feedNodeIds: nodeIds(value.feedNodeIds, fresh.feedNodeIds),
     triggeredKeys: validArray(value.triggeredKeys, isString),

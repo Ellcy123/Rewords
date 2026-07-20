@@ -47,6 +47,9 @@ describe('validateContent', () => {
     expect(ITEM_BY_ID.recorder.sourceNodeIds).toEqual(['E201'])
     expect(ITEM_BY_ID.recorder.mainlineUseNodeIds).toContain('W300')
     expect(ITEM_BY_ID.recorder.requiredForMainline).toBe(true)
+    expect(ITEM_BY_ID.recorder.price).toBe(30)
+    expect(ITEM_BY_ID.recorder.repeatable).toBe(true)
+    expect(NODE_BY_ID.E201.productItemId).toBe('recorder')
     expect(NODE_BY_ID.K101.productItemId).toBeUndefined()
   })
 
