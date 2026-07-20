@@ -42,7 +42,11 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
     case 'MOMENT_RESOLVED': {
       const resolution = action.resolution
-      if (state.resolvedMomentIds.includes(resolution.momentId) || state.coins < resolution.coinCost) return state
+      if (
+        !state.unlockedNodeIds.includes('E001')
+        || state.resolvedMomentIds.includes(resolution.momentId)
+        || state.coins < resolution.coinCost
+      ) return state
       const relationshipEvidence = resolution.evidenceTags.reduce(
         (list, kind) => appendUnique(list, {
           id: `${resolution.momentId}:${kind}`,

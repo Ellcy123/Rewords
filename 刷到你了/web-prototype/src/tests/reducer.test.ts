@@ -139,7 +139,11 @@ describe('game reducer', () => {
 
   it('applies a moment resolution once, including evidence, spend and task invitation', () => {
     const resolution = resolveMoment('PK_LAST_30_SECONDS', 'support').resolution
-    const first = gameReducer(createInitialState(), { type: 'MOMENT_RESOLVED', resolution })
+    const beforeEntry = createInitialState()
+    expect(gameReducer(beforeEntry, { type: 'MOMENT_RESOLVED', resolution })).toEqual(beforeEntry)
+    beforeEntry.unlockedNodeIds.push('E001')
+    beforeEntry.feedNodeIds.push('E001')
+    const first = gameReducer(beforeEntry, { type: 'MOMENT_RESOLVED', resolution })
     const repeated = gameReducer(first, { type: 'MOMENT_RESOLVED', resolution })
 
     expect(first.coins).toBe(70)
@@ -152,7 +156,10 @@ describe('game reducer', () => {
 
   it('deduplicates user messages, scheduled deliveries, delivered effects and E201 unlock', () => {
     const userMessage = { id: 'u1', role: 'user' as const, text: '我可以帮你找完整证据。', createdAt: 1_000 }
-    let state = gameReducer(createInitialState(), {
+    const entryState = createInitialState()
+    entryState.unlockedNodeIds.push('E001')
+    entryState.feedNodeIds.push('E001')
+    let state = gameReducer(entryState, {
       type: 'MOMENT_RESOLVED',
       resolution: resolveMoment('PK_LAST_30_SECONDS', 'hold_back').resolution,
     })

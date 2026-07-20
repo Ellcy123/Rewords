@@ -17,7 +17,8 @@ describe('relationship selectors', () => {
     expect(selectYanxinTaskStage(initial)).toBe('locked')
     expect(selectCanViewRelationshipVideo(initial)).toBe(false)
 
-    const invited = gameReducer(initial, {
+    const entryState = { ...initial, unlockedNodeIds: [...initial.unlockedNodeIds, 'E001' as const] }
+    const invited = gameReducer(entryState, {
       type: 'MOMENT_RESOLVED',
       resolution: resolveMoment('PK_LAST_30_SECONDS', 'hold_back').resolution,
     })
