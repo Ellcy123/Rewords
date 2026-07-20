@@ -187,6 +187,30 @@ describe('game reducer', () => {
     expect(repeated).toEqual(state)
   })
 
+  it('advances the active character task after repeated replies without an effective signal', () => {
+    const entryState = createInitialState()
+    entryState.unlockedNodeIds.push('E001')
+    let state = gameReducer(entryState, {
+      type: 'MOMENT_RESOLVED',
+      resolution: resolveMoment('PK_LAST_30_SECONDS', 'hold_back').resolution,
+    })
+    for (const turn of [1, 2, 3, 4]) {
+      const delivery = scheduleChatDelivery({
+        id: `no-signal-${turn}`,
+        kind: 'reply',
+        message: { id: `reply-${turn}`, role: 'assistant', text: '我在听。', createdAt: turn },
+        createdAt: turn,
+        readyAt: turn,
+        taskSignals: [],
+        effect: 'none',
+      }, () => 0)
+      state = gameReducer(state, { type: 'CHAT_DELIVERY_SCHEDULED', delivery })
+      state = gameReducer(state, { type: 'CHAT_DUE_DELIVERIES_FLUSHED', now: delivery.deliverAt })
+    }
+    expect(state.characterTasks.YANXIN_UNCUT_EVIDENCE.stage).toBe('committed')
+    expect(state.characterTasks.YANXIN_UNCUT_EVIDENCE.emittedEffects).toEqual(['schedule_progress_report'])
+  })
+
   it('ignores an E201 delivery effect before the character task is committed', () => {
     const report = { id: 'early-message', role: 'assistant' as const, text: '不该提前解锁。', createdAt: 0 }
     const delivery = scheduleChatDelivery({

@@ -7,6 +7,9 @@
 .activity-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid rgba(255,255,255,.08); }
 .activity-row div { display: grid; gap: 3px; }
 .activity-row span { color: #999; font-size: 12px; }
-.activity-row button { min-width: 62px; border: 0; border-radius: 999px; padding: 8px 10px; font-weight: 700; }
-.activity-row button:disabled { opacity: .55; }
+.activity-row button { min-width: 74px; min-height: 42px; border: 1px solid transparent; border-radius: 12px; padding: 8px 12px; font-weight: 800; transition: transform .12s ease, filter .12s ease, background .2s ease; }
+.activity-row button.is-claimable { background: linear-gradient(105deg, #ff315f, #a83cff); color: #fff; box-shadow: 0 7px 20px rgba(220,49,111,.3); }
+.activity-row button.is-claimable:active { transform: scale(.96); filter: brightness(.9); }
+.activity-row button.is-progressing { border-color: #45424d; background: #29272f; color: #8d8995; opacity: 1; }
+.activity-row button.is-claimed { border-color: rgba(91,219,145,.25); background: rgba(61,151,101,.15); color: #76dba2; opacity: 1; }
 .checkout-subsidy { margin: 10px 0; color: #ffd75f; font-size: 13px; }

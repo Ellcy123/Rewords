@@ -53,8 +53,11 @@ describe('app shell', () => {
     state.viewedNodeIds = ['W001', 'C001', 'K001']
     render(<App storage={memoryStorage(state)} />)
     await user.click(screen.getByRole('button', { name: '我的' }))
-    await user.click(screen.getByRole('button', { name: '领取完整看完不同视频 10 金币' }))
+    const claim = screen.getByRole('button', { name: '领取完整看完不同视频 10 金币' })
+    expect(claim.className).toContain('is-claimable')
+    await user.click(claim)
     expect(screen.getByText('已领取', { selector: 'button' })).toBeTruthy()
+    expect(screen.getByText('已领取', { selector: 'button' }).className).toContain('is-claimed')
     expect(screen.getByText('110')).toBeTruthy()
   })
 
@@ -187,7 +190,8 @@ describe('app shell', () => {
     await user.click(screen.getByRole('button', { name: '确认送入命运' }))
     expect((await screen.findAllByText('师傅到了，还是够不着')).length).toBeGreaterThan(0)
     await user.click(screen.getByRole('button', { name: '收进命运记录' }))
-    await user.click(screen.getByRole('button', { name: '记录' }))
+    await user.click(screen.getByRole('button', { name: '我的' }))
+    await user.click(screen.getByRole('button', { name: '查看命运记录' }))
     await user.click(screen.getByRole('button', { name: '别的命运' }))
     expect(screen.getByText('师傅到了但没有梯子')).toBeTruthy()
   })
@@ -216,7 +220,8 @@ describe('app shell', () => {
     state.resolvedNodeIds = ['W001']
     state.destinyNodeIds = ['X001']
     render(<App storage={memoryStorage(state)} />)
-    await user.click(screen.getByRole('button', { name: '记录' }))
+    await user.click(screen.getByRole('button', { name: '我的' }))
+    await user.click(screen.getByRole('button', { name: '查看命运记录' }))
     expect(screen.getByRole('button', { name: '已改写' })).toBeTruthy()
     expect(screen.getByText('婚礼灯架事故')).toBeTruthy()
     await user.click(screen.getByRole('button', { name: '重看婚礼灯架事故' }))

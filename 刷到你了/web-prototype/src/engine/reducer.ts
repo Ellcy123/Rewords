@@ -8,6 +8,7 @@ import {
   applyTaskSignal,
   createCharacterTaskState,
   markRelationshipResponseViewed,
+  recordTaskRelevantFallback,
   type CharacterTaskId,
   type TaskSignal,
 } from '../relationship/taskEngine'
@@ -30,7 +31,9 @@ export type GameAction =
   | { type: 'RECOVER_FEED' }
   | { type: 'MOMENT_RESOLVED'; resolution: MomentResolution }
   | { type: 'CHAT_USER_SENT'; message: ChatMessage }
+  | { type: 'CHAT_MESSAGES_READ' }
   | { type: 'CHAT_DELIVERY_SCHEDULED'; delivery: PendingChatDelivery }
+  | { type: 'CHAT_DELIVERY_REPLACED'; delivery: PendingChatDelivery }
   | { type: 'CHAT_DUE_DELIVERIES_FLUSHED'; now: number }
   | { type: 'TASK_SIGNAL_RECEIVED'; taskId: CharacterTaskId; signal: TaskSignal }
   | { type: 'ACTIVITY_TASK_CLAIMED'; taskId: ActivityTaskId }
@@ -82,12 +85,24 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     case 'CHAT_USER_SENT':
       if (state.messages.some(message => message.id === action.message.id)) return state
       return { ...state, messages: [...state.messages, action.message] }
+    case 'CHAT_MESSAGES_READ': {
+      const readMessageIds = state.messages.map(message => message.id)
+      if (readMessageIds.length === state.readMessageIds.length && readMessageIds.every(id => state.readMessageIds.includes(id))) return state
+      return { ...state, readMessageIds }
+    }
     case 'CHAT_DELIVERY_SCHEDULED':
       if (
         state.pendingChatDeliveries.some(delivery => delivery.id === action.delivery.id)
         || state.messages.some(message => message.id === action.delivery.message.id)
       ) return state
       return { ...state, pendingChatDeliveries: [...state.pendingChatDeliveries, action.delivery] }
+    case 'CHAT_DELIVERY_REPLACED': {
+      const index = state.pendingChatDeliveries.findIndex(delivery => delivery.id === action.delivery.id)
+      if (index < 0 || state.pendingChatDeliveries[index].message.id !== action.delivery.message.id) return state
+      const pendingChatDeliveries = [...state.pendingChatDeliveries]
+      pendingChatDeliveries[index] = action.delivery
+      return { ...state, pendingChatDeliveries }
+    }
     case 'CHAT_DUE_DELIVERIES_FLUSHED': {
       const { due, pending } = collectDueChatDeliveries(state.pendingChatDeliveries, action.now)
       if (!due.length) return state
@@ -100,7 +115,11 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           messages = [...messages, delivery.message]
         }
         let task = characterTasks.YANXIN_UNCUT_EVIDENCE
+        const taskBeforeSignals = task
         for (const signal of delivery.taskSignals) task = applyTaskSignal(task, signal).state
+        if (delivery.kind === 'reply' && task === taskBeforeSignals) {
+          task = recordTaskRelevantFallback(task).state
+        }
         if (delivery.effect === 'unlock_e201' && task.stage === 'committed') {
           unlockedNodeIds = appendUnique(unlockedNodeIds, 'E201')
           feedNodeIds = appendUnique(feedNodeIds, 'E201')

@@ -202,6 +202,7 @@ function normalizeState(value: StoredState): GameState {
     characterTasks,
     resolvedMomentIds: validArray(value.resolvedMomentIds, isMomentId),
     messages: validArray(value.messages, isChatMessage),
+    readMessageIds: validArray(value.readMessageIds, isString),
     pendingChatDeliveries: validArray(value.pendingChatDeliveries, isPendingDelivery),
     sharedMemories: validArray(value.sharedMemories, isSharedMemory),
     claimedActivityTaskIds: validArray(value.claimedActivityTaskIds, isActivityTaskId),

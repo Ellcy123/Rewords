@@ -16,3 +16,6 @@ export const selectCanViewRelationshipVideo = (state: GameState): boolean => sta
 export const selectCanGenerateEnding = (state: GameState): boolean => state.completed && state.ending === null
 export const selectPostEndingChat = (state: GameState): boolean => state.ending !== null
 export const selectItemCheckoutQuote = getCheckoutQuote
+export const selectUnreadMessageCount = (state: GameState): number => state.messages.filter(message => (
+  message.role === 'assistant' && !state.readMessageIds.includes(message.id)
+)).length

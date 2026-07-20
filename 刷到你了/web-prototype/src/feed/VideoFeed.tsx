@@ -16,6 +16,7 @@ interface Props {
   onLike?: (node: VideoNode) => void
   onFavorite?: (node: VideoNode) => void
   onViewed?: (node: VideoNode) => void
+  onMoment?: (node: VideoNode) => void
 }
 
 const FEED_SLOTS = [-1, 0, 1] as const
@@ -25,7 +26,7 @@ function modulo(value: number, count: number) {
   return ((value % count) + count) % count
 }
 
-export function VideoFeed({ nodes, index, onIndexChange, locked = false, onProduct, onGift, onComments, likedNodeIds = [], favoritedNodeIds = [], onLike, onFavorite, onViewed }: Props) {
+export function VideoFeed({ nodes, index, onIndexChange, locked = false, onProduct, onGift, onComments, likedNodeIds = [], favoritedNodeIds = [], onLike, onFavorite, onViewed, onMoment }: Props) {
   const [position, setPosition] = useState(index)
   const virtualPosition = nodes.length > 0 && modulo(position, nodes.length) === index ? position : index
   const changePosition = (nextPosition: number) => {
@@ -91,6 +92,7 @@ export function VideoFeed({ nodes, index, onIndexChange, locked = false, onProdu
               onLike={() => onLike?.(node)}
               onFavorite={() => onFavorite?.(node)}
               onViewed={() => onViewed?.(node)}
+              onMoment={() => onMoment?.(node)}
             />
           </div>
         )

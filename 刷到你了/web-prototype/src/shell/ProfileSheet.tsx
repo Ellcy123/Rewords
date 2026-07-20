@@ -4,7 +4,7 @@ import { selectProgress } from '../engine/selectors'
 import { useGame } from '../game/useGame'
 import { Sheet } from './Sheet'
 
-export function ProfileSheet({ onClose }: { onClose: () => void }) {
+export function ProfileSheet({ onClose, onRecords }: { onClose: () => void; onRecords?: () => void }) {
   const { state, dispatch } = useGame()
   const [confirm, setConfirm] = useState(false)
   return <Sheet title="我的试玩" onClose={onClose}>
@@ -21,12 +21,14 @@ export function ProfileSheet({ onClose }: { onClose: () => void }) {
           <div><b>{task.title} {progress}/{task.target}</b><span>奖励 {task.reward} 金币</span></div>
           <button
             aria-label={claimed ? `${task.title}已领取` : `领取${task.title} ${task.reward} 金币`}
+            className={claimed ? 'is-claimed' : complete ? 'is-claimable' : 'is-progressing'}
             disabled={!complete || claimed}
             onClick={() => dispatch({ type: 'ACTIVITY_TASK_CLAIMED', taskId: task.id })}
           >{claimed ? '已领取' : complete ? '领取' : '进行中'}</button>
         </div>
       })}
     </section>
+    <button className="profile-records-button" onClick={onRecords}>查看命运记录</button>
     <label className="setting-row"><span>声音反馈</span><input type="checkbox" checked={!state.muted} onChange={event => dispatch({ type: 'SET_MUTED', muted: !event.target.checked })} /></label>
     <div className="about-card"><b>关于《刷到你了》</b><p>从一条视频取得物品，把它送进另一条视频，改写已经发生的失败。</p></div>
     {confirm

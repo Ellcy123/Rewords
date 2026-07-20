@@ -51,6 +51,7 @@ export interface GameState {
   characterTasks: Record<CharacterTaskId, CharacterTaskState>
   resolvedMomentIds: MomentId[]
   messages: ChatMessage[]
+  readMessageIds: string[]
   pendingChatDeliveries: PendingChatDelivery[]
   sharedMemories: SharedMemory[]
   claimedActivityTaskIds: ActivityTaskId[]
@@ -83,6 +84,7 @@ export function createInitialState(): GameState {
     },
     resolvedMomentIds: [],
     messages: [],
+    readMessageIds: [],
     pendingChatDeliveries: [],
     sharedMemories: [],
     claimedActivityTaskIds: [],

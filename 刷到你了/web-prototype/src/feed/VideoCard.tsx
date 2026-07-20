@@ -16,9 +16,10 @@ interface Props {
   onLike?: () => void
   onFavorite?: () => void
   onViewed?: () => void
+  onMoment?: () => void
 }
 
-export function VideoCard({ node, active, onProduct, onGift, onComments, liked = false, favorited = false, onLike, onFavorite, onViewed }: Props) {
+export function VideoCard({ node, active, onProduct, onGift, onComments, liked = false, favorited = false, onLike, onFavorite, onViewed, onMoment }: Props) {
   const product = node.productItemId ? ITEM_BY_ID[node.productItemId] : null
   const { muted, toggleSound } = usePlayback()
   const [captionState, setCaptionState] = useState<{ nodeId: string; cue: CaptionCue | null }>({ nodeId: node.id, cue: null })
@@ -84,6 +85,7 @@ export function VideoCard({ node, active, onProduct, onGift, onComments, liked =
         )}
       </section>
       <button className={`gift-fab ${node.selectableItemIds.length ? 'is-active' : ''}`} aria-label="改命礼物" onClick={onGift} disabled={!node.selectableItemIds.length}><Sparkles />改命礼物</button>
+      {node.id === 'E001' && <button className="moment-fab" aria-label="决定要不要上票" onClick={onMoment}>决定要不要上票</button>}
     </article>
   )
 }
