@@ -23,7 +23,7 @@ const ChinesePunctuation = new Set(Array.from('，。！？、；：…（）《
 const HanCharacterPattern = /^\p{Script=Han}$/u
 const NodeIdPattern = /[A-Z]\d{3}/i
 const DirectContentAccessClaimPattern = /(?:节点|视频|内容|入口).{0,12}(?:开(?:通|放|启|了)?|打开|解锁)|(?:我|为你|给你|已|已经|会|将|现在|马上).{0,12}(?:开(?:通|放|启|了)?|打开|解锁).{0,12}(?:节点|视频|内容|入口)/
-const TransactionOrGiftPattern = /购买|出售|卖给|送给|送你|赠送|换成|商品/
+const TransactionOrTransferPattern = /给你|送你|送给|赠送|卖给|出售|售卖|购买|买|卖|换成|商品/
 
 function codePointLength(value: string): number {
   return Array.from(value).length
@@ -57,7 +57,7 @@ function isForbiddenDomainClaim(value: string): boolean {
   return value.includes('金币')
     || NodeIdPattern.test(value)
     || DirectContentAccessClaimPattern.test(value)
-    || (TransactionOrGiftPattern.test(value) && !value.includes('录音笔'))
+    || TransactionOrTransferPattern.test(value)
     || value.includes('无人机')
 }
 

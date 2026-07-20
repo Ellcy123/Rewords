@@ -96,7 +96,26 @@ describe('chat contracts', () => {
     ['node id', 'E201已经开放。'],
     ['invented drone product', '我送你一架无人机。'],
     ['non-whitelisted product sale', '我卖给你一部手机。'],
+    ['reviewer phone gift', '我给你一部手机。'],
+    ['reviewer sale mentioning recorder', '我卖给你一部手机，录音笔先别买。'],
   ])('rejects a reply that makes a %s claim', (_name, replyText) => {
+    expect(ChatResponseSchema.safeParse({ replyText, taskSignals: [], tone: 'serious' }).success).toBe(false)
+  })
+
+  it.each([
+    ['给你', '我给你录音笔。'],
+    ['送你', '我送你录音笔。'],
+    ['送给', '我送给你录音笔。'],
+    ['赠送', '我赠送录音笔。'],
+    ['卖给', '我卖给你录音笔。'],
+    ['出售', '我出售录音笔。'],
+    ['售卖', '我售卖录音笔。'],
+    ['购买', '我购买录音笔。'],
+    ['买', '我买录音笔。'],
+    ['卖', '我卖录音笔。'],
+    ['换成', '我换成录音笔。'],
+    ['商品', '这是录音笔商品。'],
+  ])('rejects transaction or transfer wording even when it mentions a recorder: %s', (_verb, replyText) => {
     expect(ChatResponseSchema.safeParse({ replyText, taskSignals: [], tone: 'serious' }).success).toBe(false)
   })
 
@@ -108,9 +127,9 @@ describe('chat contracts', () => {
     }).success).toBe(false)
   })
 
-  it('allows an explicit recorder in an otherwise transactional reply', () => {
+  it('allows a non-transactional recorder mention', () => {
     expect(ChatResponseSchema.safeParse({
-      replyText: '我卖给你一支录音笔。',
+      replyText: '我会核对录音笔里的完整证据。',
       taskSignals: [],
       tone: 'serious',
     }).success).toBe(true)
