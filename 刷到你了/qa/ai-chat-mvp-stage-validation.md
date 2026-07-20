@@ -30,29 +30,30 @@
 
 ## Phase B
 
-- 测试提交：NOT RUN
-- 日期：NOT RUN
-- 环境：NOT RUN
-- 自动化命令：NOT RUN
-- 人工测试环境：NOT RUN
+- 测试提交：`3e693b9`（待真机验收后补最终验证提交）
+- 日期：2026-07-20
+- 环境：Windows / PowerShell；Vitest 4.1.10；Vite 8.1.4
+- 自动化命令：Phase B Gate 指定的 7 个测试文件；全量 `npm test -- --run`；`npm run typecheck`；`npm run build`；`git diff --check`
+- 自动化摘要：Phase B Gate 7 个文件、49 项通过；全量 21 个文件、132 项通过；类型检查与生产构建退出码 0
+- 人工测试环境：局域网服务监听 `0.0.0.0:4173`，本次地址 `http://192.168.1.7:4173/`；390×844 自动浏览器连接不可用，真机双路线待用户执行
 
 | 用例 | 状态 | 证据或说明 |
 | --- | --- | --- |
-| B-01 PK 入口 | NOT RUN | |
-| B-02 二元选择界面 | NOT RUN | |
-| B-03 首次主动私信 | NOT RUN | |
-| B-04 回复轻微延迟 | NOT RUN | |
-| B-05 离开聊天页 | NOT RUN | |
-| B-06 刷新补发 | NOT RUN | |
-| B-07 主动任务报备 | NOT RUN | |
-| B-08 无可见状态 | NOT RUN | |
-| B-09 AI 失败降级 | NOT RUN | |
-| B-10 两次独立购买 | NOT RUN | |
+| B-01 PK 入口 | AUTO PASS | `app-flow.test.tsx` 与内容回归覆盖入口解锁及原推荐流；待真机确认出现位置。 |
+| B-02 二元选择界面 | AUTO PASS / MANUAL NOT RUN | `message-flow.test.tsx` 覆盖两项选择、余额不足只禁上票、无正确/错误/好感提示。 |
+| B-03 首次主动私信 | AUTO PASS / MANUAL NOT RUN | 两条路线首信不同、延迟出现并产生未读；进入聊天前不可主动发信。 |
+| B-04 回复轻微延迟 | AUTO PASS / MANUAL NOT RUN | `message-ai-flow.test.tsx` 覆盖用户消息立即出现、AI 与 fallback 延迟送达。 |
+| B-05 离开聊天页 | AUTO PASS / MANUAL NOT RUN | Provider 后台定时投递与未读提示通过；待真机操作确认。 |
+| B-06 刷新补发 | AUTO PASS / MANUAL NOT RUN | 覆盖 overdue reload 及 HTTP 请求中刷新后的单次 fallback 恢复。 |
+| B-07 主动任务报备 | AUTO PASS / MANUAL NOT RUN | committed 后只调度一条固定报备，到达后 E201 只解锁一次。 |
+| B-08 无可见状态 | AUTO PASS / MANUAL NOT RUN | 自动断言无在线、直播中、办事中、休息中、输入中、倒计时与关系数值。 |
+| B-09 AI 失败降级 | AUTO PASS | 8 秒硬超时（即使 fetch 不响应 abort）、HTTP 非 2xx、非法 JSON、未知信号和额外字段均为 typed failure；UI 使用阶段 fallback。 |
+| B-10 两次独立购买 | AUTO PASS / MANUAL NOT RUN | 全量规则回归继续覆盖 E201 录音笔可重复单支购买；待真机执行两次。 |
 | B-11 小屏适配 | NOT RUN | |
-| B-12 原有玩法回归 | NOT RUN | |
+| B-12 原有玩法回归 | AUTO PASS / MANUAL NOT RUN | `app-flow`、`video-card`、`video-feed`、`tutorial` 通过；待本提交真机回归。 |
 
-- 未解决缺陷：NOT RUN
-- 阶段结论：NOT RUN
+- 未解决缺陷：未发现自动化阻断缺陷；B-02/B-05/B-08/B-10/B-11 所需真机截图与上票/不上票双路线尚未记录。
+- 阶段结论：NOT RUN（自动化门禁通过，等待 390×844 真机双路线后才能判定 PASS）
 
 ## Phase C
 
