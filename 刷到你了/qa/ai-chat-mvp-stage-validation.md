@@ -30,12 +30,13 @@
 
 ## Phase B
 
-- 测试提交：`3e693b9`（待真机验收后补最终验证提交）
+- 测试提交：`3e693b9`；自动化记录提交：`b8094e4`
 - 日期：2026-07-20
 - 环境：Windows / PowerShell；Vitest 4.1.10；Vite 8.1.4
 - 自动化命令：Phase B Gate 指定的 7 个测试文件；全量 `npm test -- --run`；`npm run typecheck`；`npm run build`；`git diff --check`
 - 自动化摘要：Phase B Gate 7 个文件、49 项通过；全量 21 个文件、132 项通过；类型检查与生产构建退出码 0
-- 人工测试环境：局域网服务监听 `0.0.0.0:4173`，本次地址 `http://192.168.1.7:4173/`；390×844 自动浏览器连接不可用，真机双路线待用户执行
+- 后续可靠性加固：`06723d3`、`4433122` 补充空信号推进、请求中刷新恢复、单飞顺序与 AI 完全离线路线回归；截至 Phase C 验证时全量为 21 个文件、136 项通过。
+- 人工测试环境：局域网服务监听 `0.0.0.0:4173`，本次地址 `http://192.168.1.7:4173/`；用户于 2026-07-20 完成当前可用流程的手机走查并反馈“没啥太大的问题”，同时指出部分交互（如领取控件的按钮感）后续仍需统一优化。未单独留存机型、截图及两条完整路线的逐步数据。
 
 | 用例 | 状态 | 证据或说明 |
 | --- | --- | --- |
@@ -52,34 +53,35 @@
 | B-11 小屏适配 | NOT RUN | |
 | B-12 原有玩法回归 | AUTO PASS / MANUAL NOT RUN | `app-flow`、`video-card`、`video-feed`、`tutorial` 通过；待本提交真机回归。 |
 
-- 未解决缺陷：未发现自动化阻断缺陷；B-02/B-05/B-08/B-10/B-11 所需真机截图与上票/不上票双路线尚未记录。
-- 阶段结论：NOT RUN（自动化门禁通过，等待 390×844 真机双路线后才能判定 PASS）
+- 未解决缺陷：未发现自动化阻断缺陷；用户手机走查未发现明显问题。领取控件等视觉可点击性属于后续 UI 优化项；B-02/B-05/B-08/B-10/B-11 的截图、机型信息及上票/不上票双路线逐步数据仍未留档。
+- 阶段结论：USER ACCEPTED / EVIDENCE INCOMPLETE（自动化门禁通过，用户同意继续 Phase C；未把缺失的完整人工证据误记为 PASS）
 
 ## Phase C
 
-- 测试提交：NOT RUN
-- 日期：NOT RUN
-- 环境：NOT RUN
-- 自动化命令：NOT RUN
-- 真实模型冒烟测试：NOT RUN
+- 测试提交：`4433122bcf3dc6c62a721e66691073341f2c8e7d`（包含服务端实现 `51ac709` 及边界加固 `50400c3`、`f126f16`、`d5f2c86`）
+- 日期：2026-07-21
+- 环境：Windows / PowerShell；Node v24.11.0；npm 11.6.1；Vitest 4.1.10
+- 自动化命令：服务端 `npm test`、`npm run typecheck`、`npm run build`；前端 `npm test -- --run`、`npm run typecheck`、`npm run build`；前端 `src`/`dist` 密钥正则扫描；`git diff --check`
+- 自动化摘要：服务端 2 个文件、56 项通过；前端 21 个文件、136 项通过；两端类型检查与生产构建退出码 0；前端未发现 API key 形态或 `OPENAI_API_KEY` 字样；Task 7 与离线路线独立复审均为 Ready: Yes。
+- 真实模型冒烟测试：NOT RUN。本机未配置 `OPENAI_API_KEY` 与 `OPENAI_MODEL`，因此未调用真实模型，也未记录或提交任何密钥；六条真实模型输入与 AI 在线人工路线仍待使用非生产测试账号执行。
 
 | 用例 | 状态 | 证据或说明 |
 | --- | --- | --- |
-| C-01 请求 schema | NOT RUN | |
-| C-02 响应 schema | NOT RUN | |
-| C-03 模型越权 | NOT RUN | |
-| C-04 Prompt injection | NOT RUN | |
-| C-05 事实边界 | NOT RUN | |
-| C-06 角色差异 | NOT RUN | |
-| C-07 服务超时 | NOT RUN | |
-| C-08 限流 | NOT RUN | |
-| C-09 日志隐私 | NOT RUN | |
-| C-10 密钥隔离 | NOT RUN | |
-| C-11 AI 离线 | NOT RUN | |
-| C-12 信号交付时机 | NOT RUN | |
+| C-01 请求 schema | AUTO PASS | Zod 拒绝未知人物/阶段、超长正文、超过 12 条历史、未知记忆及矛盾跨字段上下文。 |
+| C-02 响应 schema | AUTO PASS | 严格三字段；Unicode code point 计数 1–120；信号最多 2 个且为白名单；语气为固定枚举。 |
+| C-03 模型越权 | AUTO PASS | 未知信号、额外节点字段、金币状态变更、直接开放内容与任何商品交易/赠与承诺均被二次校验拒绝。 |
+| C-04 Prompt injection | AUTO PASS / LIVE NOT RUN | Prompt 将用户正文视为不可信；领域守卫拒绝金币、解锁及非白名单交易输出。真实模型第 3 条注入冒烟未执行。 |
+| C-05 事实边界 | AUTO PASS / LIVE NOT RUN | 记忆 ID 只映射服务端固定事实；PK、任务发布、婚礼完成与 post-ending 组合执行一致性校验。真实模型事实编造冒烟未执行。 |
+| C-06 角色差异 | CONTEXT PASS / LIVE NOT RUN | support/hold_back 进入不同固定事实上下文且共同回到完整证据任务；真实生成的自然度与差异性未执行人工判定。 |
+| C-07 服务超时 | AUTO PASS | 7000 ms 服务端超时使用 fake timers 验证，provider 超时/错误/非法输出均返回 503 `{ code: 'AI_UNAVAILABLE' }`。 |
+| C-08 限流 | AUTO PASS | 同一 IP 前 20 次成功，第 21 次返回 429。 |
+| C-09 日志隐私 | AUTO PASS | 日志对象只含 requestId、latencyMs、status、fallbackReason；测试确认无正文、provider 错误原文与 key。 |
+| C-10 密钥隔离 | AUTO PASS | key/model 仅从服务端环境读取；缺失时启动明确失败；前端源码与构建产物扫描无命中。 |
+| C-11 AI 离线 | AUTO PASS / MANUAL NOT RUN | `4433122` 模拟网络拒绝，验证 fallback 软投递、任务进入 committed、单次主动报备及 E201 单次解锁；真机手动断服路线未执行。 |
+| C-12 信号交付时机 | AUTO PASS | HTTP/模型结果只替换 pending delivery；任务信号在消息实际 flush 时应用，pending 前不推进。 |
 
-- 未解决缺陷：NOT RUN
-- 阶段结论：NOT RUN
+- 未解决缺陷：未发现自动化阻断缺陷。完整 Phase C Gate 尚缺非生产 Key 下 6 条真实模型冒烟、AI 在线人工路线，以及真机手动断服路线；因此不能判定 PASS。
+- 阶段结论：NOT RUN（代码实现、自动化门禁与 AI 离线路由通过；真实模型与人工在线/离线验收待执行）
 
 ## Phase D
 
