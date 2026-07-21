@@ -4,6 +4,7 @@ import type { ItemId, NodeId } from '../content/types'
 import { collectDueChatDeliveries } from '../messages/delivery'
 import type { ChatMessage, PendingChatDelivery } from '../messages/types'
 import type { MomentResolution } from '../moments/types'
+import { applyRelationshipEvidence } from '../relationship/relationshipEngine'
 import {
   applyTaskSignal,
   createCharacterTaskState,
@@ -58,11 +59,18 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         }),
         state.relationshipEvidence,
       )
+      const yanxinPersona = resolution.choiceId === 'support'
+        ? applyRelationshipEvidence(state.yanxinPersona, {
+          kind: 'public_financial_support',
+          sourceMessageId: `game-event:${resolution.momentId}`,
+        }, 0).state
+        : state.yanxinPersona
       const activeFeed = state.feedNodeIds.filter(id => id !== 'E001')
       return {
         ...state,
         coins: state.coins - resolution.coinCost,
         relationshipEvidence,
+        yanxinPersona,
         resolvedMomentIds: [...state.resolvedMomentIds, resolution.momentId],
         characterTasks: {
           ...state.characterTasks,

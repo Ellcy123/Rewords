@@ -2,6 +2,11 @@ export type RelationshipDimension = 'closeness' | 'trust' | 'respect' | 'suspici
 export type RelationshipIdentity = 'new_viewer' | 'familiar_fan' | 'important_supporter' | 'private_relationship'
 export type RelationshipEvidenceKind = 'showed_specific_care' | 'respected_boundary' | 'offered_actionable_help' | 'kept_promise' | 'contradicted_action_evidence' | 'revealed_unexplained_knowledge' | 'pressured_after_refusal' | 'public_financial_support'
 
+export interface RelationshipEvidenceCandidate {
+  kind: RelationshipEvidenceKind
+  sourceMessageId: string
+}
+
 export interface RelationshipChange {
   id: string
   dimension: RelationshipDimension

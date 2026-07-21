@@ -149,6 +149,16 @@ describe('game reducer', () => {
     expect(first.coins).toBe(70)
     expect(first.resolvedMomentIds).toEqual(['PK_LAST_30_SECONDS'])
     expect(first.relationshipEvidence.map(evidence => evidence.kind)).toEqual(['support', 'boundary_pressure'])
+    expect(first.yanxinPersona.relationship.dimensions).toMatchObject({
+      closeness: 1,
+      boundaryPressure: 1,
+    })
+    expect(first.yanxinPersona.relationship.changes).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        evidenceKind: 'public_financial_support',
+        sourceId: 'game-event:PK_LAST_30_SECONDS',
+      }),
+    ]))
     expect(first.characterTasks.YANXIN_UNCUT_EVIDENCE.stage).toBe('invited')
     expect(first.unlockedNodeIds).toContain('E101')
     expect(repeated).toEqual(first)
