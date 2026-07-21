@@ -6,6 +6,7 @@ import type { LongTermMemory, MemoryCandidate, OpenLoop, OpenLoopUpdate } from '
 export type CharacterIntent = 'fan_maintenance' | 'thank' | 'banter' | 'probe' | 'explain' | 'share' | 'confirm_promise' | 'set_boundary' | 'handle_conflict' | 'end_topic' | 'advance_task'
 export type TaskEvidenceKind = 'recognized_malicious_editing' | 'accepted_complete_evidence_plan'
 export type RelationshipEvidenceKind = 'showed_specific_care' | 'respected_boundary' | 'offered_actionable_help' | 'kept_promise' | 'contradicted_action_evidence' | 'revealed_unexplained_knowledge' | 'pressured_after_refusal' | 'public_financial_support'
+export type ChatTurnKind = 'first_contact' | 'player_message' | 'progress_report'
 
 export const AllowedMemoryIds = [
   'yanxin_pk_choice_support',
@@ -32,6 +33,7 @@ export type ChatOpenLoop = Pick<OpenLoop, 'id' | 'kind' | 'summary' | 'sourceMes
 
 export interface ChatRequest {
   characterId: 'yanxin'
+  turnKind: ChatTurnKind
   currentMessageId: string
   userText: string
   taskStage: CharacterTaskStage
@@ -90,7 +92,7 @@ function isBoundedString(value: unknown, maximum = 120): value is string {
 
 function isChineseReply(value: unknown): value is string {
   return isBoundedString(value)
-    && Array.from(value).every(character => HAN_CHARACTER.test(character) || CHINESE_PUNCTUATION.has(character))
+    && Array.from(value.replaceAll('PK', '')).every(character => HAN_CHARACTER.test(character) || CHINESE_PUNCTUATION.has(character))
 }
 
 function isTaskEvidence(value: unknown): value is TaskEvidenceCandidate {
@@ -154,6 +156,7 @@ function boundDimension(value: number): number {
 function boundRequest(request: ChatRequest): ChatRequest {
   return {
     characterId: 'yanxin',
+    turnKind: request.turnKind,
     currentMessageId: boundText(request.currentMessageId, 120),
     userText: boundText(request.userText, 300),
     taskStage: request.taskStage,

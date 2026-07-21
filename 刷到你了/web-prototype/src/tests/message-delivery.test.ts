@@ -5,7 +5,6 @@ import { App } from '../App'
 import { SAVE_KEY } from '../engine/persistence'
 import { createInitialState } from '../engine/state'
 import { collectDueChatDeliveries, scheduleChatDelivery } from '../messages/delivery'
-import { YANXIN_PROGRESS_REPORT } from '../messages/character'
 import { createCharacterTaskState } from '../relationship/taskEngine'
 
 const message = { id: 'm1', role: 'assistant' as const, text: '我晚点把完整那段发你。', createdAt: 1_000 }
@@ -41,7 +40,10 @@ describe('soft-time chat delivery', () => {
   })
 })
 
-afterEach(() => vi.useRealTimers())
+afterEach(() => {
+  vi.useRealTimers()
+  vi.unstubAllGlobals()
+})
 
 describe('progress report delivery', () => {
   it('delivers an overdue persisted message immediately after reload', async () => {
@@ -70,6 +72,18 @@ describe('progress report delivery', () => {
 
   it('schedules one report in the background and does not duplicate it after reload', async () => {
     vi.useFakeTimers()
+    const generatedReport = '我把前后的素材核完了，新的完整内容已经整理好，你可以去看看。'
+    const fetcher = vi.fn(async (_url: RequestInfo | URL, init?: RequestInit) => {
+      const body = JSON.parse(String(init?.body))
+      expect(body).toEqual(expect.objectContaining({ turnKind: 'progress_report', userText: '', taskStage: 'committed' }))
+      return new Response(JSON.stringify({
+        replyText: generatedReport,
+        tone: 'warm',
+        characterIntents: ['confirm_promise'],
+        taskEvidence: [], relationshipEvidence: [], memoryCandidates: [], openLoopUpdates: [],
+      }), { status: 200 })
+    })
+    vi.stubGlobal('fetch', fetcher)
     const state = createInitialState()
     state.feedNodeIds = ['E101']
     state.unlockedNodeIds.push('E101')
@@ -85,14 +99,16 @@ describe('progress report delivery', () => {
     }
 
     const first = render(createElement(App, { storage }))
+    await act(async () => Promise.resolve())
     await act(async () => vi.advanceTimersByTimeAsync(4_250))
     fireEvent.click(screen.getByRole('button', { name: '私信，1 条未读' }))
-    expect(screen.getAllByText(YANXIN_PROGRESS_REPORT)).toHaveLength(1)
+    expect(screen.getAllByText(generatedReport)).toHaveLength(1)
     first.unmount()
 
     render(createElement(App, { storage }))
     fireEvent.click(screen.getByRole('button', { name: '私信' }))
-    expect(screen.getAllByText(YANXIN_PROGRESS_REPORT)).toHaveLength(1)
+    expect(screen.getAllByText(generatedReport)).toHaveLength(1)
+    expect(fetcher).toHaveBeenCalledTimes(1)
     const saved = JSON.parse(storage.getItem(SAVE_KEY)!)
     expect(saved.unlockedNodeIds.filter((id: string) => id === 'E201')).toHaveLength(1)
   })

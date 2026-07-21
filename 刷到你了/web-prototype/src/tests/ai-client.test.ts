@@ -3,6 +3,7 @@ import { requestYanxinReply, type ChatRequest } from '../messages/aiClient'
 
 const baseRequest: ChatRequest = {
   characterId: 'yanxin',
+  turnKind: 'player_message',
   currentMessageId: 'user-current',
   userText: '我觉得可以找完整录像',
   taskStage: 'invited',
@@ -38,6 +39,7 @@ describe('requestYanxinReply', () => {
     const fetcher = vi.fn(async (_url: RequestInfo | URL, init?: RequestInit) => {
       const body = JSON.parse(String(init?.body))
       expect(body.userText).toHaveLength(300)
+      expect(body.turnKind).toBe('player_message')
       expect(body.currentMessageId).toBe('user-current')
       expect(body.personaSnapshot.dimensions).toEqual({
         closeness: 5,
@@ -95,6 +97,34 @@ describe('requestYanxinReply', () => {
       openLoopUpdates: [],
     } })
     expect(fetcher).toHaveBeenCalledWith('/api/chat', expect.objectContaining({ method: 'POST' }))
+  })
+
+  it('preserves an empty event turn without inventing player text', async () => {
+    const fetcher = vi.fn(async (_url: RequestInfo | URL, init?: RequestInit) => {
+      const body = JSON.parse(String(init?.body))
+      expect(body).toEqual(expect.objectContaining({
+        turnKind: 'first_contact',
+        currentMessageId: 'game-event:PK_LAST_30_SECONDS:first-contact',
+        userText: '',
+      }))
+      return new Response(JSON.stringify(validResponse), { status: 200 })
+    })
+
+    await expect(requestYanxinReply({
+      ...baseRequest,
+      turnKind: 'first_contact',
+      currentMessageId: 'game-event:PK_LAST_30_SECONDS:first-contact',
+      userText: '',
+    }, fetcher)).resolves.toMatchObject({ ok: true })
+  })
+
+  it('accepts the natural PK term in an otherwise Chinese private message', async () => {
+    const fetcher = vi.fn(async () => new Response(JSON.stringify({
+      ...validResponse,
+      replyText: '刚才那场PK的素材，我想找回完整前后。',
+    }), { status: 200 }))
+
+    await expect(requestYanxinReply(baseRequest, fetcher)).resolves.toMatchObject({ ok: true })
   })
 
   it('filters, deduplicates, and bounds allowed game-event memories', async () => {

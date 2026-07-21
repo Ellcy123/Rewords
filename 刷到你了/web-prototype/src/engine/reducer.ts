@@ -3,7 +3,7 @@ import { NODE_BY_ID } from '../content/nodes'
 import type { ItemId, NodeId } from '../content/types'
 import { collectDueChatDeliveries } from '../messages/delivery'
 import { applyMemoryCandidates, applyOpenLoopUpdates } from '../messages/memory'
-import type { ChatMessage, PendingChatDelivery } from '../messages/types'
+import type { AiTurnDebugRecord, ChatMessage, PendingChatDelivery } from '../messages/types'
 import type { MomentResolution } from '../moments/types'
 import { applyRelationshipEvidence } from '../relationship/relationshipEngine'
 import {
@@ -35,6 +35,7 @@ export type GameAction =
   | { type: 'CHAT_DELIVERY_SCHEDULED'; delivery: PendingChatDelivery }
   | { type: 'CHAT_DELIVERY_REPLACED'; delivery: PendingChatDelivery }
   | { type: 'CHAT_DUE_DELIVERIES_FLUSHED'; now: number }
+  | { type: 'CHAT_AI_DEBUG_RECORDED'; record: AiTurnDebugRecord }
   | { type: 'CHAT_PROVIDER_FAILED' }
   | { type: 'CHAT_SYSTEM_FALLBACK_CHECKPOINT_SCHEDULED' }
   | { type: 'ACTIVITY_TASK_CLAIMED'; taskId: ActivityTaskId }
@@ -113,6 +114,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
     case 'CHAT_PROVIDER_FAILED':
       return { ...state, yanxinProviderFailureCount: state.yanxinProviderFailureCount + 1 }
+    case 'CHAT_AI_DEBUG_RECORDED':
+      return { ...state, aiDebugTurns: [...state.aiDebugTurns, action.record].slice(-20) }
     case 'CHAT_SYSTEM_FALLBACK_CHECKPOINT_SCHEDULED':
       return state.yanxinProviderFailureCount === 0 ? state : { ...state, yanxinProviderFailureCount: 0 }
     case 'CHAT_DUE_DELIVERIES_FLUSHED': {

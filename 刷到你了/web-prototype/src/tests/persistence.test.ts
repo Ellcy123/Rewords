@@ -93,6 +93,27 @@ describe('persistence', () => {
     expect(loadGame(storage)).toEqual({ kind: 'loaded', state })
   })
 
+  it.each([
+    ['long-term memories', 'longTermMemories', [{ id: 'broken-memory', type: 'promise', sourceMessageId: 42 }]],
+    ['open loops', 'openLoops', [{ id: 'broken-loop', kind: 'report', summary: [], status: 'open' }]],
+  ])('drops malformed persisted %s without discarding valid chat state', (_label, field, malformed) => {
+    const storage = memoryStorage()
+    const state = {
+      ...createInitialState(),
+      messages: [{ id: 'user-safe', role: 'user', text: '这条消息应保留。', createdAt: 10 }],
+      [field]: malformed,
+    }
+    storage.setItem(SAVE_KEY, JSON.stringify(state))
+
+    const loaded = loadGame(storage)
+
+    expect(loaded.kind).toBe('loaded')
+    if (loaded.kind !== 'loaded') return
+    expect(loaded.state.messages).toEqual(state.messages)
+    expect(loaded.state.longTermMemories).toEqual([])
+    expect(loaded.state.openLoops).toEqual([])
+  })
+
   it('migrates a version 4 save without losing chat or task progress', () => {
     const storage = memoryStorage()
     const message = { id: 'user-legacy', role: 'user' as const, text: '你先查清楚。', createdAt: 10 }

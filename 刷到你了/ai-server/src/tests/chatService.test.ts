@@ -64,6 +64,102 @@ async function captureModelRequest(): Promise<StructuredResponseRequest> {
 }
 
 describe('generateYanxinChat model boundary', () => {
+  it('adds a focused content-repair instruction for a repetition complaint', async () => {
+    const request = ChatRequestSchema.parse({
+      ...dynamicRequest,
+      userText: '额咋又说这句',
+      recentMessages: [{ role: 'assistant', text: '我会把完整录像的前后找回来。' }],
+    })
+    const generate = vi.fn(async (_request: StructuredResponseRequest) => JSON.stringify({
+      ...JSON.parse(validResponse),
+      replyText: '你说得对，是我刚才绕回去了。我先停一下，听你说。',
+    }))
+
+    await generateYanxinChat(request, { generate }, 'fake-model', 7_000)
+
+    expect(generate.mock.calls[0][0].instructions).toContain('本轮是重复纠错回合')
+    expect(generate.mock.calls[0][0].instructions).toContain('禁止复述任务背景')
+    expect(generate.mock.calls[0][0].instructions).not.toContain(request.userText)
+  })
+
+  it('uses content repair rather than JSON-only guidance after a repeated task explanation', async () => {
+    const request = ChatRequestSchema.parse({
+      ...dynamicRequest,
+      userText: '额咋又说这句',
+      recentMessages: [{ role: 'assistant', text: '我会把完整录像的前后找回来。' }],
+    })
+    const invalid = JSON.stringify({
+      ...JSON.parse(validResponse),
+      replyText: '你说得对，我又绕回完整录像了。',
+    })
+    const repaired = JSON.stringify({
+      ...JSON.parse(validResponse),
+      replyText: '你说得对，是我刚才绕回去了。我先停一下，听你说。',
+    })
+    const generate = vi.fn().mockResolvedValueOnce(invalid).mockResolvedValueOnce(repaired)
+
+    await generateYanxinChat(request, { generate }, 'fake-model', 7_000)
+
+    expect(generate.mock.calls[1][0].instructions).toContain('必须重写回复内容')
+    expect(generate.mock.calls[1][0].instructions).toContain('tone 仍只能使用')
+    expect(generate.mock.calls[1][0].instructions).not.toContain('只修正 JSON 类型')
+  })
+
+  it('regenerates one repetitive response with safe relevance guidance', async () => {
+    const request = ChatRequestSchema.parse({
+      ...dynamicRequest,
+      recentMessages: [{ role: 'assistant', text: '我不是非要你替我出头，只是想把前后说清楚。' }],
+    })
+    const repetitive = JSON.stringify({
+      ...JSON.parse(validResponse),
+      replyText: '我不是非要你替我出头，就是想把前后说清楚。',
+    })
+    const fresh = JSON.stringify({
+      ...JSON.parse(validResponse),
+      replyText: '你说得对，我先回答你刚才问的。',
+    })
+    const generate = vi.fn().mockResolvedValueOnce(repetitive).mockResolvedValueOnce(fresh)
+
+    await expect(generateYanxinChat(request, { generate }, 'fake-model', 7_000))
+      .resolves.toMatchObject({ replyText: '你说得对，我先回答你刚才问的。' })
+    expect(generate).toHaveBeenCalledTimes(2)
+    expect(generate.mock.calls[1][0].instructions).toContain('与最近回复重复')
+    expect(generate.mock.calls[1][0].instructions).not.toContain(request.recentMessages[0]?.text)
+  })
+
+  it('rejects a second repetitive provider response', async () => {
+    const request = ChatRequestSchema.parse({
+      ...dynamicRequest,
+      recentMessages: [{ role: 'assistant', text: '我不是非要你替我出头，只是想把前后说清楚。' }],
+    })
+    const repetitive = JSON.stringify({
+      ...JSON.parse(validResponse),
+      replyText: '我不是非要你替我出头，就是想把前后说清楚。',
+    })
+    const generate = vi.fn().mockResolvedValue(repetitive)
+
+    await expect(generateYanxinChat(request, { generate }, 'fake-model', 7_000))
+      .rejects.toMatchObject({ reason: 'repetitive_provider_output' })
+    expect(generate).toHaveBeenCalledTimes(2)
+  })
+
+  it('retries one invalid structured output inside the same request budget with safe repair guidance', async () => {
+    const invalidResponse = JSON.stringify({
+      ...JSON.parse(validResponse),
+      tone: 'calm',
+      taskEvidence: ['recognized_malicious_editing'],
+    })
+    const generate = vi.fn()
+      .mockResolvedValueOnce(invalidResponse)
+      .mockResolvedValueOnce(validResponse)
+
+    await expect(generateYanxinChat(dynamicRequest, { generate }, 'fake-model', 7_000))
+      .resolves.toMatchObject({ tone: 'serious', taskEvidence: [] })
+    expect(generate).toHaveBeenCalledTimes(2)
+    expect(generate.mock.calls[1][0].instructions).toContain('上一次输出未通过结构校验')
+    expect(generate.mock.calls[1][0].instructions).not.toContain(dynamicRequest.userText)
+  })
+
   it('keeps all untrusted dynamic text out of system instructions', async () => {
     const request = await captureModelRequest()
 
@@ -85,7 +181,7 @@ describe('generateYanxinChat model boundary', () => {
       'openLoops',
       'verifiedMemories',
       'recentMessages',
-      'currentMessage',
+      'currentTurn',
       'decisionPriority',
     ])
     expect(input.relationship).toEqual(expect.objectContaining({
@@ -108,10 +204,12 @@ describe('generateYanxinChat model boundary', () => {
     expect(input.openLoops).not.toContainEqual(dynamicRequest.openLoops[1])
     expect(input.verifiedMemories).toEqual(dynamicRequest.memories)
     expect(input.recentMessages).toEqual(dynamicRequest.recentMessages)
-    expect(input.currentMessage).toEqual({
+    expect(input.currentTurn).toEqual(expect.objectContaining({
+      kind: 'player_message',
       id: dynamicRequest.currentMessageId,
       text: dynamicRequest.userText,
-    })
+      goal: expect.stringContaining('首先回应玩家最新一句'),
+    }))
     expect(input.decisionPriority).toEqual([
       '第一优先级：回应最新消息',
       '第二优先级：维护当前关系',

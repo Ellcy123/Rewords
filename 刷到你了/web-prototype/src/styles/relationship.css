@@ -82,6 +82,8 @@
 .message-assistant p { border-bottom-left-radius: 5px; background: #29272f; }
 .message-user { justify-content: flex-end; }
 .message-user p { border-bottom-right-radius: 5px; background: linear-gradient(105deg,#ff315f,#a83cff); }
+.message-system { justify-content: center; }
+.message-system p { max-width: 92%; padding: 8px 12px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); color: #999; font-size: 12px; text-align: center; }
 .message-composer { display: grid; grid-template-columns: 1fr 44px; gap: 8px; padding: 10px 12px max(10px, env(safe-area-inset-bottom)); border-top: 1px solid rgba(255,255,255,.08); background: #151419; }
 .message-composer input { min-width: 0; height: 44px; padding: 0 14px; border: 1px solid #34323b; border-radius: 999px; outline: 0; background: #242229; color: #fff; font: inherit; }
 .message-composer input:focus { border-color: #a95bff; }
@@ -91,3 +93,12 @@
 .nav-icon { position: relative; display: grid; place-items: center; }
 .nav-icon em { position: absolute; top: -5px; right: -9px; min-width: 16px; height: 16px; display: grid; place-items: center; padding: 0 4px; border-radius: 999px; background: #ff315f; color: #fff; font-size: 9px; font-style: normal; }
 .profile-records-button { width: 100%; min-height: 48px; margin-bottom: 8px; border: 1px solid #4a4652; border-radius: 14px; background: #28262e; font-weight: 800; }
+
+.ai-debug-sheet { position: absolute; z-index: 40; top: max(8px, env(safe-area-inset-top)); left: 8px; max-width: calc(100% - 16px); color: #e9f6ef; font-size: 11px; }
+.ai-debug-sheet > button { min-height: 34px; padding: 0 12px; border: 1px solid #4b7b62; border-radius: 999px; background: rgba(12, 33, 23, .94); color: #bff3d5; font-weight: 800; }
+.ai-debug-sheet__body { width: min(360px, calc(100vw - 32px)); max-height: 70vh; margin-top: 8px; padding: 12px; overflow: auto; border: 1px solid #355844; border-radius: 14px; background: rgba(8, 18, 13, .97); box-shadow: 0 12px 38px rgba(0,0,0,.45); }
+.ai-debug-sheet__body h2, .ai-debug-sheet__body h3, .ai-debug-sheet__body p { margin: 0 0 8px; }
+.ai-debug-sheet__body article { padding: 10px 0; border-top: 1px solid rgba(191,243,213,.16); }
+.ai-debug-sheet__body dl { display: grid; grid-template-columns: 82px 1fr; gap: 5px 8px; margin: 0; }
+.ai-debug-sheet__body dt { color: #83cda4; }
+.ai-debug-sheet__body dd { margin: 0; overflow-wrap: anywhere; }

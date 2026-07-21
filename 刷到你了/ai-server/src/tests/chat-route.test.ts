@@ -43,7 +43,10 @@ describe('POST /api/chat', () => {
     const response = await request(app).post('/api/chat').send(validRequest)
 
     expect(response.status).toBe(200)
-    expect(response.body).toEqual(JSON.parse(validModelOutput))
+    expect(response.body).toEqual({
+      ...JSON.parse(validModelOutput),
+      taskEvidence: [{ kind: 'recognized_malicious_editing', sourceMessageId: 'user-current' }],
+    })
     expect(modelClient.generate).toHaveBeenCalledWith(expect.objectContaining({ model: 'fake-model' }))
   })
 

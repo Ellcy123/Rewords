@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { App } from '../App'
 import { SAVE_KEY } from '../engine/persistence'
 import { createInitialState } from '../engine/state'
-import { getYanxinFallbackReply } from '../messages/fallbackReplies'
+import { YANXIN_REPLY_UNAVAILABLE_NOTICE } from '../messages/character'
 import { createCharacterTaskState } from '../relationship/taskEngine'
 
 function memoryStorage(initial: object): Storage {
@@ -70,54 +70,56 @@ afterEach(() => {
 })
 
 describe('AI-backed private messages', () => {
-  it('varies fallback by relationship identity and topic without state effects', () => {
-    const getReply = getYanxinFallbackReply as (...args: unknown[]) => { text: string; aiEffects?: unknown }
-    const first = getReply({
-      relationshipIdentity: 'new_viewer',
-      momentChoice: 'hold_back',
-      boundaryPressure: 0,
-      latestMessage: { id: 'care-1', text: '你还好吗，先休息一下' },
-      taskStage: 'invited',
-    }, 0)
-    const second = getReply({
-      relationshipIdentity: 'important_supporter',
-      momentChoice: 'hold_back',
-      boundaryPressure: 0,
-      latestMessage: { id: 'care-2', text: '你还好吗，先休息一下' },
-      taskStage: 'invited',
-    }, 0)
+  it('records a sanitized successful turn without raw player or model text', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(10_000)
+    const storage = memoryStorage(stateWithChat())
+    vi.stubGlobal('fetch', vi.fn(async () => aiResponse('这句模型回复不能进入调试记录。', {
+      relationshipEvidence: [{ kind: 'offered_actionable_help', sourceMessageId: 'user-10000-1' }],
+      memoryCandidates: [{ type: 'promise', sourceMessageId: 'user-10000-1', interpretation: '这段解释也不能进入调试记录。' }],
+    })))
+    render(<App storage={storage} />)
+    openMessages()
 
-    expect(first.text).not.toBe(second.text)
-    expect(first.aiEffects).toEqual({ taskEvidence: [], relationshipEvidence: [], memoryCandidates: [], openLoopUpdates: [] })
-    expect(second.aiEffects).toEqual({ taskEvidence: [], relationshipEvidence: [], memoryCandidates: [], openLoopUpdates: [] })
+    const { input, send } = composer()
+    fireEvent.change(input, { target: { value: '这句玩家原文不能进入调试记录' } })
+    fireEvent.click(send)
+    await act(async () => Promise.resolve())
+
+    const [record] = savedState(storage).aiDebugTurns
+    expect(record).toMatchObject({
+      relationshipIdentity: 'new_viewer',
+      taskStage: 'invited',
+      fallbackUsed: false,
+      acceptedRelationshipEvidence: [{ kind: 'offered_actionable_help', sourceMessageId: 'user-10000-1' }],
+      acceptedMemoryCandidates: [{ type: 'promise', sourceMessageId: 'user-10000-1' }],
+      rejectedCandidates: [],
+    })
+    expect(JSON.stringify(record)).not.toContain('这句玩家原文不能进入调试记录')
+    expect(JSON.stringify(record)).not.toContain('这句模型回复不能进入调试记录')
+    expect(JSON.stringify(record)).not.toContain('这段解释也不能进入调试记录')
   })
 
-  it('uses deterministic non-repeating fallback variants for each persona-sensitive purpose', () => {
-    const getReply = getYanxinFallbackReply as (...args: unknown[]) => { text: string; aiEffects?: unknown }
-    const context = (text: string, overrides: Record<string, unknown> = {}) => ({
-      relationshipIdentity: 'familiar_fan',
-      momentChoice: 'support',
-      boundaryPressure: 0,
-      latestMessage: { id: `message-${text}`, text },
-      taskStage: 'invited',
-      ...overrides,
+  it('records a typed provider rejection when a fallback is used', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(10_000)
+    const storage = memoryStorage(stateWithChat())
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('{}', { status: 503 })))
+    render(<App storage={storage} />)
+    openMessages()
+
+    const { input, send } = composer()
+    fireEvent.change(input, { target: { value: '服务挂了也别记录正文' } })
+    fireEvent.click(send)
+    await act(async () => Promise.resolve())
+
+    await act(async () => vi.advanceTimersByTimeAsync(8_250))
+
+    expect(savedState(storage).aiDebugTurns.at(-1)).toMatchObject({
+      fallbackUsed: true,
+      acceptedTaskEvidence: [],
+      rejectedCandidates: [{ category: 'provider_response', sourceId: 'user-10000-1', reason: 'http' }],
     })
-
-    const care = getReply(context('你还好吗，要不要先歇一下'), 4)
-    const spending = getReply(context('我再给你刷点钱', { boundaryPressure: 2 }), 4)
-    const evidence = getReply(context('那段恶意剪辑和完整证据我来找'), 4)
-    const promise = getReply(context('我答应你，等你核对完'), 4)
-    const support = getReply(context('今天直播怎么样'), 4)
-    const holdBack = getReply(context('今天直播怎么样', { momentChoice: 'hold_back' }), 4)
-    const ordinary = getReply(context('今天直播怎么样', { taskStage: 'committed' }), 4)
-    const adjacent = getReply(context('今天直播怎么样', { taskStage: 'committed' }), 5)
-
-    expect(new Set([care.text, spending.text, evidence.text, promise.text, support.text, holdBack.text, ordinary.text]).size).toBe(7)
-    expect(ordinary.text).toMatch(/今天先这样|我在，等手头这点事过完再聊|你先说，我听着/)
-    expect(adjacent.text).not.toBe(ordinary.text)
-    for (const reply of [care, spending, evidence, promise, support, holdBack, ordinary, adjacent]) {
-      expect(reply.aiEffects).toEqual({ taskEvidence: [], relationshipEvidence: [], memoryCandidates: [], openLoopUpdates: [] })
-    }
   })
 
   it('shows the user message immediately, then softly delivers a validated AI reply', async () => {
@@ -152,7 +154,7 @@ describe('AI-backed private messages', () => {
     expect(document.body.textContent).not.toMatch(/输入中|倒计时|在线|直播中|办事中|休息中/)
   })
 
-  it('uses the stage-aware reply after an AI failure and keeps the delay', async () => {
+  it('uses a non-character system notice after an AI failure and keeps the delay', async () => {
     vi.useFakeTimers()
     vi.stubGlobal('fetch', vi.fn(async () => { throw new Error('offline') }))
     render(<App storage={memoryStorage(stateWithChat())} />)
@@ -161,9 +163,10 @@ describe('AI-backed private messages', () => {
     fireEvent.click(screen.getByRole('button', { name: '发送消息' }))
 
     await act(async () => Promise.resolve())
-    expect(screen.queryByText('刚认识，你先别替我操心太多。', { exact: false })).toBeNull()
+    expect(screen.queryByText(YANXIN_REPLY_UNAVAILABLE_NOTICE)).toBeNull()
     await act(async () => vi.advanceTimersByTimeAsync(2_250))
-    expect(screen.getByText('刚认识，你先别替我操心太多。', { exact: false })).toBeTruthy()
+    expect(screen.getByText(YANXIN_REPLY_UNAVAILABLE_NOTICE)).toBeTruthy()
+    expect(screen.getByText(YANXIN_REPLY_UNAVAILABLE_NOTICE).closest('article')?.className).toContain('message-system')
   })
 
   it('schedules a system fallback checkpoint solely after repeated provider failures', async () => {
@@ -185,11 +188,11 @@ describe('AI-backed private messages', () => {
       expect(beforeDelivery.messages.filter(message => message.role === 'user').map(message => message.text)).toEqual(
         ['offline user turn one', 'offline user turn two'].slice(0, turn + 1),
       )
-      expect(beforeDelivery.messages.filter(message => message.role === 'assistant' && message.id.startsWith('yanxin-reply-'))).toHaveLength(turn)
+      expect(beforeDelivery.messages.filter(message => message.role === 'system' && message.id.startsWith('yanxin-reply-'))).toHaveLength(turn)
       expect(beforeDelivery.pendingChatDeliveries.filter(delivery => delivery.kind === 'reply')).toHaveLength(1)
 
       await act(async () => vi.advanceTimersByTimeAsync(2_250))
-      expect(savedState(storage).messages.filter(message => message.role === 'assistant' && message.id.startsWith('yanxin-reply-'))).toHaveLength(turn + 1)
+      expect(savedState(storage).messages.filter(message => message.role === 'system' && message.id.startsWith('yanxin-reply-'))).toHaveLength(turn + 1)
     }
 
     await act(async () => vi.advanceTimersByTimeAsync(4_250))
@@ -220,8 +223,8 @@ describe('AI-backed private messages', () => {
 
     render(<App storage={storage} />)
     await act(async () => vi.advanceTimersByTimeAsync(8_250))
-    fireEvent.click(screen.getByRole('button', { name: '私信，1 条未读' }))
-    expect(screen.getAllByText('刚认识，你先别替我操心太多。', { exact: false })).toHaveLength(1)
+    fireEvent.click(screen.getByRole('button', { name: '私信' }))
+    expect(screen.getAllByText(YANXIN_REPLY_UNAVAILABLE_NOTICE)).toHaveLength(1)
   })
 
   it('advances through two grounded evidence deliveries before scheduling one progress report', async () => {
@@ -229,7 +232,12 @@ describe('AI-backed private messages', () => {
     vi.setSystemTime(10_000)
     const sourceMessageIds: string[] = []
     const fetcher = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
-      const request = JSON.parse(String(init?.body)) as { currentMessageId: string; taskStage: 'invited' | 'understood' }
+      const request = JSON.parse(String(init?.body)) as {
+        currentMessageId: string
+        taskStage: 'invited' | 'understood' | 'committed'
+        turnKind: 'player_message' | 'progress_report'
+      }
+      if (request.turnKind === 'progress_report') return aiResponse('完整的前后我已经核对好了')
       sourceMessageIds.push(request.currentMessageId)
       return aiResponse('我会按完整证据继续核对', {
         taskEvidence: [{
@@ -270,7 +278,7 @@ describe('AI-backed private messages', () => {
     expect(afterReport.messages.filter(message => message.id === 'yanxin-progress-report')).toHaveLength(1)
     expect(afterReport.pendingChatDeliveries.filter(delivery => delivery.kind === 'proactive_report')).toHaveLength(0)
     expect(afterReport.unlockedNodeIds.filter(id => id === 'E201')).toHaveLength(1)
-    expect(fetcher).toHaveBeenCalledTimes(2)
+    expect(fetcher).toHaveBeenCalledTimes(3)
   })
 
   it('delivers one persisted fallback when an abandoned request completes after reload', async () => {
@@ -299,13 +307,13 @@ describe('AI-backed private messages', () => {
     await act(async () => vi.advanceTimersByTimeAsync(8_250))
 
     const recovered = savedState(storage)
-    expect(recovered.messages.filter(message => message.role === 'assistant' && message.id.startsWith('yanxin-reply-'))).toHaveLength(1)
+    expect(recovered.messages.filter(message => message.role === 'system' && message.id.startsWith('yanxin-reply-'))).toHaveLength(1)
     expect(recovered.messages.some(message => message.text === 'late abandoned completion')).toBe(false)
     expect(recovered.pendingChatDeliveries.filter(delivery => delivery.kind === 'reply')).toHaveLength(0)
     expect(recovered.characterTasks.YANXIN_UNCUT_EVIDENCE.stage).toBe('invited')
 
     await act(async () => vi.advanceTimersByTimeAsync(10_000))
-    expect(savedState(storage).messages.filter(message => message.role === 'assistant' && message.id.startsWith('yanxin-reply-'))).toHaveLength(1)
+    expect(savedState(storage).messages.filter(message => message.role === 'system' && message.id.startsWith('yanxin-reply-'))).toHaveLength(1)
   })
 
   it('keeps pending replies single-flight and does not advance without new evidence', async () => {

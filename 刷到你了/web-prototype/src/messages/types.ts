@@ -1,9 +1,11 @@
 import type { NodeId } from '../content/types'
 import type { RelationshipEvidenceCandidate } from '../relationship/personaState'
-import type { TaskEvidenceCandidate } from '../relationship/taskEngine'
+import type { RelationshipIdentity, YanxinPersonaState } from '../relationship/personaState'
+import type { CharacterTaskStage, TaskEvidenceCandidate } from '../relationship/taskEngine'
+import type { CharacterIntent, ChatFailureReason } from './aiClient'
 
-export type ChatRole = 'user' | 'assistant'
-export type ChatDeliveryKind = 'reply' | 'proactive_report' | 'system_fallback_checkpoint'
+export type ChatRole = 'user' | 'assistant' | 'system'
+export type ChatDeliveryKind = 'reply' | 'proactive_report' | 'system_notice' | 'system_fallback_checkpoint'
 export type ChatDeliveryEffect = 'none' | 'unlock_e201'
 export type ChatDeliverySource = 'system_fallback'
 
@@ -54,6 +56,33 @@ export interface ChatAiEffects {
   relationshipEvidence: RelationshipEvidenceCandidate[]
   memoryCandidates: MemoryCandidate[]
   openLoopUpdates: OpenLoopUpdate[]
+}
+
+export interface AiDebugRejectedCandidate {
+  category: 'provider_response'
+  sourceId: string
+  reason: ChatFailureReason
+}
+
+export interface AiTurnDebugRecord {
+  id: string
+  createdAt: number
+  personaCoreId: 'yanxin-v1'
+  relationshipIdentity: RelationshipIdentity
+  dimensions: YanxinPersonaState['relationship']['dimensions']
+  shortTerm: YanxinPersonaState['shortTerm']
+  taskStage: CharacterTaskStage
+  recentMessageIdsRead: string[]
+  relationshipChangeSourceIdsRead: string[]
+  memoryIdsRead: string[]
+  openLoopIdsRead: string[]
+  characterIntents: CharacterIntent[]
+  acceptedTaskEvidence: TaskEvidenceCandidate[]
+  acceptedRelationshipEvidence: RelationshipEvidenceCandidate[]
+  acceptedMemoryCandidates: Array<Pick<MemoryCandidate, 'type' | 'sourceMessageId'>>
+  acceptedOpenLoopUpdates: Array<Pick<OpenLoopUpdate, 'kind' | 'sourceMessageId' | 'status'>>
+  rejectedCandidates: AiDebugRejectedCandidate[]
+  fallbackUsed: boolean
 }
 
 export interface PendingChatDelivery {

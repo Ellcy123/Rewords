@@ -2,9 +2,9 @@ import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Send } from 'lucide-react'
 import { useGame } from '../game/useGame'
 import { scheduleChatDelivery } from './delivery'
-import { getYanxinFallbackReply } from './fallbackReplies'
+import { YANXIN_REPLY_UNAVAILABLE_NOTICE } from './character'
 import { isAllowedMemoryId, requestYanxinReply } from './aiClient'
-import type { PendingChatDelivery } from './types'
+import type { AiTurnDebugRecord, ChatMessage, PendingChatDelivery } from './types'
 
 export function MessageSheet() {
   const { state, dispatch } = useGame()
@@ -30,47 +30,47 @@ export function MessageSheet() {
     const now = Date.now()
     const userMessageId = `user-${now}-${state.messages.length}`
     const messageId = `yanxin-reply-${now}-${state.messages.length}`
-    const fallback = getYanxinFallbackReply({
-      relationshipIdentity: state.yanxinPersona.relationship.identity,
-      momentChoice: state.relationshipEvidence.some(evidence => evidence.kind === 'support') ? 'support' : 'hold_back',
-      boundaryPressure: state.yanxinPersona.relationship.dimensions.boundaryPressure,
-      latestMessage: { id: userMessageId, text: trimmed },
-      taskStage,
-    }, state.messages.length)
     dispatch({ type: 'CHAT_USER_SENT', message: { id: userMessageId, role: 'user', text: trimmed, createdAt: now } })
     const recoveryDelivery: PendingChatDelivery = {
       id: `delivery-${messageId}`,
       kind: 'reply',
-      message: { id: messageId, role: 'assistant', text: fallback.text, createdAt: now },
+      message: { id: messageId, role: 'system', text: YANXIN_REPLY_UNAVAILABLE_NOTICE, createdAt: now },
       deliverAt: now + 8_000,
-      aiEffects: fallback.aiEffects,
+      aiEffects: { taskEvidence: [], relationshipEvidence: [], memoryCandidates: [], openLoopUpdates: [] },
       effect: 'none',
     }
     dispatch({ type: 'CHAT_DELIVERY_SCHEDULED', delivery: recoveryDelivery })
     setText('')
     setRequesting(true)
+    const recentMessages = state.messages
+      .filter((message): message is ChatMessage & { role: 'user' | 'assistant' } => message.role !== 'system')
+      .slice(-12)
+    const allowedMemoryIds = state.sharedMemories.map(memory => memory.id).filter(isAllowedMemoryId)
+    const memories = state.longTermMemories.filter(memory => memory.active).slice(-10)
+    const openLoops = state.openLoops.slice(-5)
     const result = await requestYanxinReply({
       characterId: 'yanxin',
+      turnKind: 'player_message',
       currentMessageId: userMessageId,
       userText: trimmed,
       taskStage,
       momentChoice: state.relationshipEvidence.some(evidence => evidence.kind === 'support') ? 'support' : 'hold_back',
-      recentMessages: state.messages.slice(-12).map(message => ({ role: message.role, text: message.text })),
-      allowedMemoryIds: state.sharedMemories.map(memory => memory.id).filter(isAllowedMemoryId),
+      recentMessages: recentMessages.map(message => ({ role: message.role, text: message.text })),
+      allowedMemoryIds,
       postEnding: state.ending !== null,
       personaSnapshot: {
         relationshipIdentity: state.yanxinPersona.relationship.identity,
         dimensions: { ...state.yanxinPersona.relationship.dimensions },
         shortTerm: { ...state.yanxinPersona.shortTerm },
       },
-      memories: state.longTermMemories.filter(memory => memory.active).slice(-10).map(memory => ({
+      memories: memories.map(memory => ({
         id: memory.id,
         type: memory.type,
         sourceMessageId: memory.sourceMessageId,
         sourceText: memory.sourceText,
         interpretation: memory.interpretation,
       })),
-      openLoops: state.openLoops.slice(-5).map(openLoop => ({
+      openLoops: openLoops.map(openLoop => ({
         id: openLoop.id,
         kind: openLoop.kind,
         summary: openLoop.summary,
@@ -78,7 +78,7 @@ export function MessageSheet() {
         status: openLoop.status,
       })),
     })
-    const replyText = result.ok ? result.data.replyText : fallback.text
+    const replyText = result.ok ? result.data.replyText : YANXIN_REPLY_UNAVAILABLE_NOTICE
     const aiEffects = result.ok
       ? {
           taskEvidence: result.data.taskEvidence,
@@ -86,10 +86,40 @@ export function MessageSheet() {
           memoryCandidates: result.data.memoryCandidates,
           openLoopUpdates: result.data.openLoopUpdates,
         }
-      : fallback.aiEffects
+      : { taskEvidence: [], relationshipEvidence: [], memoryCandidates: [], openLoopUpdates: [] }
     if (!result.ok) dispatch({ type: 'CHAT_PROVIDER_FAILED' })
     const readyAt = Date.now()
-    const message = { id: messageId, role: 'assistant' as const, text: replyText, createdAt: readyAt }
+    const debugRecord: AiTurnDebugRecord = {
+      id: `debug-${userMessageId}`,
+      createdAt: readyAt,
+      personaCoreId: 'yanxin-v1',
+      relationshipIdentity: state.yanxinPersona.relationship.identity,
+      dimensions: { ...state.yanxinPersona.relationship.dimensions },
+      shortTerm: { ...state.yanxinPersona.shortTerm },
+      taskStage,
+      recentMessageIdsRead: recentMessages.map(message => message.id),
+      relationshipChangeSourceIdsRead: [...new Set(state.yanxinPersona.relationship.changes.slice(-20).map(change => change.sourceId))],
+      memoryIdsRead: [...allowedMemoryIds, ...memories.map(memory => memory.id)],
+      openLoopIdsRead: openLoops.map(openLoop => openLoop.id),
+      characterIntents: result.ok ? [...result.data.characterIntents] : [],
+      acceptedTaskEvidence: result.ok ? result.data.taskEvidence.map(evidence => ({ ...evidence })) : [],
+      acceptedRelationshipEvidence: result.ok ? result.data.relationshipEvidence.map(evidence => ({ ...evidence })) : [],
+      acceptedMemoryCandidates: result.ok
+        ? result.data.memoryCandidates.map(candidate => ({ type: candidate.type, sourceMessageId: candidate.sourceMessageId }))
+        : [],
+      acceptedOpenLoopUpdates: result.ok
+        ? result.data.openLoopUpdates.map(update => ({ kind: update.kind, sourceMessageId: update.sourceMessageId, status: update.status }))
+        : [],
+      rejectedCandidates: result.ok ? [] : [{ category: 'provider_response', sourceId: userMessageId, reason: result.reason }],
+      fallbackUsed: !result.ok,
+    }
+    dispatch({ type: 'CHAT_AI_DEBUG_RECORDED', record: debugRecord })
+    const message: ChatMessage = {
+      id: messageId,
+      role: result.ok ? 'assistant' : 'system',
+      text: replyText,
+      createdAt: readyAt,
+    }
     dispatch({
       type: 'CHAT_DELIVERY_REPLACED',
       delivery: scheduleChatDelivery({

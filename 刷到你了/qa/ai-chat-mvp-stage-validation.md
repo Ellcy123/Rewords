@@ -84,6 +84,68 @@
 - 未解决缺陷：未发现自动化阻断缺陷。完整 Phase C Gate 尚缺非生产 Key 下 6 条真实模型冒烟、AI 在线人工路线，以及真机手动断服路线；因此不能判定 PASS。
 - 阶段结论：NOT RUN（代码实现、自动化门禁与 AI 离线路由通过；真实模型与人工在线/离线验收待执行）
 
+## Phase C-Persona（Task 9）
+
+- 测试提交：待 Task 9 提交
+- 日期：2026-07-21
+- 环境：本地开发服务；DeepSeek 非生产验收配置；真实请求以 UTF-8 JSON 发送
+- 记录约束：只记录输入类别、结构字段、身份、证据标签、降级状态和通过结果；不记录密钥、原始提示词、模型原始输出或回复原文
+- 自动化命令：前端与服务端全量 `npm test`、`npm run typecheck`、`npm run build`；仓库 `git diff --check`（最终结果在 Task 9 报告和提交中更新）
+
+### 人物状态与记忆引擎十二项验收
+
+| 用例 | 状态 | 关系身份 | 记忆连续性 | 任务证据来源 | 降级状态 | 证据或说明 |
+| --- | --- | --- | --- | --- | --- | --- |
+| P-01 新观众普通关心 | REAL PASS | `new_viewer` | 新存档，无长期记忆 | 无 | 否 | 200；七字段完整；`warm`；无任务误推进。 |
+| P-02 重要支持者普通关心 | REAL PASS | `important_supporter` | 新存档，无长期记忆 | 无 | 否 | 200；七字段完整；相同输入类别产生不同人物意图，并给出 `showed_specific_care` 候选。 |
+| P-03 支持但担心消费越界 | REAL PASS | `important_supporter` | 保存 `player_stance` 候选 | 无 | 否 | 200；人物意图含 `set_boundary`；没有把消费话题误判为任务证据。 |
+| P-04 不上票并解释原因 | REAL FAIL / SAFE | `new_viewer` | 没有接受模型候选 | 无 | `invalid_provider_output` | DeepSeek 两次输出仍未通过校验，服务端返回 typed 503；自动化证明前端改用身份化基础回复且无状态副作用。 |
+| P-05 连续偏题聊天 | REAL PASS | `familiar_fan` | 最近消息连续，未造长期记忆 | 无 | 否 | 200；天气类多轮对话七字段完整；没有按轮次推进任务。 |
+| P-06 明确谈到恶意剪辑 | REAL FAIL / SAFE | `new_viewer` | 无新增长期记忆 | 模型未提交候选 | 否 | 200 且七字段完整，但模型未产出 `recognized_malicious_editing`；规则保持原阶段，没有伪推进。该项记录模型非确定性，不继续调参。 |
+| P-07 完整取证方案 | AUTO PASS | 任意合法身份 | 不依赖长期记忆 | 当前玩家消息 ID | 否 | `contracts.test.ts` 覆盖五阶段 × 两类证据矩阵及语义匹配；`relationship-task.test.ts` 只推进一个检查点。 |
+| P-08 行为证据优先于自我声明 | AUTO PASS | 规则派生 | 来源去重后连续 | 无 | 否 | `relationship-persona.test.ts` 证明一次消费或夸奖不能升级私人关系，四个有效来源才派生身份。 |
+| P-09 刷新后记得承诺 | REAL + AUTO PASS | `familiar_fan` | 已验证 `promise` 与未完事项恢复 | 无 | 否 | 真实 API 200、七字段完整，意图含 `confirm_promise`；`persistence.test.ts` 覆盖来源保留和刷新恢复。 |
+| P-10 玩笑、冲突和未完事项跨刷新 | AUTO PASS | 保持存档身份 | 长期记忆与 open loop 分层恢复 | 无 | 否 | `message-memory.test.ts`、`persistence.test.ts` 拒绝伪造来源、畸形保存和已关闭事项更新。 |
+| P-11 公开与私聊人物一致 | AUTO PASS | 四类身份均受同一核心人格约束 | 只引用验证记忆 | 无 | 否 | `contracts.test.ts` 验证人物特征、四身份行为、事实边界和八层输入；身份只改变熟悉度，不改写事实。 |
+| P-12 提供方不可用与调试溯源 | AUTO PASS | 使用请求快照身份 | 不保存失败输出候选 | 显式 `system_fallback` 检查点 | 是 | `message-ai-flow.test.tsx` 验证 typed failure、人物化 fallback、重复失败后单次检查点；`ai-debug.test.tsx` 验证开发态面板、20 条上限与正常 UI 隔离。 |
+
+### 真实 DeepSeek 八类样本摘要
+
+| 样本 | HTTP/结构 | 关系身份 | 人物意图或状态标签 | 任务证据 | 降级 | 结论 |
+| --- | --- | --- | --- | --- | --- | --- |
+| 普通关心 / 新观众 | 200 / 七字段 | `new_viewer` | `thank,explain`；`warm` | 无 | 否 | PASS |
+| 普通关心 / 重要支持者 | 200 / 七字段 | `important_supporter` | `thank,share`；`showed_specific_care` | 无 | 否 | PASS |
+| 任务相关剪辑问题 | 200 / 七字段 | `new_viewer` | `fan_maintenance,explain` | 缺少预期候选 | 否 | FAIL / 状态安全 |
+| 无关多轮聊天 | 200 / 七字段 | `familiar_fan` | `fan_maintenance,share` | 无 | 否 | PASS |
+| 支持并担心消费 | 200 / 七字段 | `important_supporter` | `thank,set_boundary` | 无 | 否 | PASS |
+| 不上票并说明原因 | 503 / typed failure | `new_viewer` | 未接受候选 | 无 | 是 | FAIL / fallback 安全 |
+| 刷新后回忆承诺 | 200 / 七字段 | `familiar_fan` | `confirm_promise,explain`；open loop 保持 | 无 | 否 | PASS |
+| 提供方不可用 | 自动化 typed failure | 请求快照身份 | 人物化基础回复 | 仅显式系统检查点 | 是 | AUTO PASS |
+
+以上是 Task 9 当时的历史采样记录；其中固定 fallback、模型漏报任务证据等结论已被下方的“Phase C-Contextual”改造取代，不再代表当前实现。
+
+## Phase C-Contextual（AI 情境对白收口）
+
+- 日期：2026-07-21
+- 环境：本地开发服务；DeepSeek 非生产验收配置；手机与电脑同网测试地址以当次活动网卡为准
+- 自动化命令：服务端 `npm test`、`npm run typecheck`、`npm run build`；前端 `npm test`、`npm run typecheck`、`npm run build`；仓库 `git diff --check`
+- 自动化摘要：服务端 4 个文件、117 项通过；前端 24 个文件、167 项通过；两端类型检查与生产构建退出码 0。
+
+| 用例 | 状态 | 证据或说明 |
+| --- | --- | --- |
+| CC-01 首次联系建立背景 | REAL PASS | 连续 3 次真实请求均由 AI 从零说明“玩家看过 PK 结尾、剪辑争议在赛后发生、玩家没看过流传片段、完整证据尚未取得”；没有预写角色对白。 |
+| CC-02 日常聊天聚焦当下 | REAL PASS | 吃饭、口味、困倦三类真实请求均直接回应最新问题，没有机械复述剪辑任务。 |
+| CC-03 重复投诉修复 | REAL PASS | 玩家指出“又说这句”后，回复承认表达重复并把话题交还玩家；服务端硬规则禁止再次复述任务背景。 |
+| CC-04 短句语境承接 | REAL PASS | “好啊”只有在上一条确实邀请核对完整证据时才形成 `accepted_complete_evidence_plan`；脱离该语境不推进任务。 |
+| CC-05 主动进度报备 | REAL PASS | 报备说明完整素材已核对、关系派生视频已发出；禁止再写成“准备、稍后、等我再发”。 |
+| CC-06 重复输出防护 | AUTO PASS | 最近 6 条角色回复参与精确与近似重复检测；首次不合格时在同一超时预算内重写，仍不合格则返回 typed failure。 |
+| CC-07 主动消息副作用 | REAL + AUTO PASS | 主动消息误带的任务证据、关系证据、记忆候选和未完事项会被服务端清空，只保留合规对白；修正后连续 3 次首次联系均为 HTTP 200。 |
+| CC-08 AI 不可用 | AUTO PASS | 前端只显示系统提示，不再把固定兜底文本伪装成炎鑫发言，也不会产生关系或任务副作用。 |
+| CC-09 首信到达前输入 | AUTO PASS | 首次 AI 联系实际送达前不显示输入框，避免玩家先发消息导致上下文顺序倒置。 |
+| CC-10 旧对白清除 | AUTO PASS | 前端删除固定首信、固定进度报备与角色 fallback；开场、普通回复和报备均经过 `/api/chat`。 |
+
+- 阶段结论：AUTO PASS / REAL MODEL SMOKE PASS；仍需用户在手机新存档上做最终主观自然度验收。
+
 ## Phase D
 
 - 测试提交：NOT RUN

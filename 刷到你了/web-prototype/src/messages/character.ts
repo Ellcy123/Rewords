@@ -1,19 +1,4 @@
-import type { ChatMessage } from './types'
-import type { MomentChoiceId } from '../moments/types'
-
-export const YANXIN_PROGRESS_REPORT = '我试完了，完整那段也发了。你之前说得对，光留最后十秒没用。'
+export const YANXIN_REPLY_UNAVAILABLE_NOTICE = '【系统】这次回复暂时没有生成，请稍后再试。'
+export const YANXIN_FIRST_CONTACT_UNAVAILABLE_NOTICE = '【系统】炎鑫的第一条消息暂时没有生成，你仍可以稍后继续私聊。'
+export const YANXIN_PROGRESS_UNAVAILABLE_NOTICE = '【系统】炎鑫的报备消息暂时没有生成，关系视频仍已加入推荐流。'
 export const YANXIN_SYSTEM_FALLBACK_CHECKPOINT = '【系统保障】对话服务暂不可用，已保留“核对完整证据”的下一步。'
-
-const FIRST_CONTACT: Record<MomentChoiceId, string> = {
-  support: '刚才你在最后那一下站出来，我看见了。谢谢，但下次别为了我勉强花。还有件事，有人只截了最后十秒，我想把完整那段找回来。',
-  hold_back: '刚才你没跟着场面上头，我也看见了。别担心，我不是来查账的。倒是有人只截了最后十秒，我想把完整那段找回来。',
-}
-
-export function createYanxinFirstContact(choiceId: MomentChoiceId, createdAt: number): ChatMessage {
-  return {
-    id: `yanxin-first-${choiceId}`,
-    role: 'assistant',
-    text: FIRST_CONTACT[choiceId],
-    createdAt,
-  }
-}

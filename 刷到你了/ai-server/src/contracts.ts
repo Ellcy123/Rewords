@@ -7,6 +7,8 @@ export const TaskSignals = [
   'respect_boundary',
 ] as const
 
+export const ChatTurnKinds = ['first_contact', 'player_message', 'progress_report'] as const
+
 export const Tones = ['guarded', 'warm', 'teasing', 'serious'] as const
 
 export const CharacterIntents = [
@@ -58,6 +60,14 @@ const HanCharacterPattern = /^\p{Script=Han}$/u
 const NodeIdPattern = /[A-Z]\d{3}/i
 const DirectContentAccessClaimPattern = /(?:节点|视频|内容|入口).{0,12}(?:开(?:通|放|启|了)?|打开|解锁)|(?:我|为你|给你|已|已经|会|将|现在|马上).{0,12}(?:开(?:通|放|启|了)?|打开|解锁).{0,12}(?:节点|视频|内容|入口)/
 const TransactionOrTransferPattern = /给你|送你|送给|赠送|卖给|出售|售卖|购买|买|卖|换成|商品/
+const CollectiveClipViewingPattern = /(?:(?:咱们|我们).{0,10}(?:看到|看过).{0,10}(?:十秒|那段|剪辑))|(?:(?:十秒|那段|剪辑).{0,10}(?:咱们|我们).{0,10}(?:看到|看过))/
+const PlayerClipViewingPattern = /(?:你.{0,10}(?:看到|看过).{0,10}(?:十秒|那段|剪辑))|(?:(?:十秒|那段|剪辑).{0,10}你.{0,10}(?:看到|看过))/
+const PlayerDidNotViewPattern = /你.{0,8}(?:没|没有|未).{0,3}(?:看到|看过)/
+
+function inventsSharedClipViewing(value: string): boolean {
+  return CollectiveClipViewingPattern.test(value)
+    || (PlayerClipViewingPattern.test(value) && !PlayerDidNotViewPattern.test(value))
+}
 
 function codePointLength(value: string): number {
   return Array.from(value).length
@@ -84,7 +94,9 @@ function isHanCharacter(character: string): boolean {
 }
 
 function isChineseReplyText(value: string): boolean {
-  return Array.from(value).every(character => isHanCharacter(character) || ChinesePunctuation.has(character))
+  return Array.from(value.replaceAll('PK', '')).every(
+    character => isHanCharacter(character) || ChinesePunctuation.has(character),
+  )
 }
 
 function isForbiddenDomainClaim(value: string): boolean {
@@ -167,8 +179,9 @@ const OpenLoopUpdateSchema = z.object({
 
 export const ChatRequestSchema = z.object({
   characterId: z.literal('yanxin'),
+  turnKind: z.enum(ChatTurnKinds).default('player_message'),
   currentMessageId: IdSchema,
-  userText: codePointString(1, 300, 'userText'),
+  userText: codePointString(0, 300, 'userText'),
   taskStage: z.enum(['locked', 'invited', 'understood', 'committed', 'published']),
   momentChoice: z.enum(['support', 'hold_back']),
   recentMessages: z.array(z.object({
@@ -188,6 +201,19 @@ export const ChatRequestSchema = z.object({
   const hasEvidenceCompletion = memories.has('yanxin_evidence_task_completed')
   const hasBrideHelped = memories.has('yanxin_evidence_method_helped_bride')
   const hasWeddingCompletion = memories.has('bride_wedding_result_completed')
+
+  if (request.turnKind === 'player_message' && codePointLength(request.userText) === 0) {
+    addIssue(['userText'], 'player_message requires non-empty userText')
+  }
+  if (request.turnKind !== 'player_message' && codePointLength(request.userText) !== 0) {
+    addIssue(['userText'], 'proactive turns require empty userText')
+  }
+  if (request.turnKind === 'first_contact' && request.taskStage !== 'invited') {
+    addIssue(['taskStage'], 'first_contact requires invited stage')
+  }
+  if (request.turnKind === 'progress_report' && request.taskStage !== 'committed') {
+    addIssue(['taskStage'], 'progress_report requires committed stage')
+  }
 
   if (hasSupportChoice && request.momentChoice !== 'support') {
     addIssue(['allowedMemoryIds'], 'support PK memory must match momentChoice')
@@ -237,12 +263,79 @@ const ApplicableTaskEvidenceByStage = {
   published: [],
 } as const satisfies Record<ChatRequest['taskStage'], readonly TaskEvidenceKind[]>
 
+export function isRepetitionComplaint(userText: string): boolean {
+  return /重复|说过了|刚才说过|又.{0,5}(?:说|发).{0,5}(?:这|同样|一样)|怎么又说|咋又说/.test(userText)
+}
+
+function hasSemanticTaskEvidence(request: ChatRequest, kind: TaskEvidenceKind): boolean {
+  const userText = request.userText
+  if (kind === 'recognized_malicious_editing') {
+    return /恶意剪辑|断章取义|被剪|原片|原视频|原录像|完整(?:录像|视频|素材|证据|上下文|前后)/.test(userText)
+  }
+  const mentionsEvidence = /完整|原片|原视频|录像|素材|证据|时间戳|录音|画面|前后/.test(userText)
+  const proposesAction = /找|查|核对|保存|记录|提供|发送|整理|对照|确认|接受|可以|愿意|帮/.test(userText)
+  if (mentionsEvidence && proposesAction) return true
+
+  const shortAffirmative = /^(?:好啊?|可以|行啊?|愿意|没问题|那就这样)[。！？]?$/.test(userText)
+  if (!shortAffirmative) return false
+  const previousAssistant = [...request.recentMessages].reverse().find(message => message.role === 'assistant')?.text ?? ''
+  const mentionsPlan = /完整|原片|原视频|录像|素材|证据|时间戳|前后/.test(previousAssistant)
+  const invitesAgreement = /一起|要不要|可以吗|愿意|帮|等.{0,8}(?:找|查|核对)|(?:找|查|核对).{0,8}(?:完整|原片|素材)/.test(previousAssistant)
+  return mentionsPlan && invitesAgreement
+}
+
+function requiresSpendingBoundary(request: ChatRequest): boolean {
+  const mentionsSpending = /上票|打赏|刷钱|花钱|消费|冲动/.test(request.userText)
+  const expressesConcern = /怕|担心|冲动|劝|停|过度/.test(request.userText)
+  return mentionsSpending && (expressesConcern || request.personaSnapshot.dimensions.boundaryPressure >= 2)
+}
+
 export function parseChatResponseForRequest(request: ChatRequest, value: unknown): ChatResponse {
   const applicableEvidence = new Set<TaskEvidenceKind>(request.postEnding ? [] : ApplicableTaskEvidenceByStage[request.taskStage])
   const suppliedOpenLoopIds = new Set(
     request.openLoops.filter(openLoop => openLoop.status === 'open').map(openLoop => openLoop.id),
   )
-  return ChatResponseSchema.superRefine((response, context) => {
+  const normalizedValue = request.turnKind !== 'player_message'
+    && typeof value === 'object'
+    && value !== null
+    && !Array.isArray(value)
+    ? {
+        ...value,
+        taskEvidence: [],
+        relationshipEvidence: [],
+        memoryCandidates: [],
+        openLoopUpdates: [],
+      }
+    : value
+  const parsed = ChatResponseSchema.superRefine((response, context) => {
+    if (inventsSharedClipViewing(response.replyText)) {
+      context.addIssue({
+        code: 'custom',
+        path: ['replyText'],
+        message: 'reply must not invent a shared viewing of the circulating clip',
+      })
+    }
+    if (
+      request.turnKind === 'progress_report'
+      && /(?:准备|打算).{0,8}(?:发|公开)|(?:晚点|稍后|等我).{0,8}(?:发|公开)|再发/.test(response.replyText)
+    ) {
+      context.addIssue({
+        code: 'custom',
+        path: ['replyText'],
+        message: 'progress report must describe completed publication',
+      })
+    }
+    if (
+      request.turnKind === 'player_message'
+      && isRepetitionComplaint(request.userText)
+      && /十秒|剪辑|被剪|完整|原片|录像|素材|证据|前因|前后/.test(response.replyText)
+    ) {
+      context.addIssue({
+        code: 'custom',
+        path: ['replyText'],
+        message: 'repair response must not repeat the task background',
+      })
+    }
     response.taskEvidence.forEach((evidence, index) => {
       if (evidence.sourceMessageId !== request.currentMessageId) {
         context.addIssue({
@@ -258,7 +351,22 @@ export function parseChatResponseForRequest(request: ChatRequest, value: unknown
           message: 'taskEvidence contains evidence that does not apply to the request state',
         })
       }
+      if (!hasSemanticTaskEvidence(request, evidence.kind)) {
+        context.addIssue({
+          code: 'custom',
+          path: ['taskEvidence', index, 'kind'],
+          message: 'taskEvidence is not grounded in the current message meaning',
+        })
+      }
     })
+
+    if (requiresSpendingBoundary(request) && !response.characterIntents.includes('set_boundary')) {
+      context.addIssue({
+        code: 'custom',
+        path: ['characterIntents'],
+        message: 'characterIntents must include set_boundary for a spending concern',
+      })
+    }
 
     response.relationshipEvidence.forEach((evidence, index) => {
       if (evidence.sourceMessageId !== request.currentMessageId) {
@@ -294,7 +402,17 @@ export function parseChatResponseForRequest(request: ChatRequest, value: unknown
         })
       }
     })
-  }).parse(value)
+  }).parse(normalizedValue)
+  if (request.turnKind !== 'player_message') return parsed
+  const inferredEvidence = [...applicableEvidence].find(kind => hasSemanticTaskEvidence(request, kind))
+  if (!inferredEvidence || parsed.taskEvidence.some(evidence => evidence.kind === inferredEvidence)) return parsed
+  return {
+    ...parsed,
+    taskEvidence: [...parsed.taskEvidence, {
+      kind: inferredEvidence,
+      sourceMessageId: request.currentMessageId,
+    }],
+  }
 }
 
 export const ChatResponseJsonSchema = {

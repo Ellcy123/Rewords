@@ -3,6 +3,7 @@ import { NODE_BY_ID } from '../content/nodes'
 import { TRIGGERS } from '../content/triggers'
 import type { ItemId, NodeId } from '../content/types'
 import type {
+  AiTurnDebugRecord,
   ChatAiEffects,
   ChatMessage,
   LongTermMemory,
@@ -140,7 +141,7 @@ function normalizeYanxinPersona(value: unknown, fallback: YanxinPersonaState): Y
 function isChatMessage(value: unknown): value is ChatMessage {
   return isRecord(value)
     && typeof value.id === 'string'
-    && (value.role === 'user' || value.role === 'assistant')
+    && (value.role === 'user' || value.role === 'assistant' || value.role === 'system')
     && typeof value.text === 'string'
     && isFiniteNumber(value.createdAt)
 }
@@ -183,11 +184,105 @@ function normalizeAiEffects(value: unknown): ChatAiEffects | null {
   return { taskEvidence, relationshipEvidence, memoryCandidates, openLoopUpdates }
 }
 
+const debugTaskStages: AiTurnDebugRecord['taskStage'][] = ['locked', 'invited', 'understood', 'committed', 'published']
+const debugCharacterIntents: AiTurnDebugRecord['characterIntents'] = [
+  'fan_maintenance', 'thank', 'banter', 'probe', 'explain', 'share', 'confirm_promise',
+  'set_boundary', 'handle_conflict', 'end_topic', 'advance_task',
+]
+const debugFailureReasons: AiTurnDebugRecord['rejectedCandidates'][number]['reason'][] = ['timeout', 'network', 'http', 'invalid']
+
+function normalizeAiDebugRecord(value: unknown): AiTurnDebugRecord | null {
+  if (!isRecord(value) || !isRecord(value.dimensions) || !isRecord(value.shortTerm)) return null
+  const dimensions = value.dimensions
+  const shortTerm = value.shortTerm
+  const stringArrays = [
+    value.recentMessageIdsRead,
+    value.relationshipChangeSourceIdsRead,
+    value.memoryIdsRead,
+    value.openLoopIdsRead,
+  ]
+  if (
+    typeof value.id !== 'string'
+    || !isFiniteNumber(value.createdAt)
+    || value.personaCoreId !== 'yanxin-v1'
+    || !relationshipIdentities.includes(value.relationshipIdentity as RelationshipIdentity)
+    || !relationshipDimensions.every(dimension => isFiniteNumber(dimensions[dimension]))
+    || !yanxinEmotions.includes(shortTerm.emotion as YanxinShortTermState['emotion'])
+    || !yanxinActivities.includes(shortTerm.currentActivity as YanxinShortTermState['currentActivity'])
+    || !debugTaskStages.includes(value.taskStage as AiTurnDebugRecord['taskStage'])
+    || !stringArrays.every(entries => Array.isArray(entries) && entries.every(isString))
+    || !Array.isArray(value.characterIntents)
+    || !value.characterIntents.every(intent => debugCharacterIntents.includes(intent as AiTurnDebugRecord['characterIntents'][number]))
+    || typeof value.fallbackUsed !== 'boolean'
+  ) return null
+
+  const acceptedTaskEvidence = validArray(value.acceptedTaskEvidence, (candidate): candidate is AiTurnDebugRecord['acceptedTaskEvidence'][number] => (
+    isRecord(candidate) && taskEvidenceKinds.includes(candidate.kind as TaskEvidenceKind) && typeof candidate.sourceMessageId === 'string'
+  ))
+  const acceptedRelationshipEvidence = validArray(value.acceptedRelationshipEvidence, (candidate): candidate is AiTurnDebugRecord['acceptedRelationshipEvidence'][number] => (
+    isRecord(candidate) && relationshipEvidenceKinds.includes(candidate.kind as RelationshipEvidenceKind) && typeof candidate.sourceMessageId === 'string'
+  ))
+  const acceptedMemoryCandidates = validArray(value.acceptedMemoryCandidates, (candidate): candidate is AiTurnDebugRecord['acceptedMemoryCandidates'][number] => (
+    isRecord(candidate) && memoryCandidateTypes.includes(candidate.type as MemoryCandidate['type']) && typeof candidate.sourceMessageId === 'string'
+  ))
+  const acceptedOpenLoopUpdates = validArray(value.acceptedOpenLoopUpdates, (update): update is AiTurnDebugRecord['acceptedOpenLoopUpdates'][number] => (
+    isRecord(update)
+    && openLoopUpdateKinds.includes(update.kind as OpenLoopUpdate['kind'])
+    && typeof update.sourceMessageId === 'string'
+    && (update.status === 'open' || update.status === 'closed')
+  ))
+  const rejectedCandidates = validArray(value.rejectedCandidates, (candidate): candidate is AiTurnDebugRecord['rejectedCandidates'][number] => (
+    isRecord(candidate)
+    && candidate.category === 'provider_response'
+    && typeof candidate.sourceId === 'string'
+    && debugFailureReasons.includes(candidate.reason as AiTurnDebugRecord['rejectedCandidates'][number]['reason'])
+  ))
+  const candidateArrays = [
+    [value.acceptedTaskEvidence, acceptedTaskEvidence],
+    [value.acceptedRelationshipEvidence, acceptedRelationshipEvidence],
+    [value.acceptedMemoryCandidates, acceptedMemoryCandidates],
+    [value.acceptedOpenLoopUpdates, acceptedOpenLoopUpdates],
+    [value.rejectedCandidates, rejectedCandidates],
+  ] as const
+  if (candidateArrays.some(([stored, normalized]) => !Array.isArray(stored) || stored.length !== normalized.length)) return null
+
+  return {
+    id: value.id,
+    createdAt: value.createdAt,
+    personaCoreId: 'yanxin-v1',
+    relationshipIdentity: value.relationshipIdentity as RelationshipIdentity,
+    dimensions: Object.fromEntries(relationshipDimensions.map(dimension => [
+      dimension, clampRelationshipDimension(dimensions[dimension], 0),
+    ])) as AiTurnDebugRecord['dimensions'],
+    shortTerm: {
+      emotion: shortTerm.emotion as YanxinShortTermState['emotion'],
+      currentActivity: shortTerm.currentActivity as YanxinShortTermState['currentActivity'],
+    },
+    taskStage: value.taskStage as AiTurnDebugRecord['taskStage'],
+    recentMessageIdsRead: (value.recentMessageIdsRead as string[]).slice(-12),
+    relationshipChangeSourceIdsRead: (value.relationshipChangeSourceIdsRead as string[]).slice(-20),
+    memoryIdsRead: (value.memoryIdsRead as string[]).slice(-15),
+    openLoopIdsRead: (value.openLoopIdsRead as string[]).slice(-5),
+    characterIntents: [...value.characterIntents] as AiTurnDebugRecord['characterIntents'],
+    acceptedTaskEvidence,
+    acceptedRelationshipEvidence,
+    acceptedMemoryCandidates,
+    acceptedOpenLoopUpdates,
+    rejectedCandidates,
+    fallbackUsed: value.fallbackUsed,
+  }
+}
+
+function normalizeAiDebugTurns(value: unknown): AiTurnDebugRecord[] {
+  if (!Array.isArray(value)) return []
+  return value.map(normalizeAiDebugRecord).filter((record): record is AiTurnDebugRecord => record !== null).slice(-20)
+}
+
 function normalizePendingDelivery(value: unknown): PendingChatDelivery | null {
   if (
     !isRecord(value)
     || typeof value.id !== 'string'
-    || (value.kind !== 'reply' && value.kind !== 'proactive_report' && value.kind !== 'system_fallback_checkpoint')
+    || (value.kind !== 'reply' && value.kind !== 'proactive_report' && value.kind !== 'system_notice' && value.kind !== 'system_fallback_checkpoint')
     || !isChatMessage(value.message)
     || !isFiniteNumber(value.deliverAt)
     || (value.effect !== 'none' && value.effect !== 'unlock_e201')
@@ -416,6 +511,7 @@ function normalizeState(value: StoredState): GameState {
     messages,
     readMessageIds: validArray(value.readMessageIds, isString),
     pendingChatDeliveries: normalizePendingDeliveries(value.pendingChatDeliveries),
+    aiDebugTurns: normalizeAiDebugTurns(value.aiDebugTurns),
     yanxinProviderFailureCount: isFiniteNumber(value.yanxinProviderFailureCount)
       ? Math.max(0, Math.floor(value.yanxinProviderFailureCount))
       : 0,

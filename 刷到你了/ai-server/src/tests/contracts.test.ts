@@ -43,6 +43,220 @@ const validResponse = {
 const nonBmpHan = String.fromCodePoint(0x20000)
 
 describe('chat contracts', () => {
+  it('distinguishes player replies from grounded proactive turns', () => {
+    expect(ChatRequestSchema.safeParse({
+      ...validRequest,
+      turnKind: 'player_message',
+      userText: '',
+    }).success).toBe(false)
+
+    const firstContact = ChatRequestSchema.parse({
+      ...validRequest,
+      turnKind: 'first_contact',
+      currentMessageId: 'game-event:PK_LAST_30_SECONDS:first-contact',
+      userText: '',
+      recentMessages: [],
+    })
+    const progressReport = ChatRequestSchema.parse({
+      ...validRequest,
+      turnKind: 'progress_report',
+      currentMessageId: 'game-event:YANXIN_UNCUT_EVIDENCE:progress-report',
+      userText: '',
+      taskStage: 'committed',
+    })
+
+    expect(firstContact.turnKind).toBe('first_contact')
+    expect(progressReport.turnKind).toBe('progress_report')
+  })
+
+  it('builds first-contact context from shared facts instead of an assumed prior conversation', () => {
+    const request = ChatRequestSchema.parse({
+      ...validRequest,
+      turnKind: 'first_contact',
+      currentMessageId: 'game-event:PK_LAST_30_SECONDS:first-contact',
+      userText: '',
+      recentMessages: [],
+    })
+    const input = createYanxinPrompt(buildAllowedContext(request))
+
+    expect(input.currentTurn).toMatchObject({
+      kind: 'first_contact',
+      playerHasSeenCirculatingClip: false,
+      uncutEvidenceStatus: 'missing',
+    })
+    expect(JSON.stringify(input.currentTurn)).toContain('首次完整交代')
+    expect(JSON.stringify(input.currentTurn)).toContain('不得声称已经持有完整录像')
+  })
+
+  it('marks a progress report as ready instead of still reviewing', () => {
+    const request = ChatRequestSchema.parse({
+      ...validRequest,
+      turnKind: 'progress_report',
+      currentMessageId: 'game-event:YANXIN_UNCUT_EVIDENCE:progress-report',
+      userText: '',
+      taskStage: 'committed',
+    })
+    const input = createYanxinPrompt(buildAllowedContext(request))
+
+    expect(input.currentTurn).toMatchObject({
+      kind: 'progress_report',
+      uncutEvidenceStatus: 'ready',
+    })
+    expect(JSON.stringify(input.currentTurn)).toContain('完整证据已经核对完成')
+  })
+
+  it('marks player complaints about repetition as a conversational repair turn', () => {
+    const request = ChatRequestSchema.parse({
+      ...validRequest,
+      userText: '你怎么又说这句话',
+      recentMessages: [{ role: 'assistant', text: '我会把完整的前后说清楚。' }],
+    })
+    const input = createYanxinPrompt(buildAllowedContext(request))
+
+    expect(input.currentTurn).toMatchObject({
+      kind: 'player_message',
+      repairMode: 'repetition_complaint',
+    })
+    expect(input.currentTurn.goal).toContain('承认自己的表达问题')
+    expect(input.currentTurn.goal).toContain('不得把责任推给玩家')
+    expect(createYanxinInstructions()).toContain('不得再次复述刚刚被指出的内容')
+  })
+
+  it('rejects task-background repetition while repairing a repetition complaint', () => {
+    const request = ChatRequestSchema.parse({
+      ...validRequest,
+      userText: '额咋又说这句',
+      recentMessages: [{ role: 'assistant', text: '我想把完整录像的前后找回来。' }],
+    })
+
+    expect(() => parseChatResponseForRequest(request, {
+      ...validResponse,
+      replyText: '你说得对，我又绕回完整录像了。',
+    })).toThrow()
+    expect(parseChatResponseForRequest(request, {
+      ...validResponse,
+      replyText: '你说得对，是我刚才绕回去了。我先停一下，听你说。',
+    }).replyText).toContain('你说得对')
+  })
+
+  it('rejects an invented shared viewing of the circulating clip', () => {
+    const request = ChatRequestSchema.parse({
+      ...validRequest,
+      turnKind: 'progress_report',
+      currentMessageId: 'game-event:YANXIN_UNCUT_EVIDENCE:progress-report',
+      userText: '',
+      taskStage: 'committed',
+    })
+
+    expect(() => parseChatResponseForRequest(request, {
+      ...validResponse,
+      replyText: '和咱们当时看到的一样，那十秒确实被剪过。',
+    })).toThrow()
+    expect(parseChatResponseForRequest(request, {
+      ...validResponse,
+      replyText: '你之前没看过网上那段，我已经把完整的前后核对好了。',
+    }).replyText).toContain('你之前没看过')
+  })
+
+  it('requires a progress report to describe a completed publication rather than another future promise', () => {
+    const request = ChatRequestSchema.parse({
+      ...validRequest,
+      turnKind: 'progress_report',
+      currentMessageId: 'game-event:YANXIN_UNCUT_EVIDENCE:progress-report',
+      userText: '',
+      taskStage: 'committed',
+    })
+
+    expect(() => parseChatResponseForRequest(request, {
+      ...validResponse,
+      replyText: '完整素材核对完了，我准备晚点再发出来。',
+    })).toThrow()
+    expect(parseChatResponseForRequest(request, {
+      ...validResponse,
+      replyText: '完整素材核对完了，整理好的版本已经发出来了。',
+    }).replyText).toContain('已经发出来了')
+  })
+
+  it('discards player-grounded effects accidentally emitted for proactive turns', () => {
+    const request = ChatRequestSchema.parse({
+      ...validRequest,
+      turnKind: 'first_contact',
+      currentMessageId: 'game-event:PK_LAST_30_SECONDS:first-contact',
+      userText: '',
+      recentMessages: [],
+    })
+
+    expect(parseChatResponseForRequest(request, {
+      ...validResponse,
+      taskEvidence: [{ kind: 'recognized_malicious_editing', sourceMessageId: request.currentMessageId }],
+    })).toEqual(expect.objectContaining({ taskEvidence: [] }))
+    expect(parseChatResponseForRequest(request, {
+      ...validResponse,
+      relationshipEvidence: [{ kind: 'showed_specific_care', sourceMessageId: request.currentMessageId }],
+      memoryCandidates: [{
+        type: 'preference',
+        sourceMessageId: request.currentMessageId,
+        interpretation: '玩家喜欢当前安排。',
+      }],
+      openLoopUpdates: [{
+        kind: 'topic',
+        summary: '之后继续聊。',
+        sourceMessageId: request.currentMessageId,
+        status: 'open',
+      }],
+    })).toEqual(expect.objectContaining({
+      relationshipEvidence: [],
+      memoryCandidates: [],
+      openLoopUpdates: [],
+    }))
+  })
+
+  it('grounds a short affirmative answer in the immediately preceding evidence-plan invitation', () => {
+    const contextualReply = ChatRequestSchema.parse({
+      ...validRequest,
+      userText: '好啊',
+      taskStage: 'understood',
+      recentMessages: [
+        { role: 'user', text: '我没有看到完整视频。' },
+        { role: 'assistant', text: '我还没拿到原片，等找齐完整素材后一起核对，可以吗？' },
+      ],
+    })
+    const isolatedReply = ChatRequestSchema.parse({
+      ...contextualReply,
+      recentMessages: [{ role: 'assistant', text: '今天先休息一下。' }],
+    })
+    const acceptedPlan = {
+      ...validResponse,
+      taskEvidence: [{ kind: 'accepted_complete_evidence_plan', sourceMessageId: contextualReply.currentMessageId }],
+    }
+
+    expect(parseChatResponseForRequest(contextualReply, acceptedPlan).taskEvidence).toHaveLength(1)
+    expect(parseChatResponseForRequest(contextualReply, {
+      ...validResponse,
+      taskEvidence: [],
+    }).taskEvidence).toEqual([{
+      kind: 'accepted_complete_evidence_plan',
+      sourceMessageId: contextualReply.currentMessageId,
+    }])
+    expect(() => parseChatResponseForRequest(isolatedReply, acceptedPlan)).toThrow()
+  })
+
+  it('derives grounded task progress even when the model omits the hidden candidate', () => {
+    const request = ChatRequestSchema.parse({
+      ...validRequest,
+      userText: '所以这是被剪过的内容，对吗',
+      taskStage: 'invited',
+    })
+
+    expect(parseChatResponseForRequest(request, {
+      ...validResponse,
+      taskEvidence: [],
+    }).taskEvidence).toEqual([{
+      kind: 'recognized_malicious_editing',
+      sourceMessageId: request.currentMessageId,
+    }])
+  })
+
   it('accepts the mirrored persona snapshot and structured evidence protocol', () => {
     expect(ChatRequestSchema.parse(validRequest).personaSnapshot.relationshipIdentity).toBe('new_viewer')
     expect(ChatResponseSchema.parse(validResponse)).toEqual(expect.objectContaining({
@@ -155,6 +369,13 @@ describe('chat contracts', () => {
     expect(ChatResponseSchema.safeParse({ ...validResponse, replyText: nonBmpHan }).success).toBe(true)
   })
 
+  it('accepts the natural PK term in an otherwise Chinese private message', () => {
+    expect(ChatResponseSchema.safeParse({
+      ...validResponse,
+      replyText: '刚才那场PK的素材，我想找回完整前后。',
+    }).success).toBe(true)
+  })
+
   it.each([
     ['coin grant', '我已经给你增加一百金币。'],
     ['coin transfer', '我转你一百金币。'],
@@ -203,8 +424,50 @@ describe('chat contracts', () => {
     })).toThrow()
   })
 
+  it('rejects semantically unrelated task evidence even when stage and source are valid', () => {
+    const spendingRequest = ChatRequestSchema.parse({
+      ...validRequest,
+      userText: '我想继续上票，但怕自己冲动。',
+      personaSnapshot: {
+        ...validRequest.personaSnapshot,
+        dimensions: { ...validRequest.personaSnapshot.dimensions, boundaryPressure: 3 },
+      },
+    })
+    expect(() => parseChatResponseForRequest(spendingRequest, {
+      ...validResponse,
+      taskEvidence: [{ kind: 'recognized_malicious_editing', sourceMessageId: spendingRequest.currentMessageId }],
+    })).toThrow()
+
+    const promiseRequest = ChatRequestSchema.parse({
+      ...validRequest,
+      taskStage: 'understood',
+      userText: '我答应等你核对，现在有结果了吗？',
+    })
+    expect(() => parseChatResponseForRequest(promiseRequest, {
+      ...validResponse,
+      taskEvidence: [{ kind: 'accepted_complete_evidence_plan', sourceMessageId: promiseRequest.currentMessageId }],
+    })).toThrow()
+  })
+
+  it('requires an explicit boundary intent for a pressured spending concern', () => {
+    const request = ChatRequestSchema.parse({
+      ...validRequest,
+      userText: '我想继续上票，可我怕自己冲动，你会劝我停吗？',
+      personaSnapshot: {
+        ...validRequest.personaSnapshot,
+        dimensions: { ...validRequest.personaSnapshot.dimensions, boundaryPressure: 3 },
+      },
+    })
+
+    expect(() => parseChatResponseForRequest(request, validResponse)).toThrow()
+    expect(parseChatResponseForRequest(request, {
+      ...validResponse,
+      characterIntents: ['set_boundary'],
+    }).characterIntents).toEqual(['set_boundary'])
+  })
+
   it('accepts ordinary chat with no evidence or state candidates', () => {
-    expect(parseChatResponseForRequest(ChatRequestSchema.parse(validRequest), {
+    expect(parseChatResponseForRequest(ChatRequestSchema.parse({ ...validRequest, userText: '今天直播怎么样' }), {
       ...validResponse,
       replyText: '今天还行，你呢？',
       characterIntents: ['fan_maintenance'],
@@ -287,6 +550,47 @@ describe('chat contracts', () => {
       ...validResponse,
       openLoopUpdates: [{ ...closedUpdate, sourceMessageId: 'invented-loop' }],
     })).toThrow()
+  })
+
+  it('rejects closing an already-closed supplied open loop', () => {
+    const request = ChatRequestSchema.parse({
+      ...validRequest,
+      openLoops: [{
+        id: 'loop-already-closed',
+        kind: 'report',
+        summary: '核对已经结束',
+        sourceMessageId: 'older-player-message',
+        status: 'closed',
+      }],
+    })
+
+    expect(() => parseChatResponseForRequest(request, {
+      ...validResponse,
+      openLoopUpdates: [{
+        kind: 'report', summary: '重复关闭', sourceMessageId: 'loop-already-closed', status: 'closed',
+      }],
+    })).toThrow()
+  })
+
+  it.each([
+    ['locked', 'recognized_malicious_editing', false],
+    ['locked', 'accepted_complete_evidence_plan', false],
+    ['invited', 'recognized_malicious_editing', true],
+    ['invited', 'accepted_complete_evidence_plan', false],
+    ['understood', 'recognized_malicious_editing', false],
+    ['understood', 'accepted_complete_evidence_plan', true],
+    ['committed', 'recognized_malicious_editing', false],
+    ['committed', 'accepted_complete_evidence_plan', false],
+    ['published', 'recognized_malicious_editing', false],
+    ['published', 'accepted_complete_evidence_plan', false],
+  ] as const)('enforces the full task-stage matrix for %s + %s', (taskStage, kind, accepted) => {
+    const parse = () => parseChatResponseForRequest(ChatRequestSchema.parse({ ...validRequest, taskStage }), {
+      ...validResponse,
+      taskEvidence: [{ kind, sourceMessageId: validRequest.currentMessageId }],
+    })
+
+    if (accepted) expect(parse().taskEvidence).toHaveLength(1)
+    else expect(parse).toThrow()
   })
 
   it('rejects an AI-authored score at the request-aware boundary', () => {
@@ -377,6 +681,9 @@ describe('chat contracts', () => {
     expect(text).toContain('invited：taskEvidence 只允许 recognized_malicious_editing')
     expect(text).toContain('understood：taskEvidence 只允许 accepted_complete_evidence_plan')
     expect(text).toContain('locked、committed、published 或 postEnding')
+    expect(text).toContain('固定事实和本轮目标不是固定台词')
+    expect(text).toContain('玩家尚未看过网上流传的十秒剪辑')
+    expect(text).toContain('不得声称已经持有完整录像')
   })
 
   it('uses the required five-part decision priority in order', () => {
@@ -443,7 +750,7 @@ describe('chat contracts', () => {
       'openLoops',
       'verifiedMemories',
       'recentMessages',
-      'currentMessage',
+      'currentTurn',
       'decisionPriority',
     ])
   })
@@ -458,8 +765,8 @@ describe('chat contracts', () => {
       },
     })))
 
-    expect(newViewer.currentMessage.text).toBe(validRequest.userText)
-    expect(importantSupporter.currentMessage.text).toBe(validRequest.userText)
+    expect(newViewer.currentTurn.text).toBe(validRequest.userText)
+    expect(importantSupporter.currentTurn.text).toBe(validRequest.userText)
     expect(newViewer.relationship).toEqual(expect.objectContaining({
       identity: 'new_viewer',
       label: '新认识的观众',
@@ -523,6 +830,8 @@ describe('chat contracts', () => {
     expect(create).toHaveBeenCalledWith(expect.objectContaining({
       model: 'deepseek-test',
       response_format: { type: 'json_object' },
+      max_tokens: 1_000,
+      thinking: { type: 'disabled' },
       messages: [
         expect.objectContaining({ role: 'system', content: expect.stringMatching(/JSON|json/) }),
         expect.objectContaining({ role: 'user', content: '{"userText":"完整录像"}' }),
@@ -533,6 +842,8 @@ describe('chat contracts', () => {
     expect(systemContent).toEqual(expect.stringContaining('"relationshipEvidence"'))
     expect(systemContent).toEqual(expect.stringContaining('"memoryCandidates"'))
     expect(systemContent).toEqual(expect.stringContaining('"openLoopUpdates"'))
+    expect(systemContent).toEqual(expect.stringContaining('以下 JSON Schema'))
+    expect(systemContent).toEqual(expect.stringContaining('"maxItems":2'))
     expect(systemContent).not.toEqual(expect.stringContaining('taskSignals'))
   })
 

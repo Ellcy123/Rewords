@@ -12,8 +12,7 @@ import { rankFeed } from '../engine/feed'
 import type { CheckoutQuote } from '../engine/economy'
 import { selectUnreadMessageCount } from '../engine/selectors'
 import { useGame } from '../game/useGame'
-import { createYanxinFirstContact } from '../messages/character'
-import { scheduleChatDelivery } from '../messages/delivery'
+import { AiDebugSheet } from '../messages/AiDebugSheet'
 import { MessageSheet } from '../messages/MessageSheet'
 import { MomentSheet } from '../moments/MomentSheet'
 import { resolveMoment } from '../moments/resolveMoment'
@@ -51,6 +50,9 @@ export function FeedScreen() {
   const current = nodes[index] ?? nodes[0]
   const feedLocked = activeTab === 'messages' || !!overlay || completionOpen || state.pendingResultNodeId !== null
   const unreadMessages = selectUnreadMessageCount(state)
+  const debugEnabled = import.meta.env.DEV
+    && typeof window !== 'undefined'
+    && new URLSearchParams(window.location.search).get('debug') === 'ai'
 
   const chooseMoment = (choiceId: MomentChoiceId) => {
     const result = resolveMoment('PK_LAST_30_SECONDS', choiceId)
@@ -59,21 +61,7 @@ export function FeedScreen() {
       || state.resolvedMomentIds.includes(result.resolution.momentId)
       || state.coins < result.resolution.coinCost
     ) return
-    const now = Date.now()
     dispatch({ type: 'MOMENT_RESOLVED', resolution: result.resolution })
-    const message = createYanxinFirstContact(choiceId, now)
-    dispatch({
-      type: 'CHAT_DELIVERY_SCHEDULED',
-      delivery: scheduleChatDelivery({
-        id: `delivery-${message.id}`,
-        kind: 'proactive_report',
-        message,
-        createdAt: now,
-        readyAt: now,
-        aiEffects: { taskEvidence: [], relationshipEvidence: [], memoryCandidates: [], openLoopUpdates: [] },
-        effect: 'none',
-      }),
-    })
     setOverlay(null)
   }
 
@@ -175,6 +163,7 @@ export function FeedScreen() {
             }}
           />
         )}
+        {debugEnabled && <AiDebugSheet records={state.aiDebugTurns} />}
       </main>
     </PlaybackProvider>
   )

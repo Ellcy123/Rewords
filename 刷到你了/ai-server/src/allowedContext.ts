@@ -1,4 +1,4 @@
-import type { AllowedMemoryId, ChatRequest } from './contracts.js'
+import { isRepetitionComplaint, type AllowedMemoryId, type ChatRequest } from './contracts.js'
 import { YANXIN_PROFILE, type YanxinProfile } from './persona/yanxinProfile.js'
 
 interface MemoryFact {
@@ -108,6 +108,11 @@ export interface AllowedContext {
     objective: '找回未剪辑的完整证据并公开回应'
     stage: ChatRequest['taskStage']
     stageGuidance: string
+    incident: {
+      timing: string
+      circulatingClip: string
+      evidenceStatus: 'missing' | 'reviewing' | 'ready' | 'published'
+    }
   }
   momentChoice: { id: 'support' | 'hold_back'; fact: string }
   relationshipProduct: { id: 'recorder'; name: '带摄像头的录音笔' }
@@ -125,12 +130,40 @@ export interface AllowedContext {
   openLoops: ChatRequest['openLoops']
   verifiedMemories: ChatRequest['memories']
   postEnding: boolean
-  currentMessage: { id: string; text: string }
+  currentTurn: {
+    kind: ChatRequest['turnKind']
+    id: string
+    text?: string
+    repairMode: 'none' | 'repetition_complaint'
+    goal: string
+    playerHasSeenPkFinal: true
+    playerHasSeenCirculatingClip: false
+    uncutEvidenceStatus: 'missing' | 'reviewing' | 'ready' | 'published'
+    constraints: string[]
+  }
   userText: string
   recentMessages: ChatRequest['recentMessages']
 }
 
 export function buildAllowedContext(request: ChatRequest): AllowedContext {
+  const evidenceStatus = request.turnKind === 'progress_report'
+    ? 'ready' as const
+    : request.taskStage === 'published'
+    ? 'published' as const
+    : request.taskStage === 'committed'
+      ? 'reviewing' as const
+      : 'missing' as const
+  const repairMode = request.turnKind === 'player_message'
+    && isRepetitionComplaint(request.userText)
+    ? 'repetition_complaint' as const
+    : 'none' as const
+  const turnGoal = repairMode === 'repetition_complaint'
+    ? '玩家正在指出回复重复。先承认自己的表达问题，再针对玩家当前意思给出新的直接回应；不得把责任推给玩家，也不得复述刚刚被指出的任务背景。'
+    : request.turnKind === 'first_contact'
+    ? '承接玩家刚刚的PK选择，并首次完整交代PK结束后才出现的剪辑争议，让玩家无需猜测背景。'
+    : request.turnKind === 'progress_report'
+      ? '主动报备完整证据已经核对完成，整理后的关系派生视频也已经发出；用角色口吻说明结果，不重复邀请阶段的话。'
+      : '首先回应玩家最新一句，再结合最近对话、人设、关系和当前任务状态决定是否自然推进。'
   return {
     character: { id: 'yanxin', name: '炎鑫' },
     profile: YANXIN_PROFILE,
@@ -144,6 +177,11 @@ export function buildAllowedContext(request: ChatRequest): AllowedContext {
       objective: '找回未剪辑的完整证据并公开回应',
       stage: request.taskStage,
       stageGuidance: STAGE_GUIDANCE[request.taskStage],
+      incident: {
+        timing: '剪辑争议发生在玩家看过的PK结束之后。',
+        circulatingClip: '网上流传的内容只保留炎鑫最后十秒，缺少完整前后。',
+        evidenceStatus,
+      },
     },
     momentChoice: request.momentChoice === 'support'
       ? { id: 'support', fact: '玩家在 PK 最后 30 秒上票支持了你。' }
@@ -174,7 +212,27 @@ export function buildAllowedContext(request: ChatRequest): AllowedContext {
     openLoops: request.openLoops,
     verifiedMemories: request.memories,
     postEnding: request.postEnding,
-    currentMessage: { id: request.currentMessageId, text: request.userText },
+    currentTurn: {
+      kind: request.turnKind,
+      id: request.currentMessageId,
+      ...(request.turnKind === 'player_message' ? { text: request.userText } : {}),
+      repairMode,
+      goal: turnGoal,
+      playerHasSeenPkFinal: true,
+      playerHasSeenCirculatingClip: false,
+      uncutEvidenceStatus: evidenceStatus,
+      constraints: [
+        '固定事实和本轮目标不是固定台词，必须结合最近对话重新组织表达。',
+        '玩家尚未看过网上流传的十秒剪辑，不得把它当作双方已经看过的共同内容。',
+        evidenceStatus === 'missing'
+          ? '完整证据尚未取得，不得声称已经持有完整录像。'
+          : evidenceStatus === 'reviewing'
+            ? '正在核对完整素材，不得提前声称已经公开结果。'
+            : evidenceStatus === 'ready'
+              ? '完整证据已经核对完成，整理后的关系派生视频也已发出；不得再说准备、稍后或等待发布，也不得使用节点、解锁或系统入口等游戏术语。'
+              : '完整证据已经公开，不得重新邀请玩家开始同一任务。',
+      ],
+    },
     userText: request.userText,
     recentMessages: request.recentMessages,
   }
