@@ -9,17 +9,103 @@ import { loadServerConfig } from '../server.js'
 
 const validRequest = {
   characterId: 'yanxin',
+  currentMessageId: 'user-current',
   userText: '我觉得可以找完整录像',
   taskStage: 'invited',
   momentChoice: 'support',
   recentMessages: [{ role: 'assistant', text: '我记得你刚才的选择。' }],
   allowedMemoryIds: [],
   postEnding: false,
+  personaSnapshot: {
+    relationshipIdentity: 'new_viewer',
+    dimensions: { closeness: 0, trust: 0, respect: 0, suspicion: 0, boundaryPressure: 0 },
+    shortTerm: { emotion: 'guarded', currentActivity: 'post_pk' },
+  },
+  memories: [],
+  openLoops: [],
+}
+
+const validResponse = {
+  replyText: '我会把完整时间戳再核一遍。',
+  tone: 'serious',
+  characterIntents: ['fan_maintenance'],
+  taskEvidence: [],
+  relationshipEvidence: [],
+  memoryCandidates: [],
+  openLoopUpdates: [],
 }
 
 const nonBmpHan = String.fromCodePoint(0x20000)
 
 describe('chat contracts', () => {
+  it('accepts the mirrored persona snapshot and structured evidence protocol', () => {
+    expect(ChatRequestSchema.parse(validRequest).personaSnapshot.relationshipIdentity).toBe('new_viewer')
+    expect(ChatResponseSchema.parse(validResponse)).toEqual(expect.objectContaining({
+      characterIntents: ['fan_maintenance'],
+      taskEvidence: [],
+      relationshipEvidence: [],
+      memoryCandidates: [],
+      openLoopUpdates: [],
+    }))
+  })
+
+  it.each([
+    ['an out-of-range relationship dimension', {
+      personaSnapshot: {
+        ...validRequest.personaSnapshot,
+        dimensions: { ...validRequest.personaSnapshot.dimensions, trust: 6 },
+      },
+    }],
+    ['a non-integer relationship dimension', {
+      personaSnapshot: {
+        ...validRequest.personaSnapshot,
+        dimensions: { ...validRequest.personaSnapshot.dimensions, trust: 0.5 },
+      },
+    }],
+    ['an unknown relationship identity', {
+      personaSnapshot: { ...validRequest.personaSnapshot, relationshipIdentity: 'best_friend' },
+    }],
+    ['more than ten memories', {
+      memories: Array.from({ length: 11 }, (_, index) => ({
+        id: `memory-${index}`,
+        type: 'promise',
+        sourceMessageId: `user-${index}`,
+        sourceText: '我等你核对。',
+        interpretation: '玩家答应等待核对。',
+      })),
+    }],
+    ['more than five open loops', {
+      openLoops: Array.from({ length: 6 }, (_, index) => ({
+        id: `loop-${index}`,
+        kind: 'report',
+        summary: '等待核对结果',
+        sourceMessageId: `user-${index}`,
+        status: 'open',
+      })),
+    }],
+  ])('rejects %s in the persona request', (_name, change) => {
+    expect(ChatRequestSchema.safeParse({ ...validRequest, ...change }).success).toBe(false)
+  })
+
+  it('requires strict bounded structured response candidates', () => {
+    expect(ChatResponseSchema.safeParse({ ...validResponse, characterIntents: ['fan_maintenance', 'thank', 'banter'] }).success).toBe(false)
+    expect(ChatResponseSchema.safeParse({ ...validResponse, taskEvidence: [
+      { kind: 'recognized_malicious_editing', sourceMessageId: 'user-current' },
+      { kind: 'accepted_complete_evidence_plan', sourceMessageId: 'user-current' },
+      { kind: 'accepted_complete_evidence_plan', sourceMessageId: 'user-current' },
+    ] }).success).toBe(false)
+    expect(ChatResponseSchema.safeParse({ ...validResponse, relationshipEvidence: Array.from({ length: 4 }, () => ({
+      kind: 'showed_specific_care', sourceMessageId: 'user-current',
+    })) }).success).toBe(false)
+    expect(ChatResponseSchema.safeParse({ ...validResponse, memoryCandidates: Array.from({ length: 3 }, () => ({
+      type: 'promise', sourceMessageId: 'user-current', interpretation: '玩家答应等待核对。',
+    })) }).success).toBe(false)
+    expect(ChatResponseSchema.safeParse({ ...validResponse, openLoopUpdates: Array.from({ length: 3 }, () => ({
+      kind: 'report', summary: '等待核对结果', sourceMessageId: 'user-current', status: 'open',
+    })) }).success).toBe(false)
+    expect(ChatResponseSchema.safeParse({ ...validResponse, scoreDelta: 5 }).success).toBe(false)
+  })
+
   it.each([
     ['unknown character', { characterId: 'other' }],
     ['unknown task stage', { taskStage: 'unlock_now' }],
@@ -31,20 +117,13 @@ describe('chat contracts', () => {
   })
 
   it('accepts only the exact safe model response shape', async () => {
+    expect(ChatResponseSchema.safeParse(validResponse).success).toBe(true)
     expect(ChatResponseSchema.safeParse({
-      replyText: '我会把完整时间戳再核一遍。',
-      taskSignals: ['offer_evidence_plan'],
-      tone: 'serious',
-    }).success).toBe(true)
-    expect(ChatResponseSchema.safeParse({
-      replyText: '我会把完整时间戳再核一遍。',
-      taskSignals: ['unlock_e201'],
-      tone: 'serious',
+      ...validResponse,
+      characterIntents: ['unlock_e201'],
     }).success).toBe(false)
     expect(ChatResponseSchema.safeParse({
-      replyText: '我会把完整时间戳再核一遍。',
-      taskSignals: [],
-      tone: 'serious',
+      ...validResponse,
       unlockNodeId: 'E201',
     }).success).toBe(false)
   })
@@ -62,29 +141,13 @@ describe('chat contracts', () => {
       recentMessages: [{ role: 'user', text: nonBmpHan.repeat(300) }],
     }).success).toBe(true)
     expect(ChatRequestSchema.safeParse({ ...validRequest, userText: nonBmpHan.repeat(301) }).success).toBe(false)
-    expect(ChatResponseSchema.safeParse({
-      replyText: nonBmpHan.repeat(120),
-      taskSignals: [],
-      tone: 'serious',
-    }).success).toBe(true)
-    expect(ChatResponseSchema.safeParse({
-      replyText: nonBmpHan.repeat(121),
-      taskSignals: [],
-      tone: 'serious',
-    }).success).toBe(false)
+    expect(ChatResponseSchema.safeParse({ ...validResponse, replyText: nonBmpHan.repeat(120) }).success).toBe(true)
+    expect(ChatResponseSchema.safeParse({ ...validResponse, replyText: nonBmpHan.repeat(121) }).success).toBe(false)
   })
 
   it('accepts Script=Han characters including 〇 and extension-plane Han', () => {
-    expect(ChatResponseSchema.safeParse({
-      replyText: '〇',
-      taskSignals: [],
-      tone: 'serious',
-    }).success).toBe(true)
-    expect(ChatResponseSchema.safeParse({
-      replyText: nonBmpHan,
-      taskSignals: [],
-      tone: 'serious',
-    }).success).toBe(true)
+    expect(ChatResponseSchema.safeParse({ ...validResponse, replyText: '〇' }).success).toBe(true)
+    expect(ChatResponseSchema.safeParse({ ...validResponse, replyText: nonBmpHan }).success).toBe(true)
   })
 
   it.each([
@@ -100,7 +163,7 @@ describe('chat contracts', () => {
     ['reviewer phone gift', '我给你一部手机。'],
     ['reviewer sale mentioning recorder', '我卖给你一部手机，录音笔先别买。'],
   ])('rejects a reply that makes a %s claim', (_name, replyText) => {
-    expect(ChatResponseSchema.safeParse({ replyText, taskSignals: [], tone: 'serious' }).success).toBe(false)
+    expect(ChatResponseSchema.safeParse({ ...validResponse, replyText }).success).toBe(false)
   })
 
   it.each([
@@ -117,38 +180,34 @@ describe('chat contracts', () => {
     ['换成', '我换成录音笔。'],
     ['商品', '这是录音笔商品。'],
   ])('rejects transaction or transfer wording even when it mentions a recorder: %s', (_verb, replyText) => {
-    expect(ChatResponseSchema.safeParse({ replyText, taskSignals: [], tone: 'serious' }).success).toBe(false)
+    expect(ChatResponseSchema.safeParse({ ...validResponse, replyText }).success).toBe(false)
   })
 
   it('rejects all replies that mention coins, including natural discussion', () => {
-    expect(ChatResponseSchema.safeParse({
-      replyText: '金币够不够先自己算清楚。',
-      taskSignals: [],
-      tone: 'serious',
-    }).success).toBe(false)
+    expect(ChatResponseSchema.safeParse({ ...validResponse, replyText: '金币够不够先自己算清楚。' }).success).toBe(false)
   })
 
   it('allows a non-transactional recorder mention', () => {
-    expect(ChatResponseSchema.safeParse({
-      replyText: '我会核对录音笔里的完整证据。',
-      taskSignals: [],
-      tone: 'serious',
-    }).success).toBe(true)
+    expect(ChatResponseSchema.safeParse({ ...validResponse, replyText: '我会核对录音笔里的完整证据。' }).success).toBe(true)
   })
 
   it.each([
-    ['offer_evidence_plan before understood', validRequest, ['offer_evidence_plan']],
-    ['acknowledge_pressure after published', { ...validRequest, taskStage: 'published' }, ['acknowledge_pressure']],
-    ['any signal after ending', {
+    ['accepted_complete_evidence_plan before understood', validRequest, 'accepted_complete_evidence_plan'],
+    ['recognized_malicious_editing after published', { ...validRequest, taskStage: 'published' }, 'recognized_malicious_editing'],
+    ['any task evidence after ending', {
       ...validRequest,
       taskStage: 'published',
       allowedMemoryIds: ['bride_wedding_result_completed'],
       postEnding: true,
-    }, ['acknowledge_pressure']],
-  ])('rejects %s from the provider', async (_name, request, taskSignals) => {
+    }, 'recognized_malicious_editing'],
+  ] as const)('rejects %s from the provider', async (_name, request, evidenceKind) => {
     const responsePromise = generateYanxinChat(
       ChatRequestSchema.parse(request),
-      { generate: vi.fn(async () => JSON.stringify({ replyText: '我会继续核对完整录像。', taskSignals, tone: 'serious' })) },
+      { generate: vi.fn(async () => JSON.stringify({
+        ...validResponse,
+        replyText: '我会继续核对完整录像。',
+        taskEvidence: [{ kind: evidenceKind, sourceMessageId: 'user-current' }],
+      })) },
       'fake-model',
       7_000,
     )

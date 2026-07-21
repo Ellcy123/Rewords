@@ -9,6 +9,40 @@ export const TaskSignals = [
 
 export const Tones = ['guarded', 'warm', 'teasing', 'serious'] as const
 
+export const CharacterIntents = [
+  'fan_maintenance',
+  'thank',
+  'banter',
+  'probe',
+  'explain',
+  'share',
+  'confirm_promise',
+  'set_boundary',
+  'handle_conflict',
+  'end_topic',
+  'advance_task',
+] as const
+
+export const TaskEvidenceKinds = [
+  'recognized_malicious_editing',
+  'accepted_complete_evidence_plan',
+] as const
+
+export const RelationshipEvidenceKinds = [
+  'showed_specific_care',
+  'respected_boundary',
+  'offered_actionable_help',
+  'kept_promise',
+  'contradicted_action_evidence',
+  'revealed_unexplained_knowledge',
+  'pressured_after_refusal',
+  'public_financial_support',
+] as const
+
+export const MemoryTypes = ['player_stance', 'promise', 'shared_joke', 'conflict', 'preference'] as const
+export const OpenLoopKinds = ['promise', 'topic', 'conflict', 'report'] as const
+export const OpenLoopStatuses = ['open', 'closed'] as const
+
 export const AllowedMemoryIds = [
   'yanxin_pk_choice_support',
   'yanxin_pk_choice_hold_back',
@@ -70,8 +104,70 @@ const ReplyTextSchema = codePointString(1, 120, 'replyText').superRefine((value,
   }
 })
 
+const IdSchema = codePointString(1, 120, 'id')
+const SourceMessageIdSchema = codePointString(1, 120, 'sourceMessageId')
+const InterpretationSchema = codePointString(1, 120, 'interpretation')
+const SummarySchema = codePointString(1, 120, 'summary')
+
+const RelationshipDimensionsSchema = z.object({
+  closeness: z.number().int().min(-5).max(5),
+  trust: z.number().int().min(-5).max(5),
+  respect: z.number().int().min(-5).max(5),
+  suspicion: z.number().int().min(-5).max(5),
+  boundaryPressure: z.number().int().min(-5).max(5),
+}).strict()
+
+const PersonaSnapshotSchema = z.object({
+  relationshipIdentity: z.enum(['new_viewer', 'familiar_fan', 'important_supporter', 'private_relationship']),
+  dimensions: RelationshipDimensionsSchema,
+  shortTerm: z.object({
+    emotion: z.enum(['guarded', 'steady', 'warm', 'pressured']),
+    currentActivity: z.enum(['post_pk', 'reviewing_footage', 'testing_device', 'following_up']),
+  }).strict(),
+}).strict()
+
+const MemorySchema = z.object({
+  id: IdSchema,
+  type: z.enum(MemoryTypes),
+  sourceMessageId: SourceMessageIdSchema,
+  sourceText: codePointString(1, 300, 'sourceText'),
+  interpretation: InterpretationSchema,
+}).strict()
+
+const OpenLoopSchema = z.object({
+  id: IdSchema,
+  kind: z.enum(OpenLoopKinds),
+  summary: SummarySchema,
+  sourceMessageId: SourceMessageIdSchema,
+  status: z.enum(OpenLoopStatuses),
+}).strict()
+
+const TaskEvidenceSchema = z.object({
+  kind: z.enum(TaskEvidenceKinds),
+  sourceMessageId: SourceMessageIdSchema,
+}).strict()
+
+const RelationshipEvidenceSchema = z.object({
+  kind: z.enum(RelationshipEvidenceKinds),
+  sourceMessageId: SourceMessageIdSchema,
+}).strict()
+
+const MemoryCandidateSchema = z.object({
+  type: z.enum(MemoryTypes),
+  sourceMessageId: SourceMessageIdSchema,
+  interpretation: InterpretationSchema,
+}).strict()
+
+const OpenLoopUpdateSchema = z.object({
+  kind: z.enum(OpenLoopKinds),
+  summary: SummarySchema,
+  sourceMessageId: SourceMessageIdSchema,
+  status: z.enum(OpenLoopStatuses),
+}).strict()
+
 export const ChatRequestSchema = z.object({
   characterId: z.literal('yanxin'),
+  currentMessageId: IdSchema,
   userText: codePointString(1, 300, 'userText'),
   taskStage: z.enum(['locked', 'invited', 'understood', 'committed', 'published']),
   momentChoice: z.enum(['support', 'hold_back']),
@@ -81,6 +177,9 @@ export const ChatRequestSchema = z.object({
   }).strict()).max(12),
   allowedMemoryIds: z.array(AllowedMemoryIdSchema).max(AllowedMemoryIds.length),
   postEnding: z.boolean(),
+  personaSnapshot: PersonaSnapshotSchema,
+  memories: z.array(MemorySchema).max(10),
+  openLoops: z.array(OpenLoopSchema).max(5),
 }).strict().superRefine((request, context) => {
   const memories = new Set(request.allowedMemoryIds)
   const addIssue = (path: Array<string>, message: string) => context.addIssue({ code: 'custom', path, message })
@@ -115,30 +214,37 @@ export const ChatRequestSchema = z.object({
 
 export const ChatResponseSchema = z.object({
   replyText: ReplyTextSchema,
-  taskSignals: z.array(z.enum(TaskSignals)).max(2),
   tone: z.enum(Tones),
+  characterIntents: z.array(z.enum(CharacterIntents)).max(2),
+  taskEvidence: z.array(TaskEvidenceSchema).max(2),
+  relationshipEvidence: z.array(RelationshipEvidenceSchema).max(3),
+  memoryCandidates: z.array(MemoryCandidateSchema).max(2),
+  openLoopUpdates: z.array(OpenLoopUpdateSchema).max(2),
 }).strict()
 
 export type ChatRequest = z.infer<typeof ChatRequestSchema>
 export type ChatResponse = z.infer<typeof ChatResponseSchema>
 export type AllowedMemoryId = z.infer<typeof AllowedMemoryIdSchema>
+export type CharacterIntent = (typeof CharacterIntents)[number]
+export type TaskEvidenceKind = (typeof TaskEvidenceKinds)[number]
+export type RelationshipEvidenceKind = (typeof RelationshipEvidenceKinds)[number]
 
-const ApplicableSignalsByStage = {
+const ApplicableTaskEvidenceByStage = {
   locked: [],
-  invited: ['acknowledge_pressure', 'respect_boundary'],
-  understood: ['offer_evidence_plan'],
+  invited: ['recognized_malicious_editing'],
+  understood: ['accepted_complete_evidence_plan'],
   committed: [],
   published: [],
-} as const satisfies Record<ChatRequest['taskStage'], readonly (typeof TaskSignals)[number][]>
+} as const satisfies Record<ChatRequest['taskStage'], readonly TaskEvidenceKind[]>
 
 export function parseChatResponseForRequest(request: ChatRequest, value: unknown): ChatResponse {
-  const applicableSignals = new Set(request.postEnding ? [] : ApplicableSignalsByStage[request.taskStage])
+  const applicableEvidence = new Set<TaskEvidenceKind>(request.postEnding ? [] : ApplicableTaskEvidenceByStage[request.taskStage])
   return ChatResponseSchema.superRefine((response, context) => {
-    if (response.taskSignals.some(signal => !applicableSignals.has(signal))) {
+    if (response.taskEvidence.some(evidence => !applicableEvidence.has(evidence.kind))) {
       context.addIssue({
         code: 'custom',
-        path: ['taskSignals'],
-        message: 'taskSignals contain a signal that does not apply to the request state',
+        path: ['taskEvidence'],
+        message: 'taskEvidence contains evidence that does not apply to the request state',
       })
     }
   }).parse(value)
@@ -147,16 +253,80 @@ export function parseChatResponseForRequest(request: ChatRequest, value: unknown
 export const ChatResponseJsonSchema = {
   type: 'object',
   additionalProperties: false,
-  required: ['replyText', 'taskSignals', 'tone'],
+  required: [
+    'replyText',
+    'tone',
+    'characterIntents',
+    'taskEvidence',
+    'relationshipEvidence',
+    'memoryCandidates',
+    'openLoopUpdates',
+  ],
   properties: {
     replyText: { type: 'string' },
-    taskSignals: {
-      type: 'array',
-      items: { type: 'string', enum: [...TaskSignals] },
-    },
     tone: {
       type: 'string',
       enum: [...Tones],
+    },
+    characterIntents: {
+      type: 'array',
+      items: { type: 'string', enum: [...CharacterIntents] },
+      maxItems: 2,
+    },
+    taskEvidence: {
+      type: 'array',
+      maxItems: 2,
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['kind', 'sourceMessageId'],
+        properties: {
+          kind: { type: 'string', enum: [...TaskEvidenceKinds] },
+          sourceMessageId: { type: 'string' },
+        },
+      },
+    },
+    relationshipEvidence: {
+      type: 'array',
+      maxItems: 3,
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['kind', 'sourceMessageId'],
+        properties: {
+          kind: { type: 'string', enum: [...RelationshipEvidenceKinds] },
+          sourceMessageId: { type: 'string' },
+        },
+      },
+    },
+    memoryCandidates: {
+      type: 'array',
+      maxItems: 2,
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['type', 'sourceMessageId', 'interpretation'],
+        properties: {
+          type: { type: 'string', enum: [...MemoryTypes] },
+          sourceMessageId: { type: 'string' },
+          interpretation: { type: 'string' },
+        },
+      },
+    },
+    openLoopUpdates: {
+      type: 'array',
+      maxItems: 2,
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['kind', 'summary', 'sourceMessageId', 'status'],
+        properties: {
+          kind: { type: 'string', enum: [...OpenLoopKinds] },
+          summary: { type: 'string' },
+          sourceMessageId: { type: 'string' },
+          status: { type: 'string', enum: [...OpenLoopStatuses] },
+        },
+      },
     },
   },
 } satisfies ResponseFormatTextJSONSchemaConfig['schema']

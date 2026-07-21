@@ -29,8 +29,9 @@ export function MessageSheet() {
     if (!trimmed || requesting || replyPending) return
     const now = Date.now()
     const fallback = getYanxinFallbackReply(taskStage)
+    const userMessageId = `user-${now}-${state.messages.length}`
     const messageId = `yanxin-reply-${now}-${state.messages.length}`
-    dispatch({ type: 'CHAT_USER_SENT', message: { id: `user-${now}-${state.messages.length}`, role: 'user', text: trimmed, createdAt: now } })
+    dispatch({ type: 'CHAT_USER_SENT', message: { id: userMessageId, role: 'user', text: trimmed, createdAt: now } })
     const recoveryDelivery: PendingChatDelivery = {
       id: `delivery-${messageId}`,
       kind: 'reply',
@@ -44,15 +45,39 @@ export function MessageSheet() {
     setRequesting(true)
     const result = await requestYanxinReply({
       characterId: 'yanxin',
+      currentMessageId: userMessageId,
       userText: trimmed,
       taskStage,
       momentChoice: state.relationshipEvidence.some(evidence => evidence.kind === 'support') ? 'support' : 'hold_back',
       recentMessages: state.messages.slice(-12).map(message => ({ role: message.role, text: message.text })),
       allowedMemoryIds: state.sharedMemories.map(memory => memory.id),
       postEnding: state.ending !== null,
+      personaSnapshot: {
+        relationshipIdentity: state.yanxinPersona.relationship.identity,
+        dimensions: { ...state.yanxinPersona.relationship.dimensions },
+        shortTerm: { ...state.yanxinPersona.shortTerm },
+      },
+      memories: state.longTermMemories.filter(memory => memory.active).slice(-10).map(memory => ({
+        id: memory.id,
+        type: memory.type,
+        sourceMessageId: memory.sourceMessageId,
+        sourceText: memory.sourceText,
+        interpretation: memory.interpretation,
+      })),
+      openLoops: state.openLoops.slice(-5).map(openLoop => ({
+        id: openLoop.id,
+        kind: openLoop.kind,
+        summary: openLoop.summary,
+        sourceMessageId: openLoop.sourceMessageId,
+        status: openLoop.status,
+      })),
     })
     const replyText = result.ok ? result.data.replyText : fallback.text
-    const taskSignals = result.ok ? result.data.taskSignals : fallback.taskSignals
+    const taskSignals = result.ok
+      ? result.data.taskEvidence.map(evidence => evidence.kind === 'recognized_malicious_editing'
+          ? 'acknowledge_pressure' as const
+          : 'offer_evidence_plan' as const)
+      : fallback.taskSignals
     const readyAt = Date.now()
     const message = { id: messageId, role: 'assistant' as const, text: replyText, createdAt: readyAt }
     dispatch({
