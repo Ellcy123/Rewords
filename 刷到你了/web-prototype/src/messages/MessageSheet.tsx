@@ -3,7 +3,7 @@ import { Send } from 'lucide-react'
 import { useGame } from '../game/useGame'
 import { scheduleChatDelivery } from './delivery'
 import { getYanxinFallbackReply } from './fallbackReplies'
-import { requestYanxinReply } from './aiClient'
+import { isAllowedMemoryId, requestYanxinReply } from './aiClient'
 import type { PendingChatDelivery } from './types'
 
 export function MessageSheet() {
@@ -50,7 +50,7 @@ export function MessageSheet() {
       taskStage,
       momentChoice: state.relationshipEvidence.some(evidence => evidence.kind === 'support') ? 'support' : 'hold_back',
       recentMessages: state.messages.slice(-12).map(message => ({ role: message.role, text: message.text })),
-      allowedMemoryIds: state.sharedMemories.map(memory => memory.id),
+      allowedMemoryIds: state.sharedMemories.map(memory => memory.id).filter(isAllowedMemoryId),
       postEnding: state.ending !== null,
       personaSnapshot: {
         relationshipIdentity: state.yanxinPersona.relationship.identity,

@@ -7,6 +7,16 @@ export type CharacterIntent = 'fan_maintenance' | 'thank' | 'banter' | 'probe' |
 export type TaskEvidenceKind = 'recognized_malicious_editing' | 'accepted_complete_evidence_plan'
 export type RelationshipEvidenceKind = 'showed_specific_care' | 'respected_boundary' | 'offered_actionable_help' | 'kept_promise' | 'contradicted_action_evidence' | 'revealed_unexplained_knowledge' | 'pressured_after_refusal' | 'public_financial_support'
 
+export const AllowedMemoryIds = [
+  'yanxin_pk_choice_support',
+  'yanxin_pk_choice_hold_back',
+  'yanxin_evidence_task_completed',
+  'yanxin_evidence_method_helped_bride',
+  'bride_wedding_result_completed',
+] as const
+
+export type AllowedMemoryId = (typeof AllowedMemoryIds)[number]
+
 export interface TaskEvidenceCandidate {
   kind: TaskEvidenceKind
   sourceMessageId: string
@@ -27,7 +37,7 @@ export interface ChatRequest {
   taskStage: CharacterTaskStage
   momentChoice: MomentChoiceId
   recentMessages: Array<{ role: 'user' | 'assistant'; text: string }>
-  allowedMemoryIds: string[]
+  allowedMemoryIds: AllowedMemoryId[]
   postEnding: boolean
   personaSnapshot: {
     relationshipIdentity: YanxinPersonaState['relationship']['identity']
@@ -60,6 +70,11 @@ const OPEN_LOOP_STATUSES = new Set<OpenLoopUpdate['status']>(['open', 'closed'])
 const TONES = new Set<ChatResponse['tone']>(['guarded', 'warm', 'teasing', 'serious'])
 const CHINESE_PUNCTUATION = new Set(Array.from('，。！？、；：…（）《》“”‘’—'))
 const HAN_CHARACTER = /^\p{Script=Han}$/u
+const ALLOWED_MEMORY_IDS = new Set<string>(AllowedMemoryIds)
+
+export function isAllowedMemoryId(value: string): value is AllowedMemoryId {
+  return ALLOWED_MEMORY_IDS.has(value)
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === 'object' && !Array.isArray(value)
@@ -147,7 +162,7 @@ function boundRequest(request: ChatRequest): ChatRequest {
       role: message.role,
       text: boundText(message.text, 300),
     })),
-    allowedMemoryIds: [...request.allowedMemoryIds],
+    allowedMemoryIds: [...new Set(request.allowedMemoryIds.filter(isAllowedMemoryId))].slice(0, AllowedMemoryIds.length),
     postEnding: request.postEnding,
     personaSnapshot: {
       relationshipIdentity: request.personaSnapshot.relationshipIdentity,

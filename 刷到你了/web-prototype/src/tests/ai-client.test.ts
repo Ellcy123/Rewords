@@ -97,6 +97,68 @@ describe('requestYanxinReply', () => {
     expect(fetcher).toHaveBeenCalledWith('/api/chat', expect.objectContaining({ method: 'POST' }))
   })
 
+  it('filters, deduplicates, and bounds allowed game-event memories', async () => {
+    const fetcher = vi.fn(async (_url: RequestInfo | URL, init?: RequestInit) => {
+      const body = JSON.parse(String(init?.body))
+      expect(body.allowedMemoryIds).toEqual([
+        'yanxin_pk_choice_support',
+        'yanxin_pk_choice_hold_back',
+        'yanxin_evidence_task_completed',
+        'yanxin_evidence_method_helped_bride',
+        'bride_wedding_result_completed',
+      ])
+      return new Response(JSON.stringify(validResponse), { status: 200 })
+    })
+    const request = {
+      ...baseRequest,
+      allowedMemoryIds: [
+        'invalid-memory',
+        'yanxin_pk_choice_support',
+        'yanxin_pk_choice_support',
+        'yanxin_pk_choice_hold_back',
+        'yanxin_evidence_task_completed',
+        'yanxin_evidence_method_helped_bride',
+        'bride_wedding_result_completed',
+        'unexpected-sixth-value',
+      ],
+    } as unknown as ChatRequest
+
+    await expect(requestYanxinReply(request, fetcher)).resolves.toMatchObject({ ok: true })
+  })
+
+  it('bounds each memory and open-loop identifier and text field by Unicode code point', async () => {
+    const fetcher = vi.fn(async (_url: RequestInfo | URL, init?: RequestInit) => {
+      const body = JSON.parse(String(init?.body))
+      expect(Array.from(body.memories[0].id)).toHaveLength(120)
+      expect(Array.from(body.memories[0].sourceMessageId)).toHaveLength(120)
+      expect(Array.from(body.memories[0].sourceText)).toHaveLength(300)
+      expect(Array.from(body.memories[0].interpretation)).toHaveLength(120)
+      expect(Array.from(body.openLoops[0].id)).toHaveLength(120)
+      expect(Array.from(body.openLoops[0].sourceMessageId)).toHaveLength(120)
+      expect(Array.from(body.openLoops[0].summary)).toHaveLength(120)
+      return new Response(JSON.stringify(validResponse), { status: 200 })
+    })
+    const nonBmpHan = String.fromCodePoint(0x20000)
+
+    await expect(requestYanxinReply({
+      ...baseRequest,
+      memories: [{
+        id: nonBmpHan.repeat(121),
+        type: 'promise',
+        sourceMessageId: nonBmpHan.repeat(121),
+        sourceText: nonBmpHan.repeat(301),
+        interpretation: nonBmpHan.repeat(121),
+      }],
+      openLoops: [{
+        id: nonBmpHan.repeat(121),
+        kind: 'report',
+        summary: nonBmpHan.repeat(121),
+        sourceMessageId: nonBmpHan.repeat(121),
+        status: 'open',
+      }],
+    }, fetcher)).resolves.toMatchObject({ ok: true })
+  })
+
   it('returns timeout after 8 seconds instead of throwing', async () => {
     vi.useFakeTimers()
     const fetcher = vi.fn(() => new Promise<Response>(() => {}))
@@ -113,6 +175,14 @@ describe('requestYanxinReply', () => {
     ['invalid JSON', async () => new Response('{', { status: 200 }), 'invalid'],
     ['unknown intent', async () => new Response(JSON.stringify({ ...validResponse, characterIntents: ['unlock_now'] }), { status: 200 }), 'invalid'],
     ['an extra response field', async () => new Response(JSON.stringify({ ...validResponse, unlockNodeId: 'E201' }), { status: 200 }), 'invalid'],
+    ['a nested extra response field', async () => new Response(JSON.stringify({
+      ...validResponse,
+      memoryCandidates: [{ type: 'promise', sourceMessageId: 'user-current', interpretation: '玩家答应等待核对。', scoreDelta: 1 }],
+    }), { status: 200 }), 'invalid'],
+    ['too many open-loop updates', async () => new Response(JSON.stringify({
+      ...validResponse,
+      openLoopUpdates: Array.from({ length: 3 }, () => ({ kind: 'report', summary: '等待结果', sourceMessageId: 'user-current', status: 'open' })),
+    }), { status: 200 }), 'invalid'],
     ['a non-Chinese reply', async () => new Response(JSON.stringify({ ...validResponse, replyText: 'hello' }), { status: 200 }), 'invalid'],
   ])('returns a typed failure for %s', async (_name, fetcher, reason) => {
     await expect(requestYanxinReply(baseRequest, fetcher)).resolves.toEqual({ ok: false, reason })

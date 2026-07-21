@@ -30,8 +30,9 @@ function jsonInstructions(instructions: string): string {
     instructions,
     '只输出一个 JSON 对象，不要输出 Markdown、代码围栏或解释。',
     'JSON 必须严格使用这个形状：',
-    '{"replyText":"一条中文私信","taskSignals":[],"tone":"warm"}',
-    'taskSignals 只能使用 acknowledge_pressure、offer_evidence_plan、respect_boundary，最多两个。',
+    '{"replyText":"一条中文私信","tone":"warm","characterIntents":["fan_maintenance"],"taskEvidence":[],"relationshipEvidence":[],"memoryCandidates":[],"openLoopUpdates":[]}',
+    'characterIntents 最多两个，只能使用 fan_maintenance、thank、banter、probe、explain、share、confirm_promise、set_boundary、handle_conflict、end_topic、advance_task。',
+    'taskEvidence、relationshipEvidence、memoryCandidates、openLoopUpdates 必须是 JSON 数组；没有候选时输出空数组。',
     'tone 只能使用 guarded、warm、teasing、serious。',
   ].join('\n')
 }

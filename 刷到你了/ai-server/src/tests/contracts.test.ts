@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { buildAllowedContext } from '../allowedContext.js'
 import { generateYanxinChat } from '../chatService.js'
 import { ChatRequestSchema, ChatResponseJsonSchema, ChatResponseSchema } from '../contracts.js'
-import { createDeepSeekChatModel } from '../deepseekClient.js'
+import { createDeepSeekChatModel, type DeepSeekChatClient } from '../deepseekClient.js'
 import { createOpenAIChatModel } from '../openaiClient.js'
 import { createYanxinPrompt } from '../prompts/yanxin.js'
 import { loadServerConfig } from '../server.js'
@@ -311,9 +311,17 @@ describe('chat contracts', () => {
   })
 
   it('uses DeepSeek Chat Completions JSON Output through an injected client', async () => {
-    const create = vi.fn(async () => ({
-      choices: [{ message: { content: '{"replyText":"收到，我去核对完整录像。","taskSignals":[],"tone":"warm"}' } }],
-    }))
+    let systemContent: unknown
+    const create = vi.fn(async (request: Parameters<DeepSeekChatClient['chat']['completions']['create']>[0]) => {
+      systemContent = request.messages[0]?.content
+      return {
+        choices: [{ message: { content: JSON.stringify({
+          ...validResponse,
+          replyText: '收到，我去核对完整录像。',
+          tone: 'warm',
+        }) } }],
+      }
+    })
     const client = createDeepSeekChatModel('test-key', { chat: { completions: { create } } })
 
     await expect(client.generate({
@@ -330,6 +338,12 @@ describe('chat contracts', () => {
         expect.objectContaining({ role: 'user', content: '{"userText":"完整录像"}' }),
       ],
     }))
+    expect(systemContent).toEqual(expect.stringContaining('"characterIntents"'))
+    expect(systemContent).toEqual(expect.stringContaining('"taskEvidence"'))
+    expect(systemContent).toEqual(expect.stringContaining('"relationshipEvidence"'))
+    expect(systemContent).toEqual(expect.stringContaining('"memoryCandidates"'))
+    expect(systemContent).toEqual(expect.stringContaining('"openLoopUpdates"'))
+    expect(systemContent).not.toEqual(expect.stringContaining('taskSignals'))
   })
 
   it('rejects an empty DeepSeek JSON response', async () => {
