@@ -4,7 +4,7 @@ import { generateYanxinChat } from '../chatService.js'
 import { ChatRequestSchema, ChatResponseJsonSchema, ChatResponseSchema } from '../contracts.js'
 import { createDeepSeekChatModel, type DeepSeekChatClient } from '../deepseekClient.js'
 import { createOpenAIChatModel } from '../openaiClient.js'
-import { createYanxinContext, createYanxinPrompt } from '../prompts/yanxin.js'
+import { createYanxinInstructions, createYanxinPrompt } from '../prompts/yanxin.js'
 import { loadServerConfig } from '../server.js'
 
 const validRequest = {
@@ -263,7 +263,7 @@ describe('chat contracts', () => {
   })
 
   it('builds a Yanxin private-message prompt with task and fact boundaries', async () => {
-    const text = createYanxinPrompt()
+    const text = createYanxinInstructions()
     expect(text).toContain('私信')
     expect(text).toContain('完整证据')
     expect(text).toContain('不得承诺独占')
@@ -275,7 +275,7 @@ describe('chat contracts', () => {
   })
 
   it('uses the required five-part decision priority in order', () => {
-    const text = createYanxinPrompt()
+    const text = createYanxinInstructions()
     const priorities = [
       '第一优先级：回应最新消息',
       '第二优先级：维护当前关系',
@@ -289,7 +289,7 @@ describe('chat contracts', () => {
   })
 
   it('defines the streamer traits and all relationship behaviors without fixed stage lines', () => {
-    const prompt = createYanxinPrompt()
+    const prompt = createYanxinInstructions()
     expect(prompt).toContain('短视频平台男主播')
     expect(prompt).toContain('唱跳和 PK')
     expect(prompt).toContain('嘴硬')
@@ -321,16 +321,31 @@ describe('chat contracts', () => {
   })
 
   it('keeps the system prompt deterministic and free of request text', () => {
-    const firstPrompt = createYanxinPrompt()
-    const secondPrompt = createYanxinPrompt()
+    const firstPrompt = createYanxinInstructions()
+    const secondPrompt = createYanxinInstructions()
 
     expect(secondPrompt).toBe(firstPrompt)
     expect(firstPrompt).not.toContain(validRequest.userText)
   })
 
+  it('separates static instructions from the ordered dynamic prompt interface', () => {
+    const context = buildAllowedContext(ChatRequestSchema.parse(validRequest))
+    expect(createYanxinInstructions()).toEqual(expect.any(String))
+    expect(Object.keys(createYanxinPrompt(context))).toEqual([
+      'factsAndKnowledge',
+      'relationship',
+      'shortTerm',
+      'openLoops',
+      'verifiedMemories',
+      'recentMessages',
+      'currentMessage',
+      'decisionPriority',
+    ])
+  })
+
   it('creates different selected relationship context for the same user text', () => {
-    const newViewer = createYanxinContext(buildAllowedContext(ChatRequestSchema.parse(validRequest)))
-    const importantSupporter = createYanxinContext(buildAllowedContext(ChatRequestSchema.parse({
+    const newViewer = createYanxinPrompt(buildAllowedContext(ChatRequestSchema.parse(validRequest)))
+    const importantSupporter = createYanxinPrompt(buildAllowedContext(ChatRequestSchema.parse({
       ...validRequest,
       personaSnapshot: {
         ...validRequest.personaSnapshot,
@@ -349,11 +364,11 @@ describe('chat contracts', () => {
       label: '重要支持者',
     }))
     expect(importantSupporter.relationship).not.toEqual(newViewer.relationship)
-    expect(createYanxinPrompt()).toBe(createYanxinPrompt())
+    expect(createYanxinInstructions()).toBe(createYanxinInstructions())
   })
 
   it('defines static source-message rules without inventing recent-message ids', () => {
-    const text = createYanxinPrompt()
+    const text = createYanxinInstructions()
     expect(text).toContain('taskEvidence、relationshipEvidence、memoryCandidates 的 sourceMessageId 必须等于 currentMessageId')
     expect(text).toContain('recentMessages 没有消息 ID，不得为历史消息编造 ID')
     expect(text).toContain('关闭既有 openLoop 时，使用 openLoops 中对应项的真实 id')

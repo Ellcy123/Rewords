@@ -86,6 +86,7 @@ describe('generateYanxinChat model boundary', () => {
       'verifiedMemories',
       'recentMessages',
       'currentMessage',
+      'decisionPriority',
     ])
     expect(input.relationship).toEqual(expect.objectContaining({
       identity: 'important_supporter',
@@ -111,6 +112,13 @@ describe('generateYanxinChat model boundary', () => {
       id: dynamicRequest.currentMessageId,
       text: dynamicRequest.userText,
     })
+    expect(input.decisionPriority).toEqual([
+      '第一优先级：回应最新消息',
+      '第二优先级：维护当前关系',
+      '第三优先级：延续未完事项或承诺',
+      '第四优先级：表现自身生活',
+      '第五优先级：相关时推进任务',
+    ])
     expect(input).not.toHaveProperty('personaSnapshot')
   })
 })
