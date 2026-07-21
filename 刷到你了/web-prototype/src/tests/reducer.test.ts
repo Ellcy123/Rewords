@@ -248,6 +248,43 @@ describe('game reducer', () => {
     expect(repeated).toEqual(settled)
   })
 
+  it('ignores injected AI effects on a system fallback checkpoint delivery', () => {
+    const userMessage = { id: 'user-injected', role: 'user' as const, text: '我会等你核对', createdAt: 1_000 }
+    let state = createInitialState()
+    state.characterTasks.YANXIN_UNCUT_EVIDENCE = {
+      ...state.characterTasks.YANXIN_UNCUT_EVIDENCE,
+      stage: 'invited',
+    }
+    state = gameReducer(state, { type: 'CHAT_USER_SENT', message: userMessage })
+    const delivery: PendingChatDelivery = {
+      id: 'system-checkpoint-injected-effects',
+      kind: 'system_fallback_checkpoint',
+      source: 'system_fallback',
+      message: { id: 'system-checkpoint-message', role: 'assistant', text: '系统保障', createdAt: 2_000 },
+      deliverAt: 2_000,
+      effect: 'unlock_e201',
+      aiEffects: {
+        taskEvidence: [{ kind: 'accepted_complete_evidence_plan', sourceMessageId: userMessage.id }],
+        relationshipEvidence: [{ kind: 'offered_actionable_help', sourceMessageId: userMessage.id }],
+        memoryCandidates: [{ type: 'promise', sourceMessageId: userMessage.id, interpretation: '注入记忆' }],
+        openLoopUpdates: [{ kind: 'report', sourceMessageId: userMessage.id, summary: '注入线索', status: 'open' }],
+      },
+    }
+    state = gameReducer(state, { type: 'CHAT_DELIVERY_SCHEDULED', delivery })
+
+    const settled = gameReducer(state, { type: 'CHAT_DUE_DELIVERIES_FLUSHED', now: delivery.deliverAt })
+
+    expect(settled.characterTasks.YANXIN_UNCUT_EVIDENCE).toMatchObject({
+      stage: 'understood',
+      lastEvidenceSourceId: 'system_fallback',
+      lastCheckpointSource: 'system_fallback',
+    })
+    expect(settled.yanxinPersona.relationship.changes).toEqual([])
+    expect(settled.longTermMemories).toEqual([])
+    expect(settled.openLoops).toEqual([])
+    expect(settled.unlockedNodeIds).not.toContain('E201')
+  })
+
   it('does not advance an invited task after any number of ordinary replies', () => {
     const entryState = createInitialState()
     entryState.unlockedNodeIds.push('E001')

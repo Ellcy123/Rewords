@@ -194,9 +194,11 @@ function normalizePendingDelivery(value: unknown): PendingChatDelivery | null {
     || (value.source !== undefined && value.source !== 'system_fallback')
     || (value.kind === 'system_fallback_checkpoint' && value.source !== 'system_fallback')
   ) return null
-  const aiEffects = value.aiEffects === undefined
+  const aiEffects = value.kind === 'system_fallback_checkpoint'
     ? { taskEvidence: [], relationshipEvidence: [], memoryCandidates: [], openLoopUpdates: [] }
-    : normalizeAiEffects(value.aiEffects)
+    : value.aiEffects === undefined
+      ? { taskEvidence: [], relationshipEvidence: [], memoryCandidates: [], openLoopUpdates: [] }
+      : normalizeAiEffects(value.aiEffects)
   if (!aiEffects) return null
   return {
     id: value.id,

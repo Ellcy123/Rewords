@@ -165,6 +165,36 @@ describe('persistence', () => {
     }])
   })
 
+  it('strips injected AI effects from a persisted system fallback checkpoint', () => {
+    const storage = memoryStorage()
+    const state = createInitialState() as unknown as Record<string, unknown>
+    state.pendingChatDeliveries = [{
+      id: 'system-checkpoint',
+      kind: 'system_fallback_checkpoint',
+      source: 'system_fallback',
+      message: { id: 'system-message', role: 'assistant', text: '系统保障', createdAt: 10 },
+      deliverAt: 20,
+      effect: 'none',
+      aiEffects: {
+        taskEvidence: [{ kind: 'accepted_complete_evidence_plan', sourceMessageId: 'user-injected' }],
+        relationshipEvidence: [{ kind: 'offered_actionable_help', sourceMessageId: 'user-injected' }],
+        memoryCandidates: [{ type: 'promise', sourceMessageId: 'user-injected', interpretation: 'injected' }],
+        openLoopUpdates: [{ kind: 'report', sourceMessageId: 'user-injected', summary: 'injected', status: 'open' }],
+      },
+    }]
+    storage.setItem(SAVE_KEY, JSON.stringify(state))
+
+    const loaded = loadGame(storage)
+
+    expect(loaded.kind).toBe('loaded')
+    if (loaded.kind !== 'loaded') return
+    expect(loaded.state.pendingChatDeliveries).toEqual([expect.objectContaining({
+      kind: 'system_fallback_checkpoint',
+      source: 'system_fallback',
+      aiEffects: { taskEvidence: [], relationshipEvidence: [], memoryCandidates: [], openLoopUpdates: [] },
+    })])
+  })
+
   it('clamps persisted relationship dimensions and keeps only the newest twenty changes', () => {
     const storage = memoryStorage()
     const changes = Array.from({ length: 21 }, (_, index) => ({

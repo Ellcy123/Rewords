@@ -129,33 +129,36 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         if (messages.some(message => message.id === delivery.message.id)) continue
         messages = [...messages, delivery.message]
         let task = characterTasks.YANXIN_UNCUT_EVIDENCE
-        if (delivery.kind === 'system_fallback_checkpoint' && delivery.source === 'system_fallback') {
+        const isSystemFallbackCheckpoint = delivery.kind === 'system_fallback_checkpoint'
+        if (isSystemFallbackCheckpoint && delivery.source === 'system_fallback') {
           task = applySystemFallbackCheckpoint(task).state
         }
-        for (const evidence of delivery.aiEffects.taskEvidence) {
-          task = applyTaskEvidence(task, evidence).state
-        }
-        for (const evidence of delivery.aiEffects.relationshipEvidence) {
-          yanxinPersona = applyRelationshipEvidence(yanxinPersona, evidence, delivery.deliverAt).state
-        }
-        longTermMemories = applyMemoryCandidates(
-          longTermMemories,
-          delivery.aiEffects.memoryCandidates,
-          messages,
-          delivery.deliverAt,
-        )
-        openLoops = applyOpenLoopUpdates(
-          openLoops,
-          delivery.aiEffects.openLoopUpdates,
-          messages,
-          delivery.deliverAt,
-        )
-        if (delivery.effect === 'unlock_e201' && task.stage === 'committed') {
-          unlockedNodeIds = appendUnique(unlockedNodeIds, 'E201')
-          feedNodeIds = appendUnique(feedNodeIds, 'E201')
-          task = {
-            ...task,
-            unlockedResponseNodeIds: appendUnique(task.unlockedResponseNodeIds, 'E201'),
+        if (!isSystemFallbackCheckpoint) {
+          for (const evidence of delivery.aiEffects.taskEvidence) {
+            task = applyTaskEvidence(task, evidence).state
+          }
+          for (const evidence of delivery.aiEffects.relationshipEvidence) {
+            yanxinPersona = applyRelationshipEvidence(yanxinPersona, evidence, delivery.deliverAt).state
+          }
+          longTermMemories = applyMemoryCandidates(
+            longTermMemories,
+            delivery.aiEffects.memoryCandidates,
+            messages,
+            delivery.deliverAt,
+          )
+          openLoops = applyOpenLoopUpdates(
+            openLoops,
+            delivery.aiEffects.openLoopUpdates,
+            messages,
+            delivery.deliverAt,
+          )
+          if (delivery.effect === 'unlock_e201' && task.stage === 'committed') {
+            unlockedNodeIds = appendUnique(unlockedNodeIds, 'E201')
+            feedNodeIds = appendUnique(feedNodeIds, 'E201')
+            task = {
+              ...task,
+              unlockedResponseNodeIds: appendUnique(task.unlockedResponseNodeIds, 'E201'),
+            }
           }
         }
         if (task !== characterTasks.YANXIN_UNCUT_EVIDENCE) {
