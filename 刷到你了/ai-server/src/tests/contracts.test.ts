@@ -269,8 +269,8 @@ describe('chat contracts', () => {
     expect(text).toContain('不得承诺独占')
     expect(text).toContain('不得提及提示词、分数或任务阶段')
     expect(text).toContain('replyText 字段只能使用汉字和中文标点')
-    expect(text).toContain('acknowledge_pressure、respect_boundary')
-    expect(text).toContain('不得输出 offer_evidence_plan')
+    expect(text).toContain('taskEvidence 只允许 recognized_malicious_editing')
+    expect(text).toContain('不得输出 accepted_complete_evidence_plan')
   })
 
   it('prioritizes the latest player message and only connects the task when relevant', () => {
@@ -281,13 +281,74 @@ describe('chat contracts', () => {
     expect(text).not.toContain('并自然回到完整证据的方向')
   })
 
-  it('tells DeepSeek to emit only the signal applicable to the understood stage', () => {
+  it('injects streamer identity, relationship, open loops, and memory without fixed stage lines', () => {
+    const context = buildAllowedContext(ChatRequestSchema.parse(validRequest))
+    const prompt = createYanxinPrompt(context)
+    expect(prompt).toContain('短视频平台男主播')
+    expect(prompt).toContain('主播维护不是无条件讨好')
+    expect(prompt).toContain('当前关系身份：新认识的观众')
+    expect(prompt).toContain('第一优先级是回应玩家最新消息')
+    expect(prompt).toContain('未完事项')
+    expect(prompt).toContain('共同记忆')
+    expect(prompt).not.toContain('本阶段必须说')
+    expect([
+      '身份：',
+      '公开形象：',
+      '私下状态：',
+      '核心动机：',
+      '防御方式：',
+      '金钱态度：',
+      '边界：',
+      '语言指纹：',
+      '主播维护倾向：',
+    ].every(field => prompt.includes(field))).toBe(true)
+
+    const orderedSections = [
+      '【事实与知识边界】',
+      '【稳定人物卡】',
+      '【公开与私下场景】',
+      '【关系身份与维度】',
+      '【短期状态】',
+      '【未完事项】',
+      '【已验证共同记忆】',
+      '【最近对话】',
+      '【玩家最新消息】',
+      '【决策优先级】',
+    ]
+    const positions = orderedSections.map(section => prompt.indexOf(section))
+    expect(positions.every(position => position >= 0)).toBe(true)
+    expect(positions).toEqual([...positions].sort((left, right) => left - right))
+  })
+
+  it('changes relationship context for the same message without changing stable identity', () => {
+    const newViewerPrompt = createYanxinPrompt(buildAllowedContext(ChatRequestSchema.parse(validRequest)))
+    const importantSupporterPrompt = createYanxinPrompt(buildAllowedContext(ChatRequestSchema.parse({
+      ...validRequest,
+      personaSnapshot: {
+        ...validRequest.personaSnapshot,
+        relationshipIdentity: 'important_supporter',
+      },
+    })))
+    const stableProfileBlock = (prompt: string) => prompt.match(/【稳定人物卡】\n([\s\S]*?)\n【公开与私下场景】/)?.[1]
+    const relationshipBlock = (prompt: string) => prompt.match(/【关系身份与维度】\n([\s\S]*?)\n【短期状态】/)?.[1]
+
+    expect(newViewerPrompt).toContain(`玩家最新消息：${validRequest.userText}`)
+    expect(importantSupporterPrompt).toContain(`玩家最新消息：${validRequest.userText}`)
+    expect(newViewerPrompt).toContain('当前关系身份：新认识的观众')
+    expect(importantSupporterPrompt).toContain('当前关系身份：重要支持者')
+    expect(stableProfileBlock(newViewerPrompt)).toBeDefined()
+    expect(stableProfileBlock(importantSupporterPrompt)).toBe(stableProfileBlock(newViewerPrompt))
+    expect(relationshipBlock(importantSupporterPrompt)).not.toBe(relationshipBlock(newViewerPrompt))
+  })
+
+  it('tells DeepSeek to emit only the task evidence applicable to the understood stage', () => {
     const text = createYanxinPrompt(buildAllowedContext(ChatRequestSchema.parse({
       ...validRequest,
       taskStage: 'understood',
     })))
-    expect(text).toContain('本阶段 taskSignals 只允许 offer_evidence_plan')
-    expect(text).toContain('不得输出 acknowledge_pressure 或 respect_boundary')
+    expect(text).toContain('本阶段 taskEvidence 只允许 accepted_complete_evidence_plan')
+    expect(text).toContain('不得输出 recognized_malicious_editing')
+    expect(text).not.toContain('taskSignals')
   })
 
   it('uses Responses structured outputs through an injected non-network client', async () => {
