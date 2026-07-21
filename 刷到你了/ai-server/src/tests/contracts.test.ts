@@ -4,7 +4,7 @@ import { generateYanxinChat } from '../chatService.js'
 import { ChatRequestSchema, ChatResponseJsonSchema, ChatResponseSchema } from '../contracts.js'
 import { createDeepSeekChatModel, type DeepSeekChatClient } from '../deepseekClient.js'
 import { createOpenAIChatModel } from '../openaiClient.js'
-import { createYanxinPrompt } from '../prompts/yanxin.js'
+import { createYanxinContext, createYanxinPrompt } from '../prompts/yanxin.js'
 import { loadServerConfig } from '../server.js'
 
 const validRequest = {
@@ -326,6 +326,30 @@ describe('chat contracts', () => {
 
     expect(secondPrompt).toBe(firstPrompt)
     expect(firstPrompt).not.toContain(validRequest.userText)
+  })
+
+  it('creates different selected relationship context for the same user text', () => {
+    const newViewer = createYanxinContext(buildAllowedContext(ChatRequestSchema.parse(validRequest)))
+    const importantSupporter = createYanxinContext(buildAllowedContext(ChatRequestSchema.parse({
+      ...validRequest,
+      personaSnapshot: {
+        ...validRequest.personaSnapshot,
+        relationshipIdentity: 'important_supporter',
+      },
+    })))
+
+    expect(newViewer.currentMessage.text).toBe(validRequest.userText)
+    expect(importantSupporter.currentMessage.text).toBe(validRequest.userText)
+    expect(newViewer.relationship).toEqual(expect.objectContaining({
+      identity: 'new_viewer',
+      label: '新认识的观众',
+    }))
+    expect(importantSupporter.relationship).toEqual(expect.objectContaining({
+      identity: 'important_supporter',
+      label: '重要支持者',
+    }))
+    expect(importantSupporter.relationship).not.toEqual(newViewer.relationship)
+    expect(createYanxinPrompt()).toBe(createYanxinPrompt())
   })
 
   it('defines static source-message rules without inventing recent-message ids', () => {

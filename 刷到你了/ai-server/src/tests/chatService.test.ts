@@ -74,18 +74,43 @@ describe('generateYanxinChat model boundary', () => {
     expect(request.instructions).not.toContain(dynamicRequest.openLoops[0]?.summary)
   })
 
-  it('sends identified dynamic context as user JSON and excludes closed loops', async () => {
+  it('sends interpreted dynamic context in the required layer order and excludes closed loops', async () => {
     const request = await captureModelRequest()
     const input = JSON.parse(request.input)
 
-    expect(input).toEqual(expect.objectContaining({
-      currentMessageId: dynamicRequest.currentMessageId,
-      userText: dynamicRequest.userText,
-      personaSnapshot: dynamicRequest.personaSnapshot,
-      memories: dynamicRequest.memories,
-      recentMessages: dynamicRequest.recentMessages,
+    expect(Object.keys(input)).toEqual([
+      'factsAndKnowledge',
+      'relationship',
+      'shortTerm',
+      'openLoops',
+      'verifiedMemories',
+      'recentMessages',
+      'currentMessage',
+    ])
+    expect(input.relationship).toEqual(expect.objectContaining({
+      identity: 'important_supporter',
+      label: '重要支持者',
+      guidance: expect.stringContaining('主动询问意见'),
+      dimensions: {
+        closeness: { value: 2, interpretation: expect.stringContaining('交流舒适和熟悉程度') },
+        trust: { value: 1, interpretation: expect.stringContaining('对玩家可靠性的判断') },
+        respect: { value: 3, interpretation: expect.stringContaining('对玩家行动与边界感的认可') },
+        suspicion: { value: -1, interpretation: expect.stringContaining('尚未消除的疑虑与戒备') },
+        boundaryPressure: { value: 0, interpretation: expect.stringContaining('越界压力') },
+      },
     }))
+    expect(input.shortTerm).toEqual({
+      emotion: expect.objectContaining({ id: 'steady', label: '平稳', guidance: expect.any(String) }),
+      currentActivity: expect.objectContaining({ id: 'reviewing_footage', label: '核对素材', guidance: expect.any(String) }),
+    })
     expect(input.openLoops).toEqual([dynamicRequest.openLoops[0]])
     expect(input.openLoops).not.toContainEqual(dynamicRequest.openLoops[1])
+    expect(input.verifiedMemories).toEqual(dynamicRequest.memories)
+    expect(input.recentMessages).toEqual(dynamicRequest.recentMessages)
+    expect(input.currentMessage).toEqual({
+      id: dynamicRequest.currentMessageId,
+      text: dynamicRequest.userText,
+    })
+    expect(input).not.toHaveProperty('personaSnapshot')
   })
 })

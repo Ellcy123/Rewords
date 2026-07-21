@@ -6,7 +6,7 @@ import {
   type ChatRequest,
   type ChatResponse,
 } from './contracts.js'
-import { createYanxinPrompt } from './prompts/yanxin.js'
+import { createYanxinContext, createYanxinPrompt } from './prompts/yanxin.js'
 import type { ResponseFormatTextJSONSchemaConfig } from 'openai/resources/responses/responses'
 
 export interface StructuredResponseRequest {
@@ -58,19 +58,7 @@ export async function generateYanxinChat(
     const output = await withTimeout(modelClient.generate({
       model,
       instructions: createYanxinPrompt(),
-      input: JSON.stringify({
-        currentMessageId: request.currentMessageId,
-        userText: request.userText,
-        taskStage: request.taskStage,
-        momentChoice: context.momentChoice,
-        allowedMemories: context.memories,
-        relationshipProduct: context.relationshipProduct,
-        postEnding: request.postEnding,
-        personaSnapshot: request.personaSnapshot,
-        openLoops: request.openLoops.filter(loop => loop.status === 'open'),
-        memories: request.memories,
-        recentMessages: request.recentMessages,
-      }),
+      input: JSON.stringify(createYanxinContext(context)),
       schema: ChatResponseJsonSchema,
     }), timeoutMs)
     return parseProviderOutput(request, output)
