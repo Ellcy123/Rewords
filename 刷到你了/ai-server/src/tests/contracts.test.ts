@@ -214,6 +214,14 @@ describe('chat contracts', () => {
     expect(text).toContain('不得输出 offer_evidence_plan')
   })
 
+  it('prioritizes the latest player message and only connects the task when relevant', () => {
+    const text = createYanxinPrompt(buildAllowedContext(ChatRequestSchema.parse(validRequest)))
+    expect(text).toContain('第一优先级是直接回应玩家最新一条消息')
+    expect(text).toContain('只有玩家当前话题与任务相关时')
+    expect(text).toContain('含义不清时')
+    expect(text).not.toContain('并自然回到完整证据的方向')
+  })
+
   it('tells DeepSeek to emit only the signal applicable to the understood stage', () => {
     const text = createYanxinPrompt(buildAllowedContext(ChatRequestSchema.parse({
       ...validRequest,
