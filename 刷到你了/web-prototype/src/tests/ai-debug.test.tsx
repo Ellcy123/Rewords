@@ -23,6 +23,7 @@ function debugRecord(index = 1): AiTurnDebugRecord {
     id: `debug-${index}`,
     createdAt: index,
     personaCoreId: 'yanxin-v1',
+    turnKind: 'player_message',
     relationshipIdentity: 'familiar_fan',
     dimensions: { closeness: 1, trust: 2, respect: 1, suspicion: 0, boundaryPressure: 0 },
     shortTerm: { emotion: 'steady', currentActivity: 'reviewing_footage' },
@@ -56,6 +57,7 @@ describe('AI debug provenance', () => {
     expect(state.aiDebugTurns[0].id).toBe('debug-2')
     expect(state.aiDebugTurns.at(-1)).toEqual(expect.objectContaining({
       relationshipIdentity: 'familiar_fan',
+      turnKind: 'player_message',
       memoryIdsRead: ['memory-1'],
       acceptedTaskEvidence: [],
       fallbackUsed: false,

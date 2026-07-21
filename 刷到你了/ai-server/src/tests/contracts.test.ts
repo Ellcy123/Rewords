@@ -257,6 +257,22 @@ describe('chat contracts', () => {
     }])
   })
 
+  it.each([
+    ['denial of malicious editing', 'invited', '这不是恶意剪辑，只是正常回放。'],
+    ['refusal of the evidence plan', 'understood', '我不想帮你找完整证据。'],
+  ] as const)('does not derive task progress from an explicit %s', (_label, taskStage, userText) => {
+    const request = ChatRequestSchema.parse({
+      ...validRequest,
+      taskStage,
+      userText,
+    })
+
+    expect(parseChatResponseForRequest(request, {
+      ...validResponse,
+      taskEvidence: [],
+    }).taskEvidence).toEqual([])
+  })
+
   it('accepts the mirrored persona snapshot and structured evidence protocol', () => {
     expect(ChatRequestSchema.parse(validRequest).personaSnapshot.relationshipIdentity).toBe('new_viewer')
     expect(ChatResponseSchema.parse(validResponse)).toEqual(expect.objectContaining({

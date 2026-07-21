@@ -62,7 +62,8 @@ describe('PK to Yanxin message flow', () => {
       }), { status: 200 })
     })
     vi.stubGlobal('fetch', fetcher)
-    render(<App storage={memoryStorage(stateAtPk())} />)
+    const storage = memoryStorage(stateAtPk())
+    render(<App storage={storage} />)
 
     fireEvent.click(screen.getByRole('button', { name: '决定要不要上票' }))
     fireEvent.click(screen.getByRole('button', { name: choiceLabel }))
@@ -79,6 +80,13 @@ describe('PK to Yanxin message flow', () => {
     fireEvent.click(messagesButton)
     expect(screen.getByText(generatedMessage)).toBeTruthy()
     expect(fetcher).toHaveBeenCalledTimes(1)
+    const saved = JSON.parse(storage.getItem(SAVE_KEY)!)
+    expect(saved.aiDebugTurns.at(-1)).toMatchObject({
+      turnKind: 'first_contact',
+      taskStage: 'invited',
+      fallbackUsed: false,
+      characterIntents: ['explain'],
+    })
     expect(document.body.textContent).not.toContain('有人只截了最后十秒，我想把完整那段找回来')
     expect(screen.getByRole('button', { name: '私信' }).textContent).not.toContain('1')
     expect(document.body.textContent).not.toMatch(/好感|关系值|在线|直播中|办事中|休息中|输入中|倒计时/)

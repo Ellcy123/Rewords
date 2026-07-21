@@ -17,6 +17,7 @@ export function AiDebugSheet({ records }: { records: AiTurnDebugRecord[] }) {
       {[...records].reverse().map(record => <article key={record.id}>
         <h3>{record.id}</h3>
         <dl>
+          <dt>回合类型</dt><dd>{record.turnKind}</dd>
           <dt>关系身份</dt><dd>{record.relationshipIdentity}</dd>
           <dt>五维状态</dt><dd>{Object.entries(record.dimensions).map(([key, value]) => `${key}:${value}`).join(' · ')}</dd>
           <dt>任务阶段</dt><dd>{record.taskStage}</dd>

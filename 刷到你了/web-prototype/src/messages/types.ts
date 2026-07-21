@@ -2,7 +2,7 @@ import type { NodeId } from '../content/types'
 import type { RelationshipEvidenceCandidate } from '../relationship/personaState'
 import type { RelationshipIdentity, YanxinPersonaState } from '../relationship/personaState'
 import type { CharacterTaskStage, TaskEvidenceCandidate } from '../relationship/taskEngine'
-import type { CharacterIntent, ChatFailureReason } from './aiClient'
+import type { CharacterIntent, ChatFailureReason, ChatTurnKind } from './aiClient'
 
 export type ChatRole = 'user' | 'assistant' | 'system'
 export type ChatDeliveryKind = 'reply' | 'proactive_report' | 'system_notice' | 'system_fallback_checkpoint'
@@ -68,6 +68,7 @@ export interface AiTurnDebugRecord {
   id: string
   createdAt: number
   personaCoreId: 'yanxin-v1'
+  turnKind: ChatTurnKind
   relationshipIdentity: RelationshipIdentity
   dimensions: YanxinPersonaState['relationship']['dimensions']
   shortTerm: YanxinPersonaState['shortTerm']

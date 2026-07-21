@@ -8,6 +8,7 @@ import {
   YANXIN_SYSTEM_FALLBACK_CHECKPOINT,
 } from '../messages/character'
 import { isAllowedMemoryId, requestYanxinReply, type ChatRequest, type ChatTurnKind } from '../messages/aiClient'
+import { createAiTurnDebugRecord } from '../messages/debug'
 import { scheduleChatDelivery } from '../messages/delivery'
 import type { ChatMessage, ChatDeliveryEffect } from '../messages/types'
 
@@ -121,6 +122,16 @@ export function GameProvider({ children, storage }: { children: ReactNode; stora
     void requestYanxinReply(proactiveRequest(state, selected.turnKind, selected.currentMessageId)).then(result => {
       const readyAt = Date.now()
       if (!result.ok) dispatch({ type: 'CHAT_PROVIDER_FAILED' })
+      dispatch({
+        type: 'CHAT_AI_DEBUG_RECORDED',
+        record: createAiTurnDebugRecord({
+          state,
+          turnKind: selected.turnKind,
+          sourceId: selected.currentMessageId,
+          createdAt: readyAt,
+          result,
+        }),
+      })
       const messageId = result.ok ? selected.messageId : `${selected.messageId}-system-${readyAt}`
       dispatch({
         type: 'CHAT_DELIVERY_SCHEDULED',

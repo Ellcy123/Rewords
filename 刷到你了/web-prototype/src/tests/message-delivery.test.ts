@@ -111,5 +111,11 @@ describe('progress report delivery', () => {
     expect(fetcher).toHaveBeenCalledTimes(1)
     const saved = JSON.parse(storage.getItem(SAVE_KEY)!)
     expect(saved.unlockedNodeIds.filter((id: string) => id === 'E201')).toHaveLength(1)
+    expect(saved.aiDebugTurns.at(-1)).toMatchObject({
+      turnKind: 'progress_report',
+      taskStage: 'committed',
+      fallbackUsed: false,
+      characterIntents: ['confirm_promise'],
+    })
   })
 })

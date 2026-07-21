@@ -4,7 +4,8 @@ import { useGame } from '../game/useGame'
 import { scheduleChatDelivery } from './delivery'
 import { YANXIN_REPLY_UNAVAILABLE_NOTICE } from './character'
 import { isAllowedMemoryId, requestYanxinReply } from './aiClient'
-import type { AiTurnDebugRecord, ChatMessage, PendingChatDelivery } from './types'
+import { createAiTurnDebugRecord } from './debug'
+import type { ChatMessage, PendingChatDelivery } from './types'
 
 export function MessageSheet() {
   const { state, dispatch } = useGame()
@@ -89,30 +90,13 @@ export function MessageSheet() {
       : { taskEvidence: [], relationshipEvidence: [], memoryCandidates: [], openLoopUpdates: [] }
     if (!result.ok) dispatch({ type: 'CHAT_PROVIDER_FAILED' })
     const readyAt = Date.now()
-    const debugRecord: AiTurnDebugRecord = {
-      id: `debug-${userMessageId}`,
+    const debugRecord = createAiTurnDebugRecord({
+      state,
+      turnKind: 'player_message',
+      sourceId: userMessageId,
       createdAt: readyAt,
-      personaCoreId: 'yanxin-v1',
-      relationshipIdentity: state.yanxinPersona.relationship.identity,
-      dimensions: { ...state.yanxinPersona.relationship.dimensions },
-      shortTerm: { ...state.yanxinPersona.shortTerm },
-      taskStage,
-      recentMessageIdsRead: recentMessages.map(message => message.id),
-      relationshipChangeSourceIdsRead: [...new Set(state.yanxinPersona.relationship.changes.slice(-20).map(change => change.sourceId))],
-      memoryIdsRead: [...allowedMemoryIds, ...memories.map(memory => memory.id)],
-      openLoopIdsRead: openLoops.map(openLoop => openLoop.id),
-      characterIntents: result.ok ? [...result.data.characterIntents] : [],
-      acceptedTaskEvidence: result.ok ? result.data.taskEvidence.map(evidence => ({ ...evidence })) : [],
-      acceptedRelationshipEvidence: result.ok ? result.data.relationshipEvidence.map(evidence => ({ ...evidence })) : [],
-      acceptedMemoryCandidates: result.ok
-        ? result.data.memoryCandidates.map(candidate => ({ type: candidate.type, sourceMessageId: candidate.sourceMessageId }))
-        : [],
-      acceptedOpenLoopUpdates: result.ok
-        ? result.data.openLoopUpdates.map(update => ({ kind: update.kind, sourceMessageId: update.sourceMessageId, status: update.status }))
-        : [],
-      rejectedCandidates: result.ok ? [] : [{ category: 'provider_response', sourceId: userMessageId, reason: result.reason }],
-      fallbackUsed: !result.ok,
-    }
+      result,
+    })
     dispatch({ type: 'CHAT_AI_DEBUG_RECORDED', record: debugRecord })
     const message: ChatMessage = {
       id: messageId,

@@ -270,8 +270,14 @@ export function isRepetitionComplaint(userText: string): boolean {
 function hasSemanticTaskEvidence(request: ChatRequest, kind: TaskEvidenceKind): boolean {
   const userText = request.userText
   if (kind === 'recognized_malicious_editing') {
+    const deniesEditing = /(?:不是|并非|不算|不觉得|没觉得).{0,8}(?:恶意剪辑|断章取义|被剪)/.test(userText)
+      || /(?:恶意剪辑|断章取义|被剪).{0,8}(?:不存在|不成立|不算)/.test(userText)
+    if (deniesEditing) return false
     return /恶意剪辑|断章取义|被剪|原片|原视频|原录像|完整(?:录像|视频|素材|证据|上下文|前后)/.test(userText)
   }
+  const refusesPlan = /(?:不想|不愿|不要|别|不能|不可以|拒绝|算了).{0,12}(?:找|查|核对|保存|记录|提供|发送|整理|对照|确认|帮)/.test(userText)
+    || /(?:找|查|核对|保存|记录|提供|发送|整理|对照|确认|帮).{0,12}(?:算了|不行|不可以|不要)/.test(userText)
+  if (refusesPlan) return false
   const mentionsEvidence = /完整|原片|原视频|录像|素材|证据|时间戳|录音|画面|前后/.test(userText)
   const proposesAction = /找|查|核对|保存|记录|提供|发送|整理|对照|确认|接受|可以|愿意|帮/.test(userText)
   if (mentionsEvidence && proposesAction) return true

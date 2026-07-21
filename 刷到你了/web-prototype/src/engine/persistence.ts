@@ -185,6 +185,7 @@ function normalizeAiEffects(value: unknown): ChatAiEffects | null {
 }
 
 const debugTaskStages: AiTurnDebugRecord['taskStage'][] = ['locked', 'invited', 'understood', 'committed', 'published']
+const debugTurnKinds: AiTurnDebugRecord['turnKind'][] = ['first_contact', 'player_message', 'progress_report']
 const debugCharacterIntents: AiTurnDebugRecord['characterIntents'] = [
   'fan_maintenance', 'thank', 'banter', 'probe', 'explain', 'share', 'confirm_promise',
   'set_boundary', 'handle_conflict', 'end_topic', 'advance_task',
@@ -250,6 +251,9 @@ function normalizeAiDebugRecord(value: unknown): AiTurnDebugRecord | null {
     id: value.id,
     createdAt: value.createdAt,
     personaCoreId: 'yanxin-v1',
+    turnKind: debugTurnKinds.includes(value.turnKind as AiTurnDebugRecord['turnKind'])
+      ? value.turnKind as AiTurnDebugRecord['turnKind']
+      : 'player_message',
     relationshipIdentity: value.relationshipIdentity as RelationshipIdentity,
     dimensions: Object.fromEntries(relationshipDimensions.map(dimension => [
       dimension, clampRelationshipDimension(dimensions[dimension], 0),
