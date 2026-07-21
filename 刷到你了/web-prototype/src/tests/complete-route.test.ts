@@ -18,15 +18,31 @@ function unlockRelationshipProduct(state: GameState, choiceId: MomentChoiceId): 
     type: 'MOMENT_RESOLVED',
     resolution: resolveMoment('PK_LAST_30_SECONDS', choiceId).resolution,
   })
-  next = gameReducer(next, { type: 'TASK_SIGNAL_RECEIVED', taskId: 'YANXIN_UNCUT_EVIDENCE', signal: 'acknowledge_pressure' })
-  next = gameReducer(next, { type: 'TASK_SIGNAL_RECEIVED', taskId: 'YANXIN_UNCUT_EVIDENCE', signal: 'offer_evidence_plan' })
+  const userMessage = { id: `user-${choiceId}`, role: 'user' as const, text: '这是恶意剪辑，我接受完整取证方案。', createdAt: 0 }
+  next = gameReducer(next, { type: 'CHAT_USER_SENT', message: userMessage })
+  for (const [index, kind] of ['recognized_malicious_editing', 'accepted_complete_evidence_plan'].entries()) {
+    const evidenceDelivery = scheduleChatDelivery({
+      id: `evidence-${choiceId}-${index}`,
+      kind: 'reply',
+      message: { id: `evidence-message-${choiceId}-${index}`, role: 'assistant', text: '我会核对。', createdAt: index },
+      createdAt: index,
+      readyAt: index,
+      aiEffects: {
+        taskEvidence: [{ kind: kind as 'recognized_malicious_editing' | 'accepted_complete_evidence_plan', sourceMessageId: userMessage.id }],
+        relationshipEvidence: [], memoryCandidates: [], openLoopUpdates: [],
+      },
+      effect: 'none',
+    }, () => 0)
+    next = gameReducer(next, { type: 'CHAT_DELIVERY_SCHEDULED', delivery: evidenceDelivery })
+    next = gameReducer(next, { type: 'CHAT_DUE_DELIVERIES_FLUSHED', now: evidenceDelivery.deliverAt })
+  }
   const delivery = scheduleChatDelivery({
     id: `report-${choiceId}`,
     kind: 'proactive_report',
     message: { id: `message-${choiceId}`, role: 'assistant', text: '完整那段也发了。', createdAt: 0 },
     createdAt: 0,
     readyAt: 0,
-    taskSignals: [],
+    aiEffects: { taskEvidence: [], relationshipEvidence: [], memoryCandidates: [], openLoopUpdates: [] },
     effect: 'unlock_e201',
   }, () => 0)
   next = gameReducer(next, { type: 'CHAT_DELIVERY_SCHEDULED', delivery })

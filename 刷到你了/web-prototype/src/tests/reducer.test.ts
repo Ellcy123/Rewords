@@ -3,6 +3,7 @@ import { gameReducer } from '../engine/reducer'
 import { createInitialState } from '../engine/state'
 import { resolveMoment } from '../moments/resolveMoment'
 import { scheduleChatDelivery } from '../messages/delivery'
+import type { PendingChatDelivery } from '../messages/types'
 
 const buy = (state: ReturnType<typeof createInitialState>, itemId: 'ladder' | 'technician' | 'recorder' | 'projector') => gameReducer(state, { type: 'BUY_ITEM', itemId })
 
@@ -177,13 +178,16 @@ describe('game reducer', () => {
     state = gameReducer(state, { type: 'CHAT_USER_SENT', message: userMessage })
     expect(state.messages).toEqual([userMessage])
 
-    state = gameReducer(state, { type: 'TASK_SIGNAL_RECEIVED', taskId: 'YANXIN_UNCUT_EVIDENCE', signal: 'acknowledge_pressure' })
-    state = gameReducer(state, { type: 'TASK_SIGNAL_RECEIVED', taskId: 'YANXIN_UNCUT_EVIDENCE', signal: 'offer_evidence_plan' })
+    state.characterTasks.YANXIN_UNCUT_EVIDENCE = {
+      ...state.characterTasks.YANXIN_UNCUT_EVIDENCE,
+      stage: 'committed',
+      emittedEffects: ['schedule_progress_report'],
+    }
     expect(state.characterTasks.YANXIN_UNCUT_EVIDENCE.stage).toBe('committed')
     const report = { id: 'a1', role: 'assistant' as const, text: '完整那段也发了。', createdAt: 2_000 }
     const delivery = scheduleChatDelivery({
       id: 'd1', kind: 'proactive_report', message: report, createdAt: 2_000, readyAt: 2_000,
-      taskSignals: [], effect: 'unlock_e201',
+      aiEffects: { taskEvidence: [], relationshipEvidence: [], memoryCandidates: [], openLoopUpdates: [] }, effect: 'unlock_e201',
     }, () => 0)
     state = gameReducer(state, { type: 'CHAT_DELIVERY_SCHEDULED', delivery })
     state = gameReducer(state, { type: 'CHAT_DELIVERY_SCHEDULED', delivery })
@@ -197,7 +201,54 @@ describe('game reducer', () => {
     expect(repeated).toEqual(state)
   })
 
-  it('advances the active character task after repeated replies without an effective signal', () => {
+  it('settles all grounded AI effects once when the reply is delivered', () => {
+    const userMessage = {
+      id: 'user-evidence', role: 'user' as const, text: '这是恶意剪辑，我答应等你核对完。', createdAt: 1_000,
+    }
+    let state = createInitialState()
+    state.characterTasks.YANXIN_UNCUT_EVIDENCE = {
+      ...state.characterTasks.YANXIN_UNCUT_EVIDENCE,
+      stage: 'invited',
+    }
+    state = gameReducer(state, { type: 'CHAT_USER_SENT', message: userMessage })
+    const delivery = {
+      id: 'delivery-ai-effects',
+      kind: 'reply',
+      message: { id: 'assistant-ai-effects', role: 'assistant', text: '我会核对完整证据。', createdAt: 2_000 },
+      deliverAt: 2_000,
+      effect: 'none',
+      aiEffects: {
+        taskEvidence: [{ kind: 'recognized_malicious_editing', sourceMessageId: userMessage.id }],
+        relationshipEvidence: [{ kind: 'offered_actionable_help', sourceMessageId: userMessage.id }],
+        memoryCandidates: [{ type: 'promise', sourceMessageId: userMessage.id, interpretation: '玩家答应等待核对。' }],
+        openLoopUpdates: [{ kind: 'report', sourceMessageId: userMessage.id, summary: '等待核对结果', status: 'open' }],
+      },
+    } as PendingChatDelivery
+    state = gameReducer(state, { type: 'CHAT_DELIVERY_SCHEDULED', delivery })
+
+    expect(state.characterTasks.YANXIN_UNCUT_EVIDENCE.stage).toBe('invited')
+    expect(state.longTermMemories).toEqual([])
+
+    const settled = gameReducer(state, { type: 'CHAT_DUE_DELIVERIES_FLUSHED', now: delivery.deliverAt })
+    const repeated = gameReducer(settled, { type: 'CHAT_DUE_DELIVERIES_FLUSHED', now: delivery.deliverAt })
+
+    expect(settled.messages.at(-1)?.id).toBe('assistant-ai-effects')
+    expect(settled.characterTasks.YANXIN_UNCUT_EVIDENCE).toMatchObject({
+      stage: 'understood', lastEvidenceSourceId: userMessage.id,
+    })
+    expect(settled.yanxinPersona.relationship.changes).toEqual(expect.arrayContaining([
+      expect.objectContaining({ evidenceKind: 'offered_actionable_help', sourceId: userMessage.id }),
+    ]))
+    expect(settled.longTermMemories).toEqual([
+      expect.objectContaining({ type: 'promise', sourceMessageId: userMessage.id }),
+    ])
+    expect(settled.openLoops).toEqual([
+      expect.objectContaining({ kind: 'report', sourceMessageId: userMessage.id, status: 'open' }),
+    ])
+    expect(repeated).toEqual(settled)
+  })
+
+  it('does not advance an invited task after any number of ordinary replies', () => {
     const entryState = createInitialState()
     entryState.unlockedNodeIds.push('E001')
     let state = gameReducer(entryState, {
@@ -211,21 +262,21 @@ describe('game reducer', () => {
         message: { id: `reply-${turn}`, role: 'assistant', text: '我在听。', createdAt: turn },
         createdAt: turn,
         readyAt: turn,
-        taskSignals: [],
+        aiEffects: { taskEvidence: [], relationshipEvidence: [], memoryCandidates: [], openLoopUpdates: [] },
         effect: 'none',
       }, () => 0)
       state = gameReducer(state, { type: 'CHAT_DELIVERY_SCHEDULED', delivery })
       state = gameReducer(state, { type: 'CHAT_DUE_DELIVERIES_FLUSHED', now: delivery.deliverAt })
     }
-    expect(state.characterTasks.YANXIN_UNCUT_EVIDENCE.stage).toBe('committed')
-    expect(state.characterTasks.YANXIN_UNCUT_EVIDENCE.emittedEffects).toEqual(['schedule_progress_report'])
+    expect(state.characterTasks.YANXIN_UNCUT_EVIDENCE.stage).toBe('invited')
+    expect(state.characterTasks.YANXIN_UNCUT_EVIDENCE.emittedEffects).toEqual([])
   })
 
   it('ignores an E201 delivery effect before the character task is committed', () => {
     const report = { id: 'early-message', role: 'assistant' as const, text: '不该提前解锁。', createdAt: 0 }
     const delivery = scheduleChatDelivery({
       id: 'early-delivery', kind: 'proactive_report', message: report, createdAt: 0, readyAt: 0,
-      taskSignals: [], effect: 'unlock_e201',
+      aiEffects: { taskEvidence: [], relationshipEvidence: [], memoryCandidates: [], openLoopUpdates: [] }, effect: 'unlock_e201',
     }, () => 0)
     const scheduled = gameReducer(createInitialState(), { type: 'CHAT_DELIVERY_SCHEDULED', delivery })
     const flushed = gameReducer(scheduled, { type: 'CHAT_DUE_DELIVERIES_FLUSHED', now: delivery.deliverAt })

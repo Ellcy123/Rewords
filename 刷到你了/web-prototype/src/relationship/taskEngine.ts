@@ -2,13 +2,18 @@ import type { NodeId } from '../content/types'
 
 export type CharacterTaskId = 'YANXIN_UNCUT_EVIDENCE'
 export type CharacterTaskStage = 'locked' | 'invited' | 'understood' | 'committed' | 'published'
-export type TaskSignal = 'acknowledge_pressure' | 'offer_evidence_plan' | 'respect_boundary'
+export type TaskEvidenceKind = 'recognized_malicious_editing' | 'accepted_complete_evidence_plan'
 export type TaskTransitionEffect = 'schedule_progress_report' | 'mark_published'
+
+export interface TaskEvidenceCandidate {
+  kind: TaskEvidenceKind
+  sourceMessageId: string
+}
 
 export interface CharacterTaskState {
   taskId: CharacterTaskId
   stage: CharacterTaskStage
-  relevantFallbackTurns: number
+  lastEvidenceSourceId: string | null
   emittedEffects: TaskTransitionEffect[]
   unlockedResponseNodeIds: NodeId[]
 }
@@ -18,12 +23,6 @@ export interface TaskTransitionResult {
   effects: TaskTransitionEffect[]
 }
 
-const SIGNALS = new Set<TaskSignal>([
-  'acknowledge_pressure',
-  'offer_evidence_plan',
-  'respect_boundary',
-])
-
 export function createCharacterTaskState(
   taskId: CharacterTaskId,
   stage: CharacterTaskStage = 'locked',
@@ -31,7 +30,7 @@ export function createCharacterTaskState(
   return {
     taskId,
     stage,
-    relevantFallbackTurns: 0,
+    lastEvidenceSourceId: null,
     emittedEffects: [],
     unlockedResponseNodeIds: [],
   }
@@ -52,25 +51,17 @@ function enterStage(state: CharacterTaskState, stage: CharacterTaskStage): TaskT
   }
 }
 
-export function applyTaskSignal(state: CharacterTaskState, signal: TaskSignal): TaskTransitionResult {
-  if (!SIGNALS.has(signal)) return { state, effects: [] }
-  if (state.stage === 'invited' && (signal === 'acknowledge_pressure' || signal === 'respect_boundary')) {
-    return enterStage({ ...state, relevantFallbackTurns: 0 }, 'understood')
+export function applyTaskEvidence(
+  state: CharacterTaskState,
+  evidence: TaskEvidenceCandidate,
+): TaskTransitionResult {
+  if (state.stage === 'invited' && evidence.kind === 'recognized_malicious_editing') {
+    return enterStage({ ...state, lastEvidenceSourceId: evidence.sourceMessageId }, 'understood')
   }
-  if (state.stage === 'understood' && signal === 'offer_evidence_plan') {
-    return enterStage({ ...state, relevantFallbackTurns: 0 }, 'committed')
+  if (state.stage === 'understood' && evidence.kind === 'accepted_complete_evidence_plan') {
+    return enterStage({ ...state, lastEvidenceSourceId: evidence.sourceMessageId }, 'committed')
   }
   return { state, effects: [] }
-}
-
-export function recordTaskRelevantFallback(state: CharacterTaskState): TaskTransitionResult {
-  if (state.stage !== 'invited' && state.stage !== 'understood') return { state, effects: [] }
-  const relevantFallbackTurns = state.relevantFallbackTurns + 1
-  if (relevantFallbackTurns < 2) {
-    return { state: { ...state, relevantFallbackTurns }, effects: [] }
-  }
-  const nextStage = state.stage === 'invited' ? 'understood' : 'committed'
-  return enterStage({ ...state, relevantFallbackTurns: 0 }, nextStage)
 }
 
 export function markRelationshipResponseViewed(

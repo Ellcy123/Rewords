@@ -72,6 +72,12 @@ export function applyOpenLoopUpdates(
 
   const playerMessages = playerMessagesById(messages)
   for (const update of updates) {
+    if (update.status === 'closed') {
+      const current = [...loops.values()].find(loop => loop.id === update.sourceMessageId && loop.kind === update.kind)
+      if (!current) continue
+      loops.set(openLoopKey(current), { ...current, summary: limitText(update.summary), status: 'closed' })
+      continue
+    }
     const key = openLoopKey(update)
     if (!playerMessages.has(update.sourceMessageId)) continue
     const current = loops.get(key)

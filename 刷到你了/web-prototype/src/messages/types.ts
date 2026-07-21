@@ -1,5 +1,6 @@
 import type { NodeId } from '../content/types'
-import type { TaskSignal } from '../relationship/taskEngine'
+import type { RelationshipEvidenceCandidate } from '../relationship/personaState'
+import type { TaskEvidenceCandidate } from '../relationship/taskEngine'
 
 export type ChatRole = 'user' | 'assistant'
 export type ChatDeliveryKind = 'reply' | 'proactive_report'
@@ -47,12 +48,19 @@ export interface OpenLoopUpdate {
   status: OpenLoop['status']
 }
 
+export interface ChatAiEffects {
+  taskEvidence: TaskEvidenceCandidate[]
+  relationshipEvidence: RelationshipEvidenceCandidate[]
+  memoryCandidates: MemoryCandidate[]
+  openLoopUpdates: OpenLoopUpdate[]
+}
+
 export interface PendingChatDelivery {
   id: string
   kind: ChatDeliveryKind
   message: ChatMessage
   deliverAt: number
-  taskSignals: TaskSignal[]
+  aiEffects: ChatAiEffects
   effect: ChatDeliveryEffect
 }
 

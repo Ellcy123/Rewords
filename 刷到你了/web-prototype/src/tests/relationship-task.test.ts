@@ -1,39 +1,52 @@
 import { describe, expect, it } from 'vitest'
 import {
-  applyTaskSignal,
+  applyTaskEvidence,
   createCharacterTaskState,
   markRelationshipResponseViewed,
-  recordTaskRelevantFallback,
 } from '../relationship/taskEngine'
 
 describe('Yanxin relationship task', () => {
-  it('only accepts whitelisted semantic signals', () => {
+  it('advances from invited only with grounded malicious-editing evidence', () => {
     const invited = createCharacterTaskState('YANXIN_UNCUT_EVIDENCE', 'invited')
-    expect(applyTaskSignal(invited, 'acknowledge_pressure').state.stage).toBe('understood')
-    expect(applyTaskSignal(invited, 'say_anything' as never)).toEqual({ state: invited, effects: [] })
+    const result = applyTaskEvidence(invited, {
+      kind: 'recognized_malicious_editing',
+      sourceMessageId: 'user-editing',
+    })
+
+    expect(result.state).toMatchObject({ stage: 'understood', lastEvidenceSourceId: 'user-editing' })
+    expect(applyTaskEvidence(invited, {
+      kind: 'accepted_complete_evidence_plan',
+      sourceMessageId: 'user-plan-too-early',
+    })).toEqual({ state: invited, effects: [] })
   })
 
   it('enters committed once and schedules one progress report without unlocking E201', () => {
     const invited = createCharacterTaskState('YANXIN_UNCUT_EVIDENCE', 'invited')
-    const understood = applyTaskSignal(invited, 'acknowledge_pressure').state
-    const committed = applyTaskSignal(understood, 'offer_evidence_plan')
+    const understood = applyTaskEvidence(invited, {
+      kind: 'recognized_malicious_editing', sourceMessageId: 'user-editing',
+    }).state
+    const committed = applyTaskEvidence(understood, {
+      kind: 'accepted_complete_evidence_plan', sourceMessageId: 'user-plan',
+    })
 
     expect(committed.state.stage).toBe('committed')
+    expect(committed.state.lastEvidenceSourceId).toBe('user-plan')
     expect(committed.effects).toEqual(['schedule_progress_report'])
     expect(committed.state.unlockedResponseNodeIds).not.toContain('E201')
 
-    const repeated = applyTaskSignal(committed.state, 'offer_evidence_plan')
+    const repeated = applyTaskEvidence(committed.state, {
+      kind: 'accepted_complete_evidence_plan', sourceMessageId: 'user-plan',
+    })
     expect(repeated.effects).toEqual([])
     expect(repeated.state).toEqual(committed.state)
   })
 
-  it('uses two task-relevant fallback turns to advance one stage', () => {
+  it('ignores unrelated evidence without accumulating turn progress', () => {
     const invited = createCharacterTaskState('YANXIN_UNCUT_EVIDENCE', 'invited')
-    const once = recordTaskRelevantFallback(invited)
-    const twice = recordTaskRelevantFallback(once.state)
-
-    expect(once.state).toMatchObject({ stage: 'invited', relevantFallbackTurns: 1 })
-    expect(twice.state).toMatchObject({ stage: 'understood', relevantFallbackTurns: 0 })
+    expect(applyTaskEvidence(invited, {
+      kind: 'not-task-evidence' as never, sourceMessageId: 'user-chat',
+    })).toEqual({ state: invited, effects: [] })
+    expect(invited).not.toHaveProperty('relevantFallbackTurns')
   })
 
   it('publishes only after the delivered relationship response is viewed', () => {

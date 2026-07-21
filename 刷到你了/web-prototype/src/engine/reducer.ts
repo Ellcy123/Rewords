@@ -2,16 +2,14 @@ import { ITEM_BY_ID } from '../content/items'
 import { NODE_BY_ID } from '../content/nodes'
 import type { ItemId, NodeId } from '../content/types'
 import { collectDueChatDeliveries } from '../messages/delivery'
+import { applyMemoryCandidates, applyOpenLoopUpdates } from '../messages/memory'
 import type { ChatMessage, PendingChatDelivery } from '../messages/types'
 import type { MomentResolution } from '../moments/types'
 import { applyRelationshipEvidence } from '../relationship/relationshipEngine'
 import {
-  applyTaskSignal,
+  applyTaskEvidence,
   createCharacterTaskState,
   markRelationshipResponseViewed,
-  recordTaskRelevantFallback,
-  type CharacterTaskId,
-  type TaskSignal,
 } from '../relationship/taskEngine'
 import { resolveGift } from './trigger'
 import { ACTIVITY_TASK_BY_ID, getActivityProgress } from '../activity/catalog'
@@ -36,7 +34,6 @@ export type GameAction =
   | { type: 'CHAT_DELIVERY_SCHEDULED'; delivery: PendingChatDelivery }
   | { type: 'CHAT_DELIVERY_REPLACED'; delivery: PendingChatDelivery }
   | { type: 'CHAT_DUE_DELIVERIES_FLUSHED'; now: number }
-  | { type: 'TASK_SIGNAL_RECEIVED'; taskId: CharacterTaskId; signal: TaskSignal }
   | { type: 'ACTIVITY_TASK_CLAIMED'; taskId: ActivityTaskId }
   | { type: 'ENDING_SAVED'; ending: EndingRecord }
 
@@ -118,16 +115,31 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       let unlockedNodeIds = state.unlockedNodeIds
       let feedNodeIds = state.feedNodeIds
       let characterTasks = state.characterTasks
+      let yanxinPersona = state.yanxinPersona
+      let longTermMemories = state.longTermMemories
+      let openLoops = state.openLoops
       for (const delivery of due) {
-        if (!messages.some(message => message.id === delivery.message.id)) {
-          messages = [...messages, delivery.message]
-        }
+        if (messages.some(message => message.id === delivery.message.id)) continue
+        messages = [...messages, delivery.message]
         let task = characterTasks.YANXIN_UNCUT_EVIDENCE
-        const taskBeforeSignals = task
-        for (const signal of delivery.taskSignals) task = applyTaskSignal(task, signal).state
-        if (delivery.kind === 'reply' && task === taskBeforeSignals) {
-          task = recordTaskRelevantFallback(task).state
+        for (const evidence of delivery.aiEffects.taskEvidence) {
+          task = applyTaskEvidence(task, evidence).state
         }
+        for (const evidence of delivery.aiEffects.relationshipEvidence) {
+          yanxinPersona = applyRelationshipEvidence(yanxinPersona, evidence, delivery.deliverAt).state
+        }
+        longTermMemories = applyMemoryCandidates(
+          longTermMemories,
+          delivery.aiEffects.memoryCandidates,
+          messages,
+          delivery.deliverAt,
+        )
+        openLoops = applyOpenLoopUpdates(
+          openLoops,
+          delivery.aiEffects.openLoopUpdates,
+          messages,
+          delivery.deliverAt,
+        )
         if (delivery.effect === 'unlock_e201' && task.stage === 'committed') {
           unlockedNodeIds = appendUnique(unlockedNodeIds, 'E201')
           feedNodeIds = appendUnique(feedNodeIds, 'E201')
@@ -140,13 +152,17 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           characterTasks = { ...characterTasks, YANXIN_UNCUT_EVIDENCE: task }
         }
       }
-      return { ...state, messages, pendingChatDeliveries: pending, unlockedNodeIds, feedNodeIds, characterTasks }
-    }
-    case 'TASK_SIGNAL_RECEIVED': {
-      const current = state.characterTasks[action.taskId]
-      const transition = applyTaskSignal(current, action.signal)
-      if (transition.state === current) return state
-      return { ...state, characterTasks: { ...state.characterTasks, [action.taskId]: transition.state } }
+      return {
+        ...state,
+        messages,
+        pendingChatDeliveries: pending,
+        unlockedNodeIds,
+        feedNodeIds,
+        characterTasks,
+        yanxinPersona,
+        longTermMemories,
+        openLoops,
+      }
     }
     case 'ACTIVITY_TASK_CLAIMED':
       if (state.claimedActivityTaskIds.includes(action.taskId)) return state

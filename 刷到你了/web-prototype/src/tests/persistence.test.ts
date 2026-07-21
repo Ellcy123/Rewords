@@ -18,9 +18,15 @@ describe('persistence', () => {
   it('round trips versioned player state without static content', () => {
     const storage = memoryStorage()
     storage.clear()
-    saveGame(storage, createInitialState())
+    const state = createInitialState()
+    state.characterTasks.YANXIN_UNCUT_EVIDENCE = {
+      ...state.characterTasks.YANXIN_UNCUT_EVIDENCE,
+      stage: 'understood',
+      lastEvidenceSourceId: 'user-grounded-evidence',
+    }
+    saveGame(storage, state)
     expect(storage.getItem(SAVE_KEY)).not.toContain('婚礼灯架事故')
-    expect(loadGame(storage, () => 42)).toEqual({ kind: 'loaded', state: createInitialState() })
+    expect(loadGame(storage, () => 42)).toEqual({ kind: 'loaded', state })
   })
 
   it('migrates a version-1 save and derives resolved sources', () => {
@@ -102,6 +108,60 @@ describe('persistence', () => {
     expect(loaded.state.messages).toEqual([message])
     expect(loaded.state.characterTasks).toEqual(legacy.characterTasks)
     expect(loaded.state.yanxinPersona.relationship.identity).toBe('new_viewer')
+  })
+
+  it('migrates a legacy task without using its fallback turn count', () => {
+    const storage = memoryStorage()
+    const legacy = createInitialState() as unknown as Record<string, unknown>
+    legacy.characterTasks = {
+      YANXIN_UNCUT_EVIDENCE: {
+        taskId: 'YANXIN_UNCUT_EVIDENCE',
+        stage: 'invited',
+        relevantFallbackTurns: 99,
+        emittedEffects: [],
+        unlockedResponseNodeIds: [],
+      },
+    }
+    storage.setItem(SAVE_KEY, JSON.stringify(legacy))
+
+    const loaded = loadGame(storage)
+
+    expect(loaded.kind).toBe('loaded')
+    if (loaded.kind !== 'loaded') return
+    expect(loaded.state.characterTasks.YANXIN_UNCUT_EVIDENCE).toEqual({
+      taskId: 'YANXIN_UNCUT_EVIDENCE',
+      stage: 'invited',
+      lastEvidenceSourceId: null,
+      emittedEffects: [],
+      unlockedResponseNodeIds: [],
+    })
+  })
+
+  it('migrates a legacy pending delivery without applying its task signals', () => {
+    const storage = memoryStorage()
+    const legacy = createInitialState() as unknown as Record<string, unknown>
+    legacy.pendingChatDeliveries = [{
+      id: 'legacy-delivery',
+      kind: 'reply',
+      message: { id: 'legacy-reply', role: 'assistant', text: '旧回复', createdAt: 10 },
+      deliverAt: 20,
+      taskSignals: ['acknowledge_pressure'],
+      effect: 'none',
+    }]
+    storage.setItem(SAVE_KEY, JSON.stringify(legacy))
+
+    const loaded = loadGame(storage)
+
+    expect(loaded.kind).toBe('loaded')
+    if (loaded.kind !== 'loaded') return
+    expect(loaded.state.pendingChatDeliveries).toEqual([{
+      id: 'legacy-delivery',
+      kind: 'reply',
+      message: { id: 'legacy-reply', role: 'assistant', text: '旧回复', createdAt: 10 },
+      deliverAt: 20,
+      aiEffects: { taskEvidence: [], relationshipEvidence: [], memoryCandidates: [], openLoopUpdates: [] },
+      effect: 'none',
+    }])
   })
 
   it('clamps persisted relationship dimensions and keeps only the newest twenty changes', () => {

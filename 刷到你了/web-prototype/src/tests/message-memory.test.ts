@@ -64,12 +64,12 @@ describe('structured Yanxin memory', () => {
     expect(loops.every(loop => Array.from(loop.summary).length <= 120)).toBe(true)
   })
 
-  it('updates the matching open loop and rejects a missing source', () => {
+  it('closes an existing open loop by its persisted id and rejects a missing source', () => {
     const opened = applyOpenLoopUpdates([], [{
       kind: 'report', sourceMessageId: 'user-1', summary: '等核对结果', status: 'open',
     }], [userMessage], 20)
     const closed = applyOpenLoopUpdates(opened, [{
-      kind: 'report', sourceMessageId: 'user-1', summary: '已经收到核对结果', status: 'closed',
+      kind: 'report', sourceMessageId: opened[0].id, summary: '已经收到核对结果', status: 'closed',
     }, {
       kind: 'conflict', sourceMessageId: 'missing', summary: '不应保存', status: 'open',
     }], [userMessage], 30)

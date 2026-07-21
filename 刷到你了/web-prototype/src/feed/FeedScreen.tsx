@@ -70,7 +70,7 @@ export function FeedScreen() {
         message,
         createdAt: now,
         readyAt: now,
-        taskSignals: [],
+        aiEffects: { taskEvidence: [], relationshipEvidence: [], memoryCandidates: [], openLoopUpdates: [] },
         effect: 'none',
       }),
     })

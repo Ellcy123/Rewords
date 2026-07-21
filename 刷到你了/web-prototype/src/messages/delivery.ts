@@ -18,7 +18,12 @@ export function scheduleChatDelivery(
     kind: input.kind,
     message: input.message,
     deliverAt: input.kind === 'reply' ? Math.max(input.readyAt, target) : target,
-    taskSignals: [...input.taskSignals],
+    aiEffects: {
+      taskEvidence: [...input.aiEffects.taskEvidence],
+      relationshipEvidence: [...input.aiEffects.relationshipEvidence],
+      memoryCandidates: [...input.aiEffects.memoryCandidates],
+      openLoopUpdates: [...input.aiEffects.openLoopUpdates],
+    },
     effect: input.effect,
   }
 }

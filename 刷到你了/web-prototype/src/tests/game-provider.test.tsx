@@ -34,7 +34,7 @@ describe('GameProvider delivery hydration', () => {
       message: { id: 'report', role: 'assistant', text: '完整那段也发了。', createdAt: 0 },
       createdAt: 0,
       readyAt: 0,
-      taskSignals: [],
+      aiEffects: { taskEvidence: [], relationshipEvidence: [], memoryCandidates: [], openLoopUpdates: [] },
       effect: 'unlock_e201',
     }, () => 0)]
 

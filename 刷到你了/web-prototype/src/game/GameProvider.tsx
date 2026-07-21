@@ -38,7 +38,7 @@ export function GameProvider({ children, storage }: { children: ReactNode; stora
         message: { id: reportId, role: 'assistant', text: YANXIN_PROGRESS_REPORT, createdAt: now },
         createdAt: now,
         readyAt: now,
-        taskSignals: [],
+        aiEffects: { taskEvidence: [], relationshipEvidence: [], memoryCandidates: [], openLoopUpdates: [] },
         effect: 'unlock_e201',
       }),
     })

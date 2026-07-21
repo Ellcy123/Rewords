@@ -2,7 +2,16 @@ import { ITEM_BY_ID } from '../content/items'
 import { NODE_BY_ID } from '../content/nodes'
 import { TRIGGERS } from '../content/triggers'
 import type { ItemId, NodeId } from '../content/types'
-import type { ChatMessage, LongTermMemory, OpenLoop, PendingChatDelivery, SharedMemory } from '../messages/types'
+import type {
+  ChatAiEffects,
+  ChatMessage,
+  LongTermMemory,
+  MemoryCandidate,
+  OpenLoop,
+  OpenLoopUpdate,
+  PendingChatDelivery,
+  SharedMemory,
+} from '../messages/types'
 import type { MomentId } from '../moments/types'
 import {
   createYanxinPersonaState,
@@ -13,7 +22,7 @@ import {
   type YanxinPersonaState,
   type YanxinShortTermState,
 } from '../relationship/personaState'
-import type { CharacterTaskState, TaskSignal, TaskTransitionEffect } from '../relationship/taskEngine'
+import type { CharacterTaskState, TaskEvidenceKind, TaskTransitionEffect } from '../relationship/taskEngine'
 import {
   createInitialState,
   type ActivityTaskId,
@@ -136,20 +145,70 @@ function isChatMessage(value: unknown): value is ChatMessage {
     && isFiniteNumber(value.createdAt)
 }
 
-const taskSignals: TaskSignal[] = ['acknowledge_pressure', 'offer_evidence_plan', 'respect_boundary']
-function isTaskSignal(value: unknown): value is TaskSignal {
-  return taskSignals.includes(value as TaskSignal)
+const taskEvidenceKinds: TaskEvidenceKind[] = ['recognized_malicious_editing', 'accepted_complete_evidence_plan']
+const memoryCandidateTypes: MemoryCandidate['type'][] = ['player_stance', 'promise', 'shared_joke', 'conflict', 'preference']
+const openLoopUpdateKinds: OpenLoopUpdate['kind'][] = ['promise', 'topic', 'conflict', 'report']
+
+function normalizeAiEffects(value: unknown): ChatAiEffects | null {
+  if (!isRecord(value)) return null
+  const taskEvidence = validArray(value.taskEvidence, (candidate): candidate is ChatAiEffects['taskEvidence'][number] => (
+    isRecord(candidate)
+    && taskEvidenceKinds.includes(candidate.kind as TaskEvidenceKind)
+    && typeof candidate.sourceMessageId === 'string'
+  ))
+  const relationshipEvidence = validArray(value.relationshipEvidence, (candidate): candidate is ChatAiEffects['relationshipEvidence'][number] => (
+    isRecord(candidate)
+    && relationshipEvidenceKinds.includes(candidate.kind as RelationshipEvidenceKind)
+    && typeof candidate.sourceMessageId === 'string'
+  ))
+  const memoryCandidates = validArray(value.memoryCandidates, (candidate): candidate is MemoryCandidate => (
+    isRecord(candidate)
+    && memoryCandidateTypes.includes(candidate.type as MemoryCandidate['type'])
+    && typeof candidate.sourceMessageId === 'string'
+    && typeof candidate.interpretation === 'string'
+  ))
+  const openLoopUpdates = validArray(value.openLoopUpdates, (update): update is OpenLoopUpdate => (
+    isRecord(update)
+    && openLoopUpdateKinds.includes(update.kind as OpenLoopUpdate['kind'])
+    && typeof update.summary === 'string'
+    && typeof update.sourceMessageId === 'string'
+    && (update.status === 'open' || update.status === 'closed')
+  ))
+  if (
+    taskEvidence.length !== (Array.isArray(value.taskEvidence) ? value.taskEvidence.length : -1)
+    || relationshipEvidence.length !== (Array.isArray(value.relationshipEvidence) ? value.relationshipEvidence.length : -1)
+    || memoryCandidates.length !== (Array.isArray(value.memoryCandidates) ? value.memoryCandidates.length : -1)
+    || openLoopUpdates.length !== (Array.isArray(value.openLoopUpdates) ? value.openLoopUpdates.length : -1)
+  ) return null
+  return { taskEvidence, relationshipEvidence, memoryCandidates, openLoopUpdates }
 }
 
-function isPendingDelivery(value: unknown): value is PendingChatDelivery {
-  return isRecord(value)
-    && typeof value.id === 'string'
-    && (value.kind === 'reply' || value.kind === 'proactive_report')
-    && isChatMessage(value.message)
-    && isFiniteNumber(value.deliverAt)
-    && Array.isArray(value.taskSignals)
-    && value.taskSignals.every(isTaskSignal)
-    && (value.effect === 'none' || value.effect === 'unlock_e201')
+function normalizePendingDelivery(value: unknown): PendingChatDelivery | null {
+  if (
+    !isRecord(value)
+    || typeof value.id !== 'string'
+    || (value.kind !== 'reply' && value.kind !== 'proactive_report')
+    || !isChatMessage(value.message)
+    || !isFiniteNumber(value.deliverAt)
+    || (value.effect !== 'none' && value.effect !== 'unlock_e201')
+  ) return null
+  const aiEffects = value.aiEffects === undefined
+    ? { taskEvidence: [], relationshipEvidence: [], memoryCandidates: [], openLoopUpdates: [] }
+    : normalizeAiEffects(value.aiEffects)
+  if (!aiEffects) return null
+  return {
+    id: value.id,
+    kind: value.kind,
+    message: value.message,
+    deliverAt: value.deliverAt,
+    aiEffects,
+    effect: value.effect,
+  }
+}
+
+function normalizePendingDeliveries(value: unknown): PendingChatDelivery[] {
+  if (!Array.isArray(value)) return []
+  return value.map(normalizePendingDelivery).filter((delivery): delivery is PendingChatDelivery => delivery !== null)
 }
 
 const momentIds: MomentId[] = ['PK_LAST_30_SECONDS']
@@ -249,15 +308,33 @@ function isEnding(value: unknown): value is EndingRecord {
 
 const taskStages = ['locked', 'invited', 'understood', 'committed', 'published'] as const
 const transitionEffects: TaskTransitionEffect[] = ['schedule_progress_report', 'mark_published']
-function isCharacterTask(value: unknown): value is CharacterTaskState {
+interface StoredCharacterTask {
+  taskId: CharacterTaskState['taskId']
+  stage: CharacterTaskState['stage']
+  lastEvidenceSourceId?: unknown
+  emittedEffects: TaskTransitionEffect[]
+  unlockedResponseNodeIds: NodeId[]
+}
+
+function isCharacterTask(value: unknown): value is StoredCharacterTask {
   return isRecord(value)
     && value.taskId === 'YANXIN_UNCUT_EVIDENCE'
     && taskStages.includes(value.stage as typeof taskStages[number])
-    && isFiniteNumber(value.relevantFallbackTurns)
     && Array.isArray(value.emittedEffects)
     && value.emittedEffects.every(effect => transitionEffects.includes(effect as TaskTransitionEffect))
     && Array.isArray(value.unlockedResponseNodeIds)
     && value.unlockedResponseNodeIds.every(isNodeId)
+}
+
+function normalizeCharacterTask(value: unknown, fallback: CharacterTaskState): CharacterTaskState {
+  if (!isCharacterTask(value)) return fallback
+  return {
+    taskId: value.taskId,
+    stage: value.stage,
+    lastEvidenceSourceId: typeof value.lastEvidenceSourceId === 'string' ? value.lastEvidenceSourceId : null,
+    emittedEffects: [...value.emittedEffects],
+    unlockedResponseNodeIds: [...value.unlockedResponseNodeIds],
+  }
 }
 
 function repairLegacyW200(value: StoredState): StoredState {
@@ -295,9 +372,12 @@ function normalizeState(value: StoredState): GameState {
       isFiniteNumber(storedInventory[id]) ? storedInventory[id] : fresh.inventory[id],
     ])) as Record<ItemId, number>
     : fresh.inventory
-  const characterTasks = isRecord(value.characterTasks) && isCharacterTask(value.characterTasks.YANXIN_UNCUT_EVIDENCE)
-    ? { YANXIN_UNCUT_EVIDENCE: value.characterTasks.YANXIN_UNCUT_EVIDENCE }
-    : fresh.characterTasks
+  const characterTasks = {
+    YANXIN_UNCUT_EVIDENCE: normalizeCharacterTask(
+      isRecord(value.characterTasks) ? value.characterTasks.YANXIN_UNCUT_EVIDENCE : undefined,
+      fresh.characterTasks.YANXIN_UNCUT_EVIDENCE,
+    ),
+  }
   const tutorialSteps: TutorialStep[] = ['product', 'gift', 'target', 'done']
   const messages = validArray(value.messages, isChatMessage)
 
@@ -326,7 +406,7 @@ function normalizeState(value: StoredState): GameState {
     resolvedMomentIds: validArray(value.resolvedMomentIds, isMomentId),
     messages,
     readMessageIds: validArray(value.readMessageIds, isString),
-    pendingChatDeliveries: validArray(value.pendingChatDeliveries, isPendingDelivery),
+    pendingChatDeliveries: normalizePendingDeliveries(value.pendingChatDeliveries),
     sharedMemories: validArray(value.sharedMemories, isSharedMemory),
     longTermMemories: normalizeLongTermMemories(value.longTermMemories, messages),
     openLoops: normalizeOpenLoops(value.openLoops, messages),

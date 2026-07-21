@@ -37,7 +37,7 @@ export function MessageSheet() {
       kind: 'reply',
       message: { id: messageId, role: 'assistant', text: fallback.text, createdAt: now },
       deliverAt: now + 8_000,
-      taskSignals: fallback.taskSignals,
+      aiEffects: { taskEvidence: [], relationshipEvidence: [], memoryCandidates: [], openLoopUpdates: [] },
       effect: 'none',
     }
     dispatch({ type: 'CHAT_DELIVERY_SCHEDULED', delivery: recoveryDelivery })
@@ -73,11 +73,14 @@ export function MessageSheet() {
       })),
     })
     const replyText = result.ok ? result.data.replyText : fallback.text
-    const taskSignals = result.ok
-      ? result.data.taskEvidence.map(evidence => evidence.kind === 'recognized_malicious_editing'
-          ? 'acknowledge_pressure' as const
-          : 'offer_evidence_plan' as const)
-      : fallback.taskSignals
+    const aiEffects = result.ok
+      ? {
+          taskEvidence: result.data.taskEvidence,
+          relationshipEvidence: result.data.relationshipEvidence,
+          memoryCandidates: result.data.memoryCandidates,
+          openLoopUpdates: result.data.openLoopUpdates,
+        }
+      : { taskEvidence: [], relationshipEvidence: [], memoryCandidates: [], openLoopUpdates: [] }
     const readyAt = Date.now()
     const message = { id: messageId, role: 'assistant' as const, text: replyText, createdAt: readyAt }
     dispatch({
@@ -88,7 +91,7 @@ export function MessageSheet() {
         message,
         createdAt: now,
         readyAt,
-        taskSignals,
+        aiEffects,
         effect: 'none',
       }),
     })

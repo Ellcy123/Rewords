@@ -29,8 +29,21 @@ function stateWithChat() {
   return state
 }
 
-function aiResponse(replyText: string, taskSignals: string[] = []): Response {
-  return new Response(JSON.stringify({ replyText, taskSignals, tone: 'serious' }), { status: 200 })
+function aiResponse(replyText: string, effects: {
+  taskEvidence?: Array<{ kind: 'recognized_malicious_editing' | 'accepted_complete_evidence_plan'; sourceMessageId: string }>
+  relationshipEvidence?: Array<{ kind: 'offered_actionable_help'; sourceMessageId: string }>
+  memoryCandidates?: Array<{ type: 'promise'; sourceMessageId: string; interpretation: string }>
+  openLoopUpdates?: Array<{ kind: 'report'; sourceMessageId: string; summary: string; status: 'open' | 'closed' }>
+} = {}): Response {
+  return new Response(JSON.stringify({
+    replyText,
+    tone: 'serious',
+    characterIntents: [],
+    taskEvidence: effects.taskEvidence ?? [],
+    relationshipEvidence: effects.relationshipEvidence ?? [],
+    memoryCandidates: effects.memoryCandidates ?? [],
+    openLoopUpdates: effects.openLoopUpdates ?? [],
+  }), { status: 200 })
 }
 
 function openMessages(): void {
@@ -58,6 +71,7 @@ afterEach(() => {
 describe('AI-backed private messages', () => {
   it('shows the user message immediately, then softly delivers a validated AI reply', async () => {
     vi.useFakeTimers()
+    vi.setSystemTime(10_000)
     let finishRequest!: (response: Response) => void
     const fetcher = vi.fn(() => new Promise<Response>(resolve => { finishRequest = resolve }))
     vi.stubGlobal('fetch', fetcher)
@@ -73,11 +87,9 @@ describe('AI-backed private messages', () => {
     expect(screen.getByRole('button', { name: '发送消息' }).hasAttribute('disabled')).toBe(true)
     expect(screen.queryByText('我去把原片找出来。')).toBeNull()
 
-    await act(async () => finishRequest(new Response(JSON.stringify({
-      replyText: '我去把原片找出来。',
-      taskSignals: ['acknowledge_pressure'],
-      tone: 'serious',
-    }), { status: 200 })))
+    await act(async () => finishRequest(aiResponse('我去把原片找出来。', {
+      taskEvidence: [{ kind: 'recognized_malicious_editing', sourceMessageId: 'user-10000-1' }],
+    })))
     expect(screen.queryByText('我去把原片找出来。')).toBeNull()
     fireEvent.change(input, { target: { value: '那我等你' } })
     expect(screen.getByRole('button', { name: '发送消息' }).hasAttribute('disabled')).toBe(true)
@@ -103,7 +115,7 @@ describe('AI-backed private messages', () => {
     expect(screen.getByText('我不是非要你替我出头。', { exact: false })).toBeTruthy()
   })
 
-  it('reaches E201 through softly delivered offline fallback replies', async () => {
+  it('does not advance a task through softly delivered offline fallback replies', async () => {
     vi.useFakeTimers()
     vi.setSystemTime(10_000)
     const fetcher = vi.fn(async () => { throw new Error('ai-server offline') })
@@ -129,20 +141,11 @@ describe('AI-backed private messages', () => {
       expect(savedState(storage).messages.filter(message => message.role === 'assistant' && message.id.startsWith('yanxin-reply-'))).toHaveLength(turn + 1)
     }
 
-    const beforeReport = savedState(storage)
-    expect(beforeReport.characterTasks.YANXIN_UNCUT_EVIDENCE.stage).toBe('committed')
-    expect(beforeReport.pendingChatDeliveries.filter(delivery => delivery.kind === 'proactive_report')).toHaveLength(1)
-    expect(beforeReport.unlockedNodeIds).not.toContain('E201')
-
-    await act(async () => vi.advanceTimersByTimeAsync(4_250))
-    const afterReport = savedState(storage)
-    expect(afterReport.messages.filter(message => message.id === 'yanxin-progress-report')).toHaveLength(1)
-    expect(afterReport.unlockedNodeIds.filter(id => id === 'E201')).toHaveLength(1)
-
     await act(async () => vi.advanceTimersByTimeAsync(10_000))
     const settled = savedState(storage)
-    expect(settled.messages.filter(message => message.id === 'yanxin-progress-report')).toHaveLength(1)
-    expect(settled.unlockedNodeIds.filter(id => id === 'E201')).toHaveLength(1)
+    expect(settled.characterTasks.YANXIN_UNCUT_EVIDENCE.stage).toBe('invited')
+    expect(settled.messages.filter(message => message.id === 'yanxin-progress-report')).toHaveLength(0)
+    expect(settled.unlockedNodeIds).not.toContain('E201')
     expect(fetcher).toHaveBeenCalledTimes(2)
   })
 
@@ -164,27 +167,37 @@ describe('AI-backed private messages', () => {
     expect(screen.getAllByText('我不是非要你替我出头。', { exact: false })).toHaveLength(1)
   })
 
-  it('advances empty-signal replies through deterministic fallback before delivering one progress report', async () => {
+  it('advances through two grounded evidence deliveries before scheduling one progress report', async () => {
     vi.useFakeTimers()
     vi.setSystemTime(10_000)
-    const fetcher = vi.fn(async () => aiResponse('这次没有命中任务信号'))
+    const sourceMessageIds: string[] = []
+    const fetcher = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      const request = JSON.parse(String(init?.body)) as { currentMessageId: string; taskStage: 'invited' | 'understood' }
+      sourceMessageIds.push(request.currentMessageId)
+      return aiResponse('我会按完整证据继续核对', {
+        taskEvidence: [{
+          kind: request.taskStage === 'invited'
+            ? 'recognized_malicious_editing'
+            : 'accepted_complete_evidence_plan',
+          sourceMessageId: request.currentMessageId,
+        }],
+      })
+    })
     vi.stubGlobal('fetch', fetcher)
     const storage = memoryStorage(stateWithChat())
     render(<App storage={storage} />)
     openMessages()
 
-    for (const turn of [1, 2, 3, 4]) {
+    for (const turn of [1, 2]) {
       const { input, send } = composer()
       fireEvent.change(input, { target: { value: `empty-signal-${turn}` } })
       fireEvent.click(send)
       await act(async () => Promise.resolve())
       await act(async () => vi.advanceTimersByTimeAsync(2_250))
-      if (turn === 2) {
-        expect(savedState(storage).characterTasks.YANXIN_UNCUT_EVIDENCE).toMatchObject({
-          stage: 'understood',
-          relevantFallbackTurns: 0,
-        })
-      }
+      expect(savedState(storage).characterTasks.YANXIN_UNCUT_EVIDENCE).toMatchObject({
+        stage: turn === 1 ? 'understood' : 'committed',
+        lastEvidenceSourceId: sourceMessageIds.at(-1),
+      })
     }
 
     const beforeReport = savedState(storage)
@@ -200,7 +213,7 @@ describe('AI-backed private messages', () => {
     expect(afterReport.messages.filter(message => message.id === 'yanxin-progress-report')).toHaveLength(1)
     expect(afterReport.pendingChatDeliveries.filter(delivery => delivery.kind === 'proactive_report')).toHaveLength(0)
     expect(afterReport.unlockedNodeIds.filter(id => id === 'E201')).toHaveLength(1)
-    expect(fetcher).toHaveBeenCalledTimes(4)
+    expect(fetcher).toHaveBeenCalledTimes(2)
   })
 
   it('delivers one persisted fallback when an abandoned request completes after reload', async () => {
@@ -221,7 +234,9 @@ describe('AI-backed private messages', () => {
     expect(savedState(storage).pendingChatDeliveries.filter(delivery => delivery.kind === 'reply')).toHaveLength(1)
     render(<App storage={storage} />)
     await act(async () => {
-      resolveRequest(aiResponse('late abandoned completion', ['acknowledge_pressure']))
+      resolveRequest(aiResponse('late abandoned completion', {
+        taskEvidence: [{ kind: 'recognized_malicious_editing', sourceMessageId: 'user-10000-1' }],
+      }))
       await Promise.resolve()
     })
     await act(async () => vi.advanceTimersByTimeAsync(8_250))
@@ -230,13 +245,13 @@ describe('AI-backed private messages', () => {
     expect(recovered.messages.filter(message => message.role === 'assistant' && message.id.startsWith('yanxin-reply-'))).toHaveLength(1)
     expect(recovered.messages.some(message => message.text === 'late abandoned completion')).toBe(false)
     expect(recovered.pendingChatDeliveries.filter(delivery => delivery.kind === 'reply')).toHaveLength(0)
-    expect(recovered.characterTasks.YANXIN_UNCUT_EVIDENCE.stage).toBe('understood')
+    expect(recovered.characterTasks.YANXIN_UNCUT_EVIDENCE.stage).toBe('invited')
 
     await act(async () => vi.advanceTimersByTimeAsync(10_000))
     expect(savedState(storage).messages.filter(message => message.role === 'assistant' && message.id.startsWith('yanxin-reply-'))).toHaveLength(1)
   })
 
-  it('keeps pending replies single-flight and does not over-advance on a stale duplicate signal', async () => {
+  it('keeps pending replies single-flight and does not advance without new evidence', async () => {
     vi.useFakeTimers()
     vi.setSystemTime(10_000)
     const resolvers: Array<(response: Response) => void> = []
@@ -255,7 +270,9 @@ describe('AI-backed private messages', () => {
     expect(savedState(storage).messages.filter(message => message.role === 'user').map(message => message.text)).toEqual(['first user turn'])
 
     await act(async () => {
-      resolvers.shift()!(aiResponse('first reply', ['acknowledge_pressure']))
+      resolvers.shift()!(aiResponse('第一次回复', {
+        taskEvidence: [{ kind: 'recognized_malicious_editing', sourceMessageId: 'user-10000-1' }],
+      }))
       await Promise.resolve()
     })
     await act(async () => vi.advanceTimersByTimeAsync(2_250))
@@ -269,7 +286,7 @@ describe('AI-backed private messages', () => {
     expect(fetcher).toHaveBeenCalledTimes(2)
 
     await act(async () => {
-      resolvers.shift()!(aiResponse('stale duplicate reply', ['acknowledge_pressure']))
+      resolvers.shift()!(aiResponse('第二次回复'))
       await Promise.resolve()
     })
     await act(async () => vi.advanceTimersByTimeAsync(2_250))
@@ -277,13 +294,13 @@ describe('AI-backed private messages', () => {
     const finalState = savedState(storage)
     expect(finalState.messages.slice(-4).map(message => `${message.role}:${message.text}`)).toEqual([
       'user:first user turn',
-      'assistant:first reply',
+      'assistant:第一次回复',
       'user:second user turn',
-      'assistant:stale duplicate reply',
+      'assistant:第二次回复',
     ])
     expect(finalState.characterTasks.YANXIN_UNCUT_EVIDENCE).toMatchObject({
       stage: 'understood',
-      relevantFallbackTurns: 1,
+      lastEvidenceSourceId: 'user-10000-1',
     })
     expect(finalState.pendingChatDeliveries).toHaveLength(0)
   })
