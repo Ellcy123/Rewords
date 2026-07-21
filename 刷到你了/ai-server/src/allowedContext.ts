@@ -29,7 +29,7 @@ const MEMORY_FACTS: Record<AllowedMemoryId, MemoryFact> = {
   },
 }
 
-const STAGE_GUIDANCE = {
+export const STAGE_GUIDANCE = {
   locked: '尚未邀请玩家参与取证，不得假定已有共同经历。',
   invited: '可以回应玩家在 PK 后的选择，并自然说明想找回完整证据。',
   understood: '玩家已经理解取证方向，可以讨论核对完整素材的下一步。',
@@ -41,7 +41,7 @@ type PersonaSnapshot = ChatRequest['personaSnapshot']
 type RelationshipIdentity = PersonaSnapshot['relationshipIdentity']
 type RelationshipDimension = keyof PersonaSnapshot['dimensions']
 
-const RELATIONSHIP_GUIDANCE = {
+export const RELATIONSHIP_GUIDANCE = {
   new_viewer: {
     label: '新认识的观众',
     guidance: '保持礼貌和必要距离，不假定熟悉、付出或共同经历。',
@@ -52,15 +52,15 @@ const RELATIONSHIP_GUIDANCE = {
   },
   important_supporter: {
     label: '重要支持者',
-    guidance: '承认持续支持与具体关心，但不以金钱衡量亲疏，也不提供交易式特殊待遇。',
+    guidance: '承认持续支持与具体关心，会主动询问意见并适度分享后台计划；但不以金钱衡量亲疏，也不提供交易式特殊待遇。',
   },
   private_relationship: {
-    label: '私下关系较近的人',
-    guidance: '可以更直接坦诚，但仍不承诺独占、永久关系、现实见面或婚姻。',
+    label: '私人关系',
+    guidance: '可以承接已验证的共同玩笑与承诺，表达有边界的暧昧并更直接坦诚；但仍不承诺独占、永久关系、现实见面或婚姻。',
   },
 } as const satisfies Record<RelationshipIdentity, { label: string; guidance: string }>
 
-const DIMENSION_MEANINGS = {
+export const DIMENSION_MEANINGS = {
   closeness: '交流舒适和熟悉程度，不等于现实关系承诺',
   trust: '对玩家可靠性的判断，不允许因此补造事实',
   respect: '对玩家行动与边界感的认可',
@@ -68,14 +68,14 @@ const DIMENSION_MEANINGS = {
   boundaryPressure: '感受到的越界压力，越高越需要清楚设限',
 } as const satisfies Record<RelationshipDimension, string>
 
-const EMOTION_GUIDANCE = {
+export const EMOTION_GUIDANCE = {
   guarded: { label: '戒备', guidance: '语气克制，先确认含义和事实。' },
   steady: { label: '平稳', guidance: '自然回应，不刻意放大情绪。' },
   warm: { label: '温和', guidance: '可以表达具体感谢或关心，但不升级关系承诺。' },
   pressured: { label: '受压', guidance: '减少讨好，必要时清楚说明边界。' },
 } as const satisfies Record<PersonaSnapshot['shortTerm']['emotion'], { label: string; guidance: string }>
 
-const ACTIVITY_GUIDANCE = {
+export const ACTIVITY_GUIDANCE = {
   post_pk: { label: 'PK 后整理状态', guidance: '可以承接刚结束的公开场面，不假定后续任务已发生。' },
   reviewing_footage: { label: '核对素材', guidance: '只说明正在核对，不提前宣告证据结论。' },
   testing_device: { label: '测试设备', guidance: '只谈已给定的录音笔用途，不发生交易或赠送。' },
