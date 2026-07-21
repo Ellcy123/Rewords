@@ -1,5 +1,5 @@
 import type { ItemId, NodeId } from '../content/types'
-import type { ChatMessage, PendingChatDelivery, SharedMemory } from '../messages/types'
+import type { ChatMessage, LongTermMemory, OpenLoop, PendingChatDelivery, SharedMemory } from '../messages/types'
 import type { MomentId, RelationshipEvidenceTag } from '../moments/types'
 import { createYanxinPersonaState, type YanxinPersonaState } from '../relationship/personaState'
 import { createCharacterTaskState, type CharacterTaskId, type CharacterTaskState } from '../relationship/taskEngine'
@@ -55,6 +55,8 @@ export interface GameState {
   readMessageIds: string[]
   pendingChatDeliveries: PendingChatDelivery[]
   sharedMemories: SharedMemory[]
+  longTermMemories: LongTermMemory[]
+  openLoops: OpenLoop[]
   claimedActivityTaskIds: ActivityTaskId[]
   ledger: EconomyEntry[]
   ending: EndingRecord | null
@@ -89,6 +91,8 @@ export function createInitialState(): GameState {
     readMessageIds: [],
     pendingChatDeliveries: [],
     sharedMemories: [],
+    longTermMemories: [],
+    openLoops: [],
     claimedActivityTaskIds: [],
     ledger: [],
     ending: null,

@@ -2,7 +2,7 @@ import { ITEM_BY_ID } from '../content/items'
 import { NODE_BY_ID } from '../content/nodes'
 import { TRIGGERS } from '../content/triggers'
 import type { ItemId, NodeId } from '../content/types'
-import type { ChatMessage, PendingChatDelivery, SharedMemory } from '../messages/types'
+import type { ChatMessage, LongTermMemory, OpenLoop, PendingChatDelivery, SharedMemory } from '../messages/types'
 import type { MomentId } from '../moments/types'
 import {
   createYanxinPersonaState,
@@ -172,6 +172,61 @@ function isSharedMemory(value: unknown): value is SharedMemory {
     && (value.sourceNodeId === undefined || isNodeId(value.sourceNodeId))
 }
 
+const memoryTypes: LongTermMemory['type'][] = ['player_stance', 'promise', 'shared_joke', 'conflict', 'preference']
+function isLongTermMemory(value: unknown): value is LongTermMemory {
+  return isRecord(value)
+    && typeof value.id === 'string'
+    && memoryTypes.includes(value.type as LongTermMemory['type'])
+    && typeof value.sourceMessageId === 'string'
+    && typeof value.sourceText === 'string'
+    && typeof value.interpretation === 'string'
+    && isFiniteNumber(value.createdAt)
+    && isFiniteNumber(value.lastReferencedAt)
+    && typeof value.active === 'boolean'
+}
+
+const openLoopKinds: OpenLoop['kind'][] = ['promise', 'topic', 'conflict', 'report']
+function isOpenLoop(value: unknown): value is OpenLoop {
+  return isRecord(value)
+    && typeof value.id === 'string'
+    && openLoopKinds.includes(value.kind as OpenLoop['kind'])
+    && typeof value.summary === 'string'
+    && typeof value.sourceMessageId === 'string'
+    && (value.status === 'open' || value.status === 'closed')
+    && isFiniteNumber(value.createdAt)
+}
+
+function normalizeLongTermMemories(value: unknown, messages: ChatMessage[]): LongTermMemory[] {
+  const playerMessages = new Map(messages.filter(message => message.role === 'user').map(message => [message.id, message]))
+  const keys = new Set<string>()
+  const memories: LongTermMemory[] = []
+  let activeCount = 0
+  for (const memory of validArray(value, isLongTermMemory)) {
+    const source = playerMessages.get(memory.sourceMessageId)
+    const key = `${memory.type}:${memory.sourceMessageId}`
+    if (!source || source.text !== memory.sourceText || keys.has(key) || (memory.active && activeCount >= 30)) continue
+    keys.add(key)
+    if (memory.active) activeCount += 1
+    memories.push({ ...memory, interpretation: Array.from(memory.interpretation).slice(0, 120).join('') })
+  }
+  return memories
+}
+
+function normalizeOpenLoops(value: unknown, messages: ChatMessage[]): OpenLoop[] {
+  const playerMessageIds = new Set(messages.filter(message => message.role === 'user').map(message => message.id))
+  const keys = new Set<string>()
+  const loops: OpenLoop[] = []
+  let openCount = 0
+  for (const loop of validArray(value, isOpenLoop)) {
+    const key = `${loop.kind}:${loop.sourceMessageId}`
+    if (!playerMessageIds.has(loop.sourceMessageId) || keys.has(key) || (loop.status === 'open' && openCount >= 10)) continue
+    keys.add(key)
+    if (loop.status === 'open') openCount += 1
+    loops.push({ ...loop, summary: Array.from(loop.summary).slice(0, 120).join('') })
+  }
+  return loops
+}
+
 const activityTaskIds: ActivityTaskId[] = ['WATCH_THREE', 'LIKE_THREE', 'FAVORITE_TWO']
 function isActivityTaskId(value: unknown): value is ActivityTaskId {
   return activityTaskIds.includes(value as ActivityTaskId)
@@ -244,6 +299,7 @@ function normalizeState(value: StoredState): GameState {
     ? { YANXIN_UNCUT_EVIDENCE: value.characterTasks.YANXIN_UNCUT_EVIDENCE }
     : fresh.characterTasks
   const tutorialSteps: TutorialStep[] = ['product', 'gift', 'target', 'done']
+  const messages = validArray(value.messages, isChatMessage)
 
   return {
     version: 5,
@@ -268,10 +324,12 @@ function normalizeState(value: StoredState): GameState {
     relationshipEvidence: validArray(value.relationshipEvidence, isRelationshipEvidence),
     characterTasks,
     resolvedMomentIds: validArray(value.resolvedMomentIds, isMomentId),
-    messages: validArray(value.messages, isChatMessage),
+    messages,
     readMessageIds: validArray(value.readMessageIds, isString),
     pendingChatDeliveries: validArray(value.pendingChatDeliveries, isPendingDelivery),
     sharedMemories: validArray(value.sharedMemories, isSharedMemory),
+    longTermMemories: normalizeLongTermMemories(value.longTermMemories, messages),
+    openLoops: normalizeOpenLoops(value.openLoops, messages),
     claimedActivityTaskIds: validArray(value.claimedActivityTaskIds, isActivityTaskId),
     ledger: validArray(value.ledger, isEconomyEntry),
     ending: value.ending === null || value.ending === undefined ? null : isEnding(value.ending) ? value.ending : null,

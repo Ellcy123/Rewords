@@ -68,6 +68,25 @@ describe('persistence', () => {
     }
   })
 
+  it('round trips version-5 structured memories and open loops', () => {
+    const storage = memoryStorage()
+    const state = createInitialState()
+    state.messages = [{ id: 'user-1', role: 'user', text: '你先核对，我等你。', createdAt: 10 }]
+    state.longTermMemories = [{
+      id: 'memory-promise-user-1', type: 'promise', sourceMessageId: 'user-1',
+      sourceText: '你先核对，我等你。', interpretation: '玩家答应等我核对完再判断。',
+      createdAt: 20, lastReferencedAt: 20, active: true,
+    }]
+    state.openLoops = [{
+      id: 'open-loop-report-user-1', kind: 'report', summary: '等待核对结果',
+      sourceMessageId: 'user-1', status: 'open', createdAt: 20,
+    }]
+
+    saveGame(storage, state)
+
+    expect(loadGame(storage)).toEqual({ kind: 'loaded', state })
+  })
+
   it('migrates a version 4 save without losing chat or task progress', () => {
     const storage = memoryStorage()
     const message = { id: 'user-legacy', role: 'user' as const, text: '你先查清楚。', createdAt: 10 }
