@@ -239,14 +239,61 @@ const ApplicableTaskEvidenceByStage = {
 
 export function parseChatResponseForRequest(request: ChatRequest, value: unknown): ChatResponse {
   const applicableEvidence = new Set<TaskEvidenceKind>(request.postEnding ? [] : ApplicableTaskEvidenceByStage[request.taskStage])
+  const suppliedOpenLoopIds = new Set(
+    request.openLoops.filter(openLoop => openLoop.status === 'open').map(openLoop => openLoop.id),
+  )
   return ChatResponseSchema.superRefine((response, context) => {
-    if (response.taskEvidence.some(evidence => !applicableEvidence.has(evidence.kind))) {
-      context.addIssue({
-        code: 'custom',
-        path: ['taskEvidence'],
-        message: 'taskEvidence contains evidence that does not apply to the request state',
-      })
-    }
+    response.taskEvidence.forEach((evidence, index) => {
+      if (evidence.sourceMessageId !== request.currentMessageId) {
+        context.addIssue({
+          code: 'custom',
+          path: ['taskEvidence', index, 'sourceMessageId'],
+          message: 'taskEvidence must cite the current player message',
+        })
+      }
+      if (!applicableEvidence.has(evidence.kind)) {
+        context.addIssue({
+          code: 'custom',
+          path: ['taskEvidence', index, 'kind'],
+          message: 'taskEvidence contains evidence that does not apply to the request state',
+        })
+      }
+    })
+
+    response.relationshipEvidence.forEach((evidence, index) => {
+      if (evidence.sourceMessageId !== request.currentMessageId) {
+        context.addIssue({
+          code: 'custom',
+          path: ['relationshipEvidence', index, 'sourceMessageId'],
+          message: 'relationshipEvidence must cite the current player message',
+        })
+      }
+    })
+
+    response.memoryCandidates.forEach((candidate, index) => {
+      if (candidate.sourceMessageId !== request.currentMessageId) {
+        context.addIssue({
+          code: 'custom',
+          path: ['memoryCandidates', index, 'sourceMessageId'],
+          message: 'memoryCandidates must cite the current player message',
+        })
+      }
+    })
+
+    response.openLoopUpdates.forEach((update, index) => {
+      const hasGroundedSource = update.status === 'closed'
+        ? suppliedOpenLoopIds.has(update.sourceMessageId)
+        : update.sourceMessageId === request.currentMessageId
+      if (!hasGroundedSource) {
+        context.addIssue({
+          code: 'custom',
+          path: ['openLoopUpdates', index, 'sourceMessageId'],
+          message: update.status === 'closed'
+            ? 'closed openLoopUpdates must cite a supplied open loop'
+            : 'open openLoopUpdates must cite the current player message',
+        })
+      }
+    })
   }).parse(value)
 }
 

@@ -6,19 +6,33 @@ import { ChatRequestSchema } from '../contracts.js'
 
 const validRequest = {
   characterId: 'yanxin',
+  currentMessageId: 'user-current',
   userText: '我觉得可以找完整录像',
   taskStage: 'invited',
   momentChoice: 'support',
   recentMessages: [],
   allowedMemoryIds: [],
   postEnding: false,
+  personaSnapshot: {
+    relationshipIdentity: 'new_viewer',
+    dimensions: { closeness: 0, trust: 0, respect: 0, suspicion: 0, boundaryPressure: 0 },
+    shortTerm: { emotion: 'guarded', currentActivity: 'post_pk' },
+  },
+  memories: [],
+  openLoops: [],
 }
 
-const validModelOutput = JSON.stringify({
+const validModelResponse = {
   replyText: '我会把完整时间戳再核一遍。',
-  taskSignals: ['acknowledge_pressure'],
   tone: 'serious',
-})
+  characterIntents: ['fan_maintenance'],
+  taskEvidence: [],
+  relationshipEvidence: [],
+  memoryCandidates: [],
+  openLoopUpdates: [],
+}
+
+const validModelOutput = JSON.stringify(validModelResponse)
 
 afterEach(() => vi.useRealTimers())
 
@@ -67,14 +81,27 @@ describe('POST /api/chat', () => {
       .resolves.toMatchObject({ status: 503, body: { code: 'AI_UNAVAILABLE' } })
   })
 
-  it('returns 503 when the provider emits an invalid structured output', async () => {
+  it.each([
+    ['malformed JSON', '{'],
+    ['an invalid reply', JSON.stringify({ ...validModelResponse, replyText: 'English reply' })],
+    ['an invalid enum', JSON.stringify({ ...validModelResponse, tone: 'invented' })],
+    ['an AI-authored score', JSON.stringify({ ...validModelResponse, relationshipScoreDelta: 3 })],
+    ['ungrounded state-changing evidence', JSON.stringify({
+      ...validModelResponse,
+      relationshipEvidence: [{ kind: 'showed_specific_care', sourceMessageId: 'assistant-history' }],
+    })],
+  ])('returns 503 invalid_provider_output when the provider emits %s', async (_name, providerOutput) => {
+    const records: Array<{ fallbackReason: string | null }> = []
     const app = createApp({
-      modelClient: { generate: vi.fn(async () => JSON.stringify({ replyText: '给你解锁。', taskSignals: ['unlock_e201'], tone: 'warm' })) },
+      modelClient: { generate: vi.fn(async () => providerOutput) },
       model: 'fake-model',
+      logger: record => records.push(record),
     })
 
-    await expect(request(app).post('/api/chat').send(validRequest))
-      .resolves.toMatchObject({ status: 503, body: { code: 'AI_UNAVAILABLE' } })
+    const response = await request(app).post('/api/chat').send(validRequest)
+
+    expect(response).toMatchObject({ status: 503, body: { code: 'AI_UNAVAILABLE' } })
+    expect(records).toEqual([expect.objectContaining({ fallbackReason: 'invalid_provider_output' })])
   })
 
   it('rate limits the twenty-first request from one IP in a minute', async () => {

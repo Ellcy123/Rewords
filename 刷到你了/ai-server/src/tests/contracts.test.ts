@@ -1,7 +1,12 @@
 import { describe, expect, it, vi } from 'vitest'
 import { buildAllowedContext } from '../allowedContext.js'
 import { generateYanxinChat } from '../chatService.js'
-import { ChatRequestSchema, ChatResponseJsonSchema, ChatResponseSchema } from '../contracts.js'
+import {
+  ChatRequestSchema,
+  ChatResponseJsonSchema,
+  ChatResponseSchema,
+  parseChatResponseForRequest,
+} from '../contracts.js'
 import { createDeepSeekChatModel, type DeepSeekChatClient } from '../deepseekClient.js'
 import { createOpenAIChatModel } from '../openaiClient.js'
 import { createYanxinInstructions, createYanxinPrompt } from '../prompts/yanxin.js'
@@ -189,6 +194,106 @@ describe('chat contracts', () => {
 
   it('allows a non-transactional recorder mention', () => {
     expect(ChatResponseSchema.safeParse({ ...validResponse, replyText: '我会核对录音笔里的完整证据。' }).success).toBe(true)
+  })
+
+  it('rejects task evidence that does not cite the current player message', () => {
+    expect(() => parseChatResponseForRequest(ChatRequestSchema.parse(validRequest), {
+      ...validResponse,
+      taskEvidence: [{ kind: 'recognized_malicious_editing', sourceMessageId: 'missing' }],
+    })).toThrow()
+  })
+
+  it('accepts ordinary chat with no evidence or state candidates', () => {
+    expect(parseChatResponseForRequest(ChatRequestSchema.parse(validRequest), {
+      ...validResponse,
+      replyText: '今天还行，你呢？',
+      characterIntents: ['fan_maintenance'],
+    })).toEqual(expect.objectContaining({
+      taskEvidence: [],
+      relationshipEvidence: [],
+      memoryCandidates: [],
+      openLoopUpdates: [],
+    }))
+  })
+
+  it('rejects relationship evidence attributed to an assistant history message', () => {
+    expect(() => parseChatResponseForRequest(ChatRequestSchema.parse(validRequest), {
+      ...validResponse,
+      relationshipEvidence: [{ kind: 'showed_specific_care', sourceMessageId: 'assistant-history' }],
+    })).toThrow()
+  })
+
+  it('requires every memory candidate to cite the current player message', () => {
+    const request = ChatRequestSchema.parse({
+      ...validRequest,
+      recentMessages: [{ role: 'user', text: '我之前答应过会等你。' }],
+    })
+
+    expect(() => parseChatResponseForRequest(request, {
+      ...validResponse,
+      memoryCandidates: [{
+        type: 'promise',
+        sourceMessageId: 'invented-history-id',
+        interpretation: '玩家答应等待核对。',
+      }],
+    })).toThrow()
+    expect(parseChatResponseForRequest(request, {
+      ...validResponse,
+      memoryCandidates: [{
+        type: 'promise',
+        sourceMessageId: request.currentMessageId,
+        interpretation: '玩家答应等待核对。',
+      }],
+    }).memoryCandidates).toHaveLength(1)
+  })
+
+  it('accepts a new open loop grounded in the current message', () => {
+    const request = ChatRequestSchema.parse(validRequest)
+
+    expect(parseChatResponseForRequest(request, {
+      ...validResponse,
+      openLoopUpdates: [{
+        kind: 'report',
+        summary: '等待核对结果',
+        sourceMessageId: request.currentMessageId,
+        status: 'open',
+      }],
+    }).openLoopUpdates).toHaveLength(1)
+  })
+
+  it('requires a closed open-loop update to cite an existing supplied open loop', () => {
+    const request = ChatRequestSchema.parse({
+      ...validRequest,
+      openLoops: [{
+        id: 'loop-existing',
+        kind: 'report',
+        summary: '等待核对结果',
+        sourceMessageId: 'older-player-message',
+        status: 'open',
+      }],
+    })
+    const closedUpdate = {
+      kind: 'report',
+      summary: '核对已经完成',
+      sourceMessageId: 'loop-existing',
+      status: 'closed',
+    }
+
+    expect(parseChatResponseForRequest(request, {
+      ...validResponse,
+      openLoopUpdates: [closedUpdate],
+    }).openLoopUpdates).toEqual([closedUpdate])
+    expect(() => parseChatResponseForRequest(request, {
+      ...validResponse,
+      openLoopUpdates: [{ ...closedUpdate, sourceMessageId: 'invented-loop' }],
+    })).toThrow()
+  })
+
+  it('rejects an AI-authored score at the request-aware boundary', () => {
+    expect(() => parseChatResponseForRequest(ChatRequestSchema.parse(validRequest), {
+      ...validResponse,
+      relationshipScoreDelta: 3,
+    })).toThrow()
   })
 
   it.each([
