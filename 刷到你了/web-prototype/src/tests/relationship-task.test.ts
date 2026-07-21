@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   applyTaskEvidence,
+  applySystemFallbackCheckpoint,
   createCharacterTaskState,
   markRelationshipResponseViewed,
 } from '../relationship/taskEngine'
@@ -47,6 +48,30 @@ describe('Yanxin relationship task', () => {
       kind: 'not-task-evidence' as never, sourceMessageId: 'user-chat',
     })).toEqual({ state: invited, effects: [] })
     expect(invited).not.toHaveProperty('relevantFallbackTurns')
+  })
+
+  it('advances exactly one required checkpoint with an explicit system fallback source', () => {
+    const invited = createCharacterTaskState('YANXIN_UNCUT_EVIDENCE', 'invited')
+    const firstCheckpoint = applySystemFallbackCheckpoint(invited)
+
+    expect(firstCheckpoint.state).toMatchObject({
+      stage: 'understood',
+      lastEvidenceSourceId: 'system_fallback',
+      lastCheckpointSource: 'system_fallback',
+    })
+    expect(firstCheckpoint.effects).toEqual([])
+
+    const secondCheckpoint = applySystemFallbackCheckpoint(firstCheckpoint.state)
+    expect(secondCheckpoint.state).toMatchObject({
+      stage: 'committed',
+      lastEvidenceSourceId: 'system_fallback',
+      lastCheckpointSource: 'system_fallback',
+    })
+    expect(secondCheckpoint.effects).toEqual(['schedule_progress_report'])
+    expect(applySystemFallbackCheckpoint(secondCheckpoint.state)).toEqual({
+      state: secondCheckpoint.state,
+      effects: [],
+    })
   })
 
   it('publishes only after the delivered relationship response is viewed', () => {

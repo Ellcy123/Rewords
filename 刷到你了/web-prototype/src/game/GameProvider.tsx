@@ -2,7 +2,7 @@ import { createContext, useEffect, useMemo, useReducer, useState, type Dispatch,
 import { gameReducer, type GameAction } from '../engine/reducer'
 import { loadGame, saveGame, SAVE_KEY, type LoadResult } from '../engine/persistence'
 import { createInitialState, type GameState } from '../engine/state'
-import { YANXIN_PROGRESS_REPORT } from '../messages/character'
+import { YANXIN_PROGRESS_REPORT, YANXIN_SYSTEM_FALLBACK_CHECKPOINT } from '../messages/character'
 import { scheduleChatDelivery } from '../messages/delivery'
 
 export interface GameContextValue { state: GameState; dispatch: Dispatch<GameAction>; loadResult: LoadResult }
@@ -43,6 +43,31 @@ export function GameProvider({ children, storage }: { children: ReactNode; stora
       }),
     })
   }, [blocked, state.characterTasks.YANXIN_UNCUT_EVIDENCE, state.messages, state.pendingChatDeliveries])
+  useEffect(() => {
+    if (blocked || state.yanxinProviderFailureCount < 2) return
+    const task = state.characterTasks.YANXIN_UNCUT_EVIDENCE
+    if (task.stage !== 'invited' && task.stage !== 'understood') return
+    const checkpointStage = task.stage === 'invited' ? 'understood' : 'committed'
+    const checkpointId = `yanxin-system-fallback-checkpoint-${checkpointStage}`
+    const checkpointExists = state.messages.some(message => message.id === checkpointId)
+      || state.pendingChatDeliveries.some(delivery => delivery.message.id === checkpointId)
+    if (checkpointExists) return
+    const now = Date.now()
+    dispatch({
+      type: 'CHAT_DELIVERY_SCHEDULED',
+      delivery: scheduleChatDelivery({
+        id: `delivery-${checkpointId}`,
+        kind: 'system_fallback_checkpoint',
+        message: { id: checkpointId, role: 'assistant', text: YANXIN_SYSTEM_FALLBACK_CHECKPOINT, createdAt: now },
+        createdAt: now,
+        readyAt: now,
+        aiEffects: { taskEvidence: [], relationshipEvidence: [], memoryCandidates: [], openLoopUpdates: [] },
+        effect: 'none',
+        source: 'system_fallback',
+      }),
+    })
+    dispatch({ type: 'CHAT_SYSTEM_FALLBACK_CHECKPOINT_SCHEDULED' })
+  }, [blocked, state.yanxinProviderFailureCount, state.characterTasks.YANXIN_UNCUT_EVIDENCE, state.messages, state.pendingChatDeliveries])
   const value = useMemo(() => ({ state, dispatch, loadResult: initial }), [state, initial])
   if (blocked) return <main className="save-recovery"><span>存档版本不兼容</span><h1>存档需要更新</h1><p>旧存档不会覆盖当前内容。重新开始后即可进入试玩。</p><button onClick={() => { storage.removeItem(SAVE_KEY); dispatch({ type: 'RESET_GAME' }); setBlocked(false) }}>安全重新开始</button></main>
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>

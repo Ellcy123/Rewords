@@ -2,6 +2,7 @@ import type { ChatMessage } from './types'
 import type { MomentChoiceId } from '../moments/types'
 
 export const YANXIN_PROGRESS_REPORT = '我试完了，完整那段也发了。你之前说得对，光留最后十秒没用。'
+export const YANXIN_SYSTEM_FALLBACK_CHECKPOINT = '【系统保障】对话服务暂不可用，已保留“核对完整证据”的下一步。'
 
 const FIRST_CONTACT: Record<MomentChoiceId, string> = {
   support: '刚才你在最后那一下站出来，我看见了。谢谢，但下次别为了我勉强花。还有件事，有人只截了最后十秒，我想把完整那段找回来。',

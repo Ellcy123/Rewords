@@ -132,6 +132,7 @@ describe('persistence', () => {
       taskId: 'YANXIN_UNCUT_EVIDENCE',
       stage: 'invited',
       lastEvidenceSourceId: null,
+      lastCheckpointSource: null,
       emittedEffects: [],
       unlockedResponseNodeIds: [],
     })

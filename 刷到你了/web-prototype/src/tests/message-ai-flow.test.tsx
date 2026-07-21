@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { App } from '../App'
 import { SAVE_KEY } from '../engine/persistence'
 import { createInitialState } from '../engine/state'
+import { getYanxinFallbackReply } from '../messages/fallbackReplies'
 import { createCharacterTaskState } from '../relationship/taskEngine'
 
 function memoryStorage(initial: object): Storage {
@@ -69,6 +70,56 @@ afterEach(() => {
 })
 
 describe('AI-backed private messages', () => {
+  it('varies fallback by relationship identity and topic without state effects', () => {
+    const getReply = getYanxinFallbackReply as (...args: unknown[]) => { text: string; aiEffects?: unknown }
+    const first = getReply({
+      relationshipIdentity: 'new_viewer',
+      momentChoice: 'hold_back',
+      boundaryPressure: 0,
+      latestMessage: { id: 'care-1', text: '你还好吗，先休息一下' },
+      taskStage: 'invited',
+    }, 0)
+    const second = getReply({
+      relationshipIdentity: 'important_supporter',
+      momentChoice: 'hold_back',
+      boundaryPressure: 0,
+      latestMessage: { id: 'care-2', text: '你还好吗，先休息一下' },
+      taskStage: 'invited',
+    }, 0)
+
+    expect(first.text).not.toBe(second.text)
+    expect(first.aiEffects).toEqual({ taskEvidence: [], relationshipEvidence: [], memoryCandidates: [], openLoopUpdates: [] })
+    expect(second.aiEffects).toEqual({ taskEvidence: [], relationshipEvidence: [], memoryCandidates: [], openLoopUpdates: [] })
+  })
+
+  it('uses deterministic non-repeating fallback variants for each persona-sensitive purpose', () => {
+    const getReply = getYanxinFallbackReply as (...args: unknown[]) => { text: string; aiEffects?: unknown }
+    const context = (text: string, overrides: Record<string, unknown> = {}) => ({
+      relationshipIdentity: 'familiar_fan',
+      momentChoice: 'support',
+      boundaryPressure: 0,
+      latestMessage: { id: `message-${text}`, text },
+      taskStage: 'invited',
+      ...overrides,
+    })
+
+    const care = getReply(context('你还好吗，要不要先歇一下'), 4)
+    const spending = getReply(context('我再给你刷点钱', { boundaryPressure: 2 }), 4)
+    const evidence = getReply(context('那段恶意剪辑和完整证据我来找'), 4)
+    const promise = getReply(context('我答应你，等你核对完'), 4)
+    const support = getReply(context('今天直播怎么样'), 4)
+    const holdBack = getReply(context('今天直播怎么样', { momentChoice: 'hold_back' }), 4)
+    const ordinary = getReply(context('今天直播怎么样', { taskStage: 'committed' }), 4)
+    const adjacent = getReply(context('今天直播怎么样', { taskStage: 'committed' }), 5)
+
+    expect(new Set([care.text, spending.text, evidence.text, promise.text, support.text, holdBack.text, ordinary.text]).size).toBe(7)
+    expect(ordinary.text).toMatch(/今天先这样|我在，等手头这点事过完再聊|你先说，我听着/)
+    expect(adjacent.text).not.toBe(ordinary.text)
+    for (const reply of [care, spending, evidence, promise, support, holdBack, ordinary, adjacent]) {
+      expect(reply.aiEffects).toEqual({ taskEvidence: [], relationshipEvidence: [], memoryCandidates: [], openLoopUpdates: [] })
+    }
+  })
+
   it('shows the user message immediately, then softly delivers a validated AI reply', async () => {
     vi.useFakeTimers()
     vi.setSystemTime(10_000)
@@ -110,12 +161,12 @@ describe('AI-backed private messages', () => {
     fireEvent.click(screen.getByRole('button', { name: '发送消息' }))
 
     await act(async () => Promise.resolve())
-    expect(screen.queryByText('我不是非要你替我出头。', { exact: false })).toBeNull()
+    expect(screen.queryByText('刚认识，你先别替我操心太多。', { exact: false })).toBeNull()
     await act(async () => vi.advanceTimersByTimeAsync(2_250))
-    expect(screen.getByText('我不是非要你替我出头。', { exact: false })).toBeTruthy()
+    expect(screen.getByText('刚认识，你先别替我操心太多。', { exact: false })).toBeTruthy()
   })
 
-  it('does not advance a task through softly delivered offline fallback replies', async () => {
+  it('schedules a system fallback checkpoint solely after repeated provider failures', async () => {
     vi.useFakeTimers()
     vi.setSystemTime(10_000)
     const fetcher = vi.fn(async () => { throw new Error('ai-server offline') })
@@ -141,11 +192,17 @@ describe('AI-backed private messages', () => {
       expect(savedState(storage).messages.filter(message => message.role === 'assistant' && message.id.startsWith('yanxin-reply-'))).toHaveLength(turn + 1)
     }
 
-    await act(async () => vi.advanceTimersByTimeAsync(10_000))
+    await act(async () => vi.advanceTimersByTimeAsync(4_250))
     const settled = savedState(storage)
-    expect(settled.characterTasks.YANXIN_UNCUT_EVIDENCE.stage).toBe('invited')
+    expect(settled.characterTasks.YANXIN_UNCUT_EVIDENCE).toMatchObject({
+      stage: 'understood',
+      lastEvidenceSourceId: 'system_fallback',
+      lastCheckpointSource: 'system_fallback',
+    })
+    expect(settled.messages.filter(message => message.id === 'yanxin-system-fallback-checkpoint-understood')).toHaveLength(1)
     expect(settled.messages.filter(message => message.id === 'yanxin-progress-report')).toHaveLength(0)
     expect(settled.unlockedNodeIds).not.toContain('E201')
+    expect(settled.yanxinProviderFailureCount).toBe(0)
     expect(fetcher).toHaveBeenCalledTimes(2)
   })
 
@@ -164,7 +221,7 @@ describe('AI-backed private messages', () => {
     render(<App storage={storage} />)
     await act(async () => vi.advanceTimersByTimeAsync(8_250))
     fireEvent.click(screen.getByRole('button', { name: '私信，1 条未读' }))
-    expect(screen.getAllByText('我不是非要你替我出头。', { exact: false })).toHaveLength(1)
+    expect(screen.getAllByText('刚认识，你先别替我操心太多。', { exact: false })).toHaveLength(1)
   })
 
   it('advances through two grounded evidence deliveries before scheduling one progress report', async () => {

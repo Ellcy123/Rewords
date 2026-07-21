@@ -28,16 +28,22 @@ export function MessageSheet() {
     const trimmed = text.trim()
     if (!trimmed || requesting || replyPending) return
     const now = Date.now()
-    const fallback = getYanxinFallbackReply(taskStage)
     const userMessageId = `user-${now}-${state.messages.length}`
     const messageId = `yanxin-reply-${now}-${state.messages.length}`
+    const fallback = getYanxinFallbackReply({
+      relationshipIdentity: state.yanxinPersona.relationship.identity,
+      momentChoice: state.relationshipEvidence.some(evidence => evidence.kind === 'support') ? 'support' : 'hold_back',
+      boundaryPressure: state.yanxinPersona.relationship.dimensions.boundaryPressure,
+      latestMessage: { id: userMessageId, text: trimmed },
+      taskStage,
+    }, state.messages.length)
     dispatch({ type: 'CHAT_USER_SENT', message: { id: userMessageId, role: 'user', text: trimmed, createdAt: now } })
     const recoveryDelivery: PendingChatDelivery = {
       id: `delivery-${messageId}`,
       kind: 'reply',
       message: { id: messageId, role: 'assistant', text: fallback.text, createdAt: now },
       deliverAt: now + 8_000,
-      aiEffects: { taskEvidence: [], relationshipEvidence: [], memoryCandidates: [], openLoopUpdates: [] },
+      aiEffects: fallback.aiEffects,
       effect: 'none',
     }
     dispatch({ type: 'CHAT_DELIVERY_SCHEDULED', delivery: recoveryDelivery })
@@ -80,7 +86,8 @@ export function MessageSheet() {
           memoryCandidates: result.data.memoryCandidates,
           openLoopUpdates: result.data.openLoopUpdates,
         }
-      : { taskEvidence: [], relationshipEvidence: [], memoryCandidates: [], openLoopUpdates: [] }
+      : fallback.aiEffects
+    if (!result.ok) dispatch({ type: 'CHAT_PROVIDER_FAILED' })
     const readyAt = Date.now()
     const message = { id: messageId, role: 'assistant' as const, text: replyText, createdAt: readyAt }
     dispatch({

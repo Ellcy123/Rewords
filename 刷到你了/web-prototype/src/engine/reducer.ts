@@ -8,6 +8,7 @@ import type { MomentResolution } from '../moments/types'
 import { applyRelationshipEvidence } from '../relationship/relationshipEngine'
 import {
   applyTaskEvidence,
+  applySystemFallbackCheckpoint,
   createCharacterTaskState,
   markRelationshipResponseViewed,
 } from '../relationship/taskEngine'
@@ -34,6 +35,8 @@ export type GameAction =
   | { type: 'CHAT_DELIVERY_SCHEDULED'; delivery: PendingChatDelivery }
   | { type: 'CHAT_DELIVERY_REPLACED'; delivery: PendingChatDelivery }
   | { type: 'CHAT_DUE_DELIVERIES_FLUSHED'; now: number }
+  | { type: 'CHAT_PROVIDER_FAILED' }
+  | { type: 'CHAT_SYSTEM_FALLBACK_CHECKPOINT_SCHEDULED' }
   | { type: 'ACTIVITY_TASK_CLAIMED'; taskId: ActivityTaskId }
   | { type: 'ENDING_SAVED'; ending: EndingRecord }
 
@@ -108,6 +111,10 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       pendingChatDeliveries[index] = action.delivery
       return { ...state, pendingChatDeliveries }
     }
+    case 'CHAT_PROVIDER_FAILED':
+      return { ...state, yanxinProviderFailureCount: state.yanxinProviderFailureCount + 1 }
+    case 'CHAT_SYSTEM_FALLBACK_CHECKPOINT_SCHEDULED':
+      return state.yanxinProviderFailureCount === 0 ? state : { ...state, yanxinProviderFailureCount: 0 }
     case 'CHAT_DUE_DELIVERIES_FLUSHED': {
       const { due, pending } = collectDueChatDeliveries(state.pendingChatDeliveries, action.now)
       if (!due.length) return state
@@ -122,6 +129,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         if (messages.some(message => message.id === delivery.message.id)) continue
         messages = [...messages, delivery.message]
         let task = characterTasks.YANXIN_UNCUT_EVIDENCE
+        if (delivery.kind === 'system_fallback_checkpoint' && delivery.source === 'system_fallback') {
+          task = applySystemFallbackCheckpoint(task).state
+        }
         for (const evidence of delivery.aiEffects.taskEvidence) {
           task = applyTaskEvidence(task, evidence).state
         }

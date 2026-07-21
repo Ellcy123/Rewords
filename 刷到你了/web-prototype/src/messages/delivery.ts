@@ -25,6 +25,7 @@ export function scheduleChatDelivery(
       openLoopUpdates: [...input.aiEffects.openLoopUpdates],
     },
     effect: input.effect,
+    source: input.source,
   }
 }
 

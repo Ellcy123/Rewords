@@ -54,6 +54,7 @@ export interface GameState {
   messages: ChatMessage[]
   readMessageIds: string[]
   pendingChatDeliveries: PendingChatDelivery[]
+  yanxinProviderFailureCount: number
   sharedMemories: SharedMemory[]
   longTermMemories: LongTermMemory[]
   openLoops: OpenLoop[]
@@ -90,6 +91,7 @@ export function createInitialState(): GameState {
     messages: [],
     readMessageIds: [],
     pendingChatDeliveries: [],
+    yanxinProviderFailureCount: 0,
     sharedMemories: [],
     longTermMemories: [],
     openLoops: [],

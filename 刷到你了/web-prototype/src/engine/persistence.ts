@@ -187,10 +187,12 @@ function normalizePendingDelivery(value: unknown): PendingChatDelivery | null {
   if (
     !isRecord(value)
     || typeof value.id !== 'string'
-    || (value.kind !== 'reply' && value.kind !== 'proactive_report')
+    || (value.kind !== 'reply' && value.kind !== 'proactive_report' && value.kind !== 'system_fallback_checkpoint')
     || !isChatMessage(value.message)
     || !isFiniteNumber(value.deliverAt)
     || (value.effect !== 'none' && value.effect !== 'unlock_e201')
+    || (value.source !== undefined && value.source !== 'system_fallback')
+    || (value.kind === 'system_fallback_checkpoint' && value.source !== 'system_fallback')
   ) return null
   const aiEffects = value.aiEffects === undefined
     ? { taskEvidence: [], relationshipEvidence: [], memoryCandidates: [], openLoopUpdates: [] }
@@ -203,6 +205,7 @@ function normalizePendingDelivery(value: unknown): PendingChatDelivery | null {
     deliverAt: value.deliverAt,
     aiEffects,
     effect: value.effect,
+    source: value.source === 'system_fallback' ? value.source : undefined,
   }
 }
 
@@ -312,6 +315,7 @@ interface StoredCharacterTask {
   taskId: CharacterTaskState['taskId']
   stage: CharacterTaskState['stage']
   lastEvidenceSourceId?: unknown
+  lastCheckpointSource?: unknown
   emittedEffects: TaskTransitionEffect[]
   unlockedResponseNodeIds: NodeId[]
 }
@@ -332,6 +336,9 @@ function normalizeCharacterTask(value: unknown, fallback: CharacterTaskState): C
     taskId: value.taskId,
     stage: value.stage,
     lastEvidenceSourceId: typeof value.lastEvidenceSourceId === 'string' ? value.lastEvidenceSourceId : null,
+    lastCheckpointSource: value.lastCheckpointSource === 'ai' || value.lastCheckpointSource === 'system_fallback'
+      ? value.lastCheckpointSource
+      : null,
     emittedEffects: [...value.emittedEffects],
     unlockedResponseNodeIds: [...value.unlockedResponseNodeIds],
   }
@@ -407,6 +414,9 @@ function normalizeState(value: StoredState): GameState {
     messages,
     readMessageIds: validArray(value.readMessageIds, isString),
     pendingChatDeliveries: normalizePendingDeliveries(value.pendingChatDeliveries),
+    yanxinProviderFailureCount: isFiniteNumber(value.yanxinProviderFailureCount)
+      ? Math.max(0, Math.floor(value.yanxinProviderFailureCount))
+      : 0,
     sharedMemories: validArray(value.sharedMemories, isSharedMemory),
     longTermMemories: normalizeLongTermMemories(value.longTermMemories, messages),
     openLoops: normalizeOpenLoops(value.openLoops, messages),

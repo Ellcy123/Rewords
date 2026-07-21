@@ -3,8 +3,9 @@ import type { RelationshipEvidenceCandidate } from '../relationship/personaState
 import type { TaskEvidenceCandidate } from '../relationship/taskEngine'
 
 export type ChatRole = 'user' | 'assistant'
-export type ChatDeliveryKind = 'reply' | 'proactive_report'
+export type ChatDeliveryKind = 'reply' | 'proactive_report' | 'system_fallback_checkpoint'
 export type ChatDeliveryEffect = 'none' | 'unlock_e201'
+export type ChatDeliverySource = 'system_fallback'
 
 export interface ChatMessage {
   id: string
@@ -62,6 +63,7 @@ export interface PendingChatDelivery {
   deliverAt: number
   aiEffects: ChatAiEffects
   effect: ChatDeliveryEffect
+  source?: ChatDeliverySource
 }
 
 export interface ChatDeliveryInput extends Omit<PendingChatDelivery, 'deliverAt'> {
