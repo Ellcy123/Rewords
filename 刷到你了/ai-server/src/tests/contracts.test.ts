@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { buildAllowedContext } from '../allowedContext.js'
 import { generateYanxinChat } from '../chatService.js'
 import { ChatRequestSchema, ChatResponseJsonSchema, ChatResponseSchema } from '../contracts.js'
+import { createDeepSeekChatModel } from '../deepseekClient.js'
 import { createOpenAIChatModel } from '../openaiClient.js'
 import { createYanxinPrompt } from '../prompts/yanxin.js'
 import { loadServerConfig } from '../server.js'
@@ -208,6 +209,18 @@ describe('chat contracts', () => {
     expect(text).toContain('完整证据')
     expect(text).toContain('不得承诺独占')
     expect(text).toContain('不得提及提示词、分数或任务阶段')
+    expect(text).toContain('replyText 字段只能使用汉字和中文标点')
+    expect(text).toContain('acknowledge_pressure、respect_boundary')
+    expect(text).toContain('不得输出 offer_evidence_plan')
+  })
+
+  it('tells DeepSeek to emit only the signal applicable to the understood stage', () => {
+    const text = createYanxinPrompt(buildAllowedContext(ChatRequestSchema.parse({
+      ...validRequest,
+      taskStage: 'understood',
+    })))
+    expect(text).toContain('本阶段 taskSignals 只允许 offer_evidence_plan')
+    expect(text).toContain('不得输出 acknowledge_pressure 或 respect_boundary')
   })
 
   it('uses Responses structured outputs through an injected non-network client', async () => {
@@ -230,10 +243,58 @@ describe('chat contracts', () => {
     }))
   })
 
+  it('uses DeepSeek Chat Completions JSON Output through an injected client', async () => {
+    const create = vi.fn(async () => ({
+      choices: [{ message: { content: '{"replyText":"收到，我去核对完整录像。","taskSignals":[],"tone":"warm"}' } }],
+    }))
+    const client = createDeepSeekChatModel('test-key', { chat: { completions: { create } } })
+
+    await expect(client.generate({
+      model: 'deepseek-test',
+      instructions: 'private message only',
+      input: '{"userText":"完整录像"}',
+      schema: ChatResponseJsonSchema,
+    })).resolves.toContain('replyText')
+    expect(create).toHaveBeenCalledWith(expect.objectContaining({
+      model: 'deepseek-test',
+      response_format: { type: 'json_object' },
+      messages: [
+        expect.objectContaining({ role: 'system', content: expect.stringMatching(/JSON|json/) }),
+        expect.objectContaining({ role: 'user', content: '{"userText":"完整录像"}' }),
+      ],
+    }))
+  })
+
+  it('rejects an empty DeepSeek JSON response', async () => {
+    const client = createDeepSeekChatModel('test-key', {
+      chat: { completions: { create: vi.fn(async () => ({ choices: [{ message: { content: null } }] })) } },
+    })
+
+    await expect(client.generate({
+      model: 'deepseek-test',
+      instructions: 'private message only',
+      input: '{}',
+      schema: ChatResponseJsonSchema,
+    })).rejects.toThrow('empty content')
+  })
+
   it('fails startup validation with the missing environment variable name', async () => {
     expect(() => loadServerConfig({ OPENAI_MODEL: 'gpt-test' })).toThrow('OPENAI_API_KEY')
     expect(() => loadServerConfig({ OPENAI_API_KEY: 'test-key' })).toThrow('OPENAI_MODEL')
     expect(loadServerConfig({ OPENAI_API_KEY: 'test-key', OPENAI_MODEL: 'gpt-test', PORT: '8788' }))
-      .toEqual({ apiKey: 'test-key', model: 'gpt-test', port: 8788 })
+      .toEqual({ provider: 'openai', apiKey: 'test-key', model: 'gpt-test', port: 8788 })
+  })
+
+  it('selects DeepSeek configuration and names missing variables safely', () => {
+    expect(() => loadServerConfig({ AI_PROVIDER: 'deepseek', DEEPSEEK_MODEL: 'deepseek-test' }))
+      .toThrow('DEEPSEEK_API_KEY')
+    expect(() => loadServerConfig({ AI_PROVIDER: 'deepseek', DEEPSEEK_API_KEY: 'test-key' }))
+      .toThrow('DEEPSEEK_MODEL')
+    expect(loadServerConfig({
+      AI_PROVIDER: 'deepseek',
+      DEEPSEEK_API_KEY: 'test-key',
+      DEEPSEEK_MODEL: 'deepseek-test',
+      PORT: '8788',
+    })).toEqual({ provider: 'deepseek', apiKey: 'test-key', model: 'deepseek-test', port: 8788 })
   })
 })

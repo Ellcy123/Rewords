@@ -64,6 +64,7 @@
 - 自动化命令：服务端 `npm test`、`npm run typecheck`、`npm run build`；前端 `npm test -- --run`、`npm run typecheck`、`npm run build`；前端 `src`/`dist` 密钥正则扫描；`git diff --check`
 - 自动化摘要：服务端 2 个文件、56 项通过；前端 21 个文件、136 项通过；两端类型检查与生产构建退出码 0；前端未发现 API key 形态或 `OPENAI_API_KEY` 字样；Task 7 与离线路线独立复审均为 Ready: Yes。
 - 真实模型冒烟测试：NOT RUN。本机未配置 `OPENAI_API_KEY` 与 `OPENAI_MODEL`，因此未调用真实模型，也未记录或提交任何密钥；六条真实模型输入与 AI 在线人工路线仍待使用非生产测试账号执行。
+- DeepSeek 兼容冒烟：2026-07-21 使用本机忽略的 DeepSeek 测试配置，经前端 `4173 → /api/chat → 8787` 发出一条无个人信息的 hold-back 请求；返回 HTTP 200、严格三字段、68 个 Unicode 字符、`respect_boundary`、`warm`。该结果证明兼容适配器在线可用，但不替代上述 OpenAI 六条完整冒烟。
 
 | 用例 | 状态 | 证据或说明 |
 | --- | --- | --- |

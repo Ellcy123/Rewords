@@ -41,6 +41,7 @@ export interface AllowedContext {
   task: {
     id: 'YANXIN_UNCUT_EVIDENCE'
     objective: '找回未剪辑的完整证据并公开回应'
+    stage: ChatRequest['taskStage']
     stageGuidance: string
   }
   momentChoice: { id: 'support' | 'hold_back'; fact: string }
@@ -57,6 +58,7 @@ export function buildAllowedContext(request: ChatRequest): AllowedContext {
     task: {
       id: 'YANXIN_UNCUT_EVIDENCE',
       objective: '找回未剪辑的完整证据并公开回应',
+      stage: request.taskStage,
       stageGuidance: STAGE_GUIDANCE[request.taskStage],
     },
     momentChoice: request.momentChoice === 'support'
