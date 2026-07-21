@@ -1,6 +1,7 @@
 import type { ItemId, NodeId } from '../content/types'
 import type { ChatMessage, PendingChatDelivery, SharedMemory } from '../messages/types'
 import type { MomentId, RelationshipEvidenceTag } from '../moments/types'
+import { createYanxinPersonaState, type YanxinPersonaState } from '../relationship/personaState'
 import { createCharacterTaskState, type CharacterTaskId, type CharacterTaskState } from '../relationship/taskEngine'
 
 export type TutorialStep = 'product' | 'gift' | 'target' | 'done'
@@ -30,7 +31,7 @@ export interface EndingRecord {
 }
 
 export interface GameState {
-  version: 4
+  version: 5
   coins: number
   inventory: Record<ItemId, number>
   discoveredItemIds: ItemId[]
@@ -57,11 +58,12 @@ export interface GameState {
   claimedActivityTaskIds: ActivityTaskId[]
   ledger: EconomyEntry[]
   ending: EndingRecord | null
+  yanxinPersona: YanxinPersonaState
 }
 
 export function createInitialState(): GameState {
   return {
-    version: 4,
+    version: 5,
     coins: 100,
     inventory: { ladder: 0, technician: 0, recorder: 0, projector: 0 },
     discoveredItemIds: ['ladder', 'technician'],
@@ -90,5 +92,6 @@ export function createInitialState(): GameState {
     claimedActivityTaskIds: [],
     ledger: [],
     ending: null,
+    yanxinPersona: createYanxinPersonaState(),
   }
 }

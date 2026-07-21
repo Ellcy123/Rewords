@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { loadGame, SAVE_KEY, saveGame } from '../engine/persistence'
-import { createInitialState } from '../engine/state'
+import { createInitialState, type GameState } from '../engine/state'
 
 function memoryStorage(): Storage {
   const values = new Map<string, string>()
@@ -37,7 +37,7 @@ describe('persistence', () => {
     const result = loadGame(storage)
     expect(result.kind).toBe('loaded')
     if (result.kind === 'loaded') {
-      expect(result.state.version).toBe(4)
+      expect(result.state.version).toBe(5)
       expect(result.state.resolvedNodeIds).toEqual(['W001'])
       expect(result.state.feedNodeIds).toEqual(['W101'])
     }
@@ -59,13 +59,63 @@ describe('persistence', () => {
     const result = loadGame(storage)
     expect(result.kind).toBe('loaded')
     if (result.kind === 'loaded') {
-      expect(result.state.version).toBe(4)
+      expect(result.state.version).toBe(5)
       expect(result.state.currentNodeId).toBe('W300')
       expect(result.state.pendingResultNodeId).toBeNull()
       expect(result.state.unlockedNodeIds).toContain('W300')
       expect(result.state.feedNodeIds).toContain('W300')
       expect(JSON.stringify(result.state)).not.toContain('W200')
     }
+  })
+
+  it('migrates a version 4 save without losing chat or task progress', () => {
+    const storage = memoryStorage()
+    const message = { id: 'user-legacy', role: 'user' as const, text: '你先查清楚。', createdAt: 10 }
+    const legacy = { ...createInitialState(), version: 4, messages: [message] }
+    delete (legacy as Partial<GameState>).yanxinPersona
+    storage.setItem(SAVE_KEY, JSON.stringify(legacy))
+
+    const loaded = loadGame(storage)
+
+    expect(loaded.kind).toBe('loaded')
+    if (loaded.kind !== 'loaded') return
+    expect(loaded.state.version).toBe(5)
+    expect(loaded.state.messages).toEqual([message])
+    expect(loaded.state.characterTasks).toEqual(legacy.characterTasks)
+    expect(loaded.state.yanxinPersona.relationship.identity).toBe('new_viewer')
+  })
+
+  it('clamps persisted relationship dimensions and keeps only the newest twenty changes', () => {
+    const storage = memoryStorage()
+    const changes = Array.from({ length: 21 }, (_, index) => ({
+      id: `change-${index}`,
+      dimension: 'trust',
+      delta: 1,
+      sourceId: `source-${index}`,
+      evidenceKind: 'kept_promise',
+      createdAt: index,
+    }))
+    const stored = {
+      ...createInitialState(),
+      yanxinPersona: {
+        ...createInitialState().yanxinPersona,
+        relationship: {
+          identity: 'familiar_fan',
+          dimensions: { closeness: -7, trust: 8, respect: 3, suspicion: -3, boundaryPressure: 0 },
+          changes,
+        },
+      },
+    }
+    storage.setItem(SAVE_KEY, JSON.stringify(stored))
+
+    const loaded = loadGame(storage)
+
+    expect(loaded.kind).toBe('loaded')
+    if (loaded.kind !== 'loaded') return
+    expect(loaded.state.yanxinPersona.relationship.dimensions).toEqual({
+      closeness: -5, trust: 5, respect: 3, suspicion: -3, boundaryPressure: 0,
+    })
+    expect(loaded.state.yanxinPersona.relationship.changes).toEqual(changes.slice(-20))
   })
 
   it('migrates an exact version-3 fixture without changing core progress', () => {
@@ -92,7 +142,7 @@ describe('persistence', () => {
     expect(result.kind).toBe('loaded')
     if (result.kind === 'loaded') {
       expect(result.state).toMatchObject({
-        version: 4,
+        version: 5,
         coins: 47,
         inventory: legacy.inventory,
         currentNodeId: 'W300',
@@ -110,7 +160,7 @@ describe('persistence', () => {
     }
   })
 
-  it('falls back only malformed version-4 array fields', () => {
+  it('falls back only malformed version-5 array fields', () => {
     const storage = memoryStorage()
     const stored = {
       ...createInitialState(),

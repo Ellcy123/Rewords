@@ -4,6 +4,15 @@ import { TRIGGERS } from '../content/triggers'
 import type { ItemId, NodeId } from '../content/types'
 import type { ChatMessage, PendingChatDelivery, SharedMemory } from '../messages/types'
 import type { MomentId } from '../moments/types'
+import {
+  createYanxinPersonaState,
+  type RelationshipChange,
+  type RelationshipDimension,
+  type RelationshipEvidenceKind,
+  type RelationshipIdentity,
+  type YanxinPersonaState,
+  type YanxinShortTermState,
+} from '../relationship/personaState'
 import type { CharacterTaskState, TaskSignal, TaskTransitionEffect } from '../relationship/taskEngine'
 import {
   createInitialState,
@@ -60,6 +69,64 @@ function nodeIds(value: unknown, fallback: NodeId[] = []): NodeId[] {
 
 const isString = (value: unknown): value is string => typeof value === 'string'
 const isFiniteNumber = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value)
+
+const relationshipDimensions: RelationshipDimension[] = ['closeness', 'trust', 'respect', 'suspicion', 'boundaryPressure']
+const relationshipIdentities: RelationshipIdentity[] = ['new_viewer', 'familiar_fan', 'important_supporter', 'private_relationship']
+const relationshipEvidenceKinds: RelationshipEvidenceKind[] = [
+  'showed_specific_care',
+  'respected_boundary',
+  'offered_actionable_help',
+  'kept_promise',
+  'contradicted_action_evidence',
+  'revealed_unexplained_knowledge',
+  'pressured_after_refusal',
+  'public_financial_support',
+]
+const yanxinEmotions: YanxinShortTermState['emotion'][] = ['guarded', 'steady', 'warm', 'pressured']
+const yanxinActivities: YanxinShortTermState['currentActivity'][] = ['post_pk', 'reviewing_footage', 'testing_device', 'following_up']
+
+function clampRelationshipDimension(value: unknown, fallback: number): number {
+  if (!isFiniteNumber(value)) return fallback
+  return Math.min(5, Math.max(-5, value))
+}
+
+function isRelationshipChange(value: unknown): value is RelationshipChange {
+  return isRecord(value)
+    && typeof value.id === 'string'
+    && relationshipDimensions.includes(value.dimension as RelationshipDimension)
+    && (value.delta === -2 || value.delta === -1 || value.delta === 1 || value.delta === 2)
+    && typeof value.sourceId === 'string'
+    && relationshipEvidenceKinds.includes(value.evidenceKind as RelationshipEvidenceKind)
+    && isFiniteNumber(value.createdAt)
+}
+
+function normalizeYanxinPersona(value: unknown, fallback: YanxinPersonaState): YanxinPersonaState {
+  if (!isRecord(value)) return fallback
+  const relationship = isRecord(value.relationship) ? value.relationship : {}
+  const dimensions = isRecord(relationship.dimensions) ? relationship.dimensions : {}
+  const shortTerm = isRecord(value.shortTerm) ? value.shortTerm : {}
+
+  return {
+    relationship: {
+      identity: relationshipIdentities.includes(relationship.identity as RelationshipIdentity)
+        ? relationship.identity as RelationshipIdentity
+        : fallback.relationship.identity,
+      dimensions: Object.fromEntries(relationshipDimensions.map(dimension => [
+        dimension,
+        clampRelationshipDimension(dimensions[dimension], fallback.relationship.dimensions[dimension]),
+      ])) as YanxinPersonaState['relationship']['dimensions'],
+      changes: validArray(relationship.changes, isRelationshipChange).slice(-20),
+    },
+    shortTerm: {
+      emotion: yanxinEmotions.includes(shortTerm.emotion as YanxinShortTermState['emotion'])
+        ? shortTerm.emotion as YanxinShortTermState['emotion']
+        : fallback.shortTerm.emotion,
+      currentActivity: yanxinActivities.includes(shortTerm.currentActivity as YanxinShortTermState['currentActivity'])
+        ? shortTerm.currentActivity as YanxinShortTermState['currentActivity']
+        : fallback.shortTerm.currentActivity,
+    },
+  }
+}
 
 function isChatMessage(value: unknown): value is ChatMessage {
   return isRecord(value)
@@ -179,7 +246,7 @@ function normalizeState(value: StoredState): GameState {
   const tutorialSteps: TutorialStep[] = ['product', 'gift', 'target', 'done']
 
   return {
-    version: 4,
+    version: 5,
     coins: isFiniteNumber(value.coins) ? value.coins : fresh.coins,
     inventory,
     discoveredItemIds: validArray(value.discoveredItemIds, isItemId, fresh.discoveredItemIds),
@@ -208,6 +275,7 @@ function normalizeState(value: StoredState): GameState {
     claimedActivityTaskIds: validArray(value.claimedActivityTaskIds, isActivityTaskId),
     ledger: validArray(value.ledger, isEconomyEntry),
     ending: value.ending === null || value.ending === undefined ? null : isEnding(value.ending) ? value.ending : null,
+    yanxinPersona: normalizeYanxinPersona(value.yanxinPersona, fresh.yanxinPersona),
   }
 }
 
@@ -236,7 +304,7 @@ export function loadGame(storage: Storage, now: () => number = Date.now): LoadRe
     if (!isRecord(parsed)) throw new Error('Save root must be an object')
     const value = repairLegacyW200(parsed)
     if (value.version === 1) return { kind: 'loaded', state: migrateV1(value) }
-    if (value.version === 2 || value.version === 3 || value.version === 4) {
+    if (value.version === 2 || value.version === 3 || value.version === 4 || value.version === 5) {
       return { kind: 'loaded', state: normalizeState(value) }
     }
     return { kind: 'requires-reset', raw }
