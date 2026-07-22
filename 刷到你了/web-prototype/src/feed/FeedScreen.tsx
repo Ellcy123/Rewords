@@ -9,7 +9,14 @@ import type { ItemId, NodeId } from '../content/types'
 import { CompletionOverlay } from '../destiny/CompletionOverlay'
 import { RecordsSheet } from '../destiny/RecordsSheet'
 import { rankFeed } from '../engine/feed'
+import type { CheckoutQuote } from '../engine/economy'
+import { selectUnreadMessageCount } from '../engine/selectors'
 import { useGame } from '../game/useGame'
+import { AiDebugSheet } from '../messages/AiDebugSheet'
+import { MessageSheet } from '../messages/MessageSheet'
+import { MomentSheet } from '../moments/MomentSheet'
+import { resolveMoment } from '../moments/resolveMoment'
+import type { MomentChoiceId } from '../moments/types'
 import { BottomNav } from '../shell/BottomNav'
 import { CommentsSheet } from '../shell/CommentsSheet'
 import { ProfileSheet } from '../shell/ProfileSheet'
@@ -21,7 +28,9 @@ import { VideoFeed } from './VideoFeed'
 type Overlay =
   | { type: 'product'; itemId: ItemId; returnToGiftNodeId?: NodeId }
   | { type: 'gift' | 'comments' | 'replay'; nodeId: NodeId }
-  | { type: 'inventory' | 'records' | 'profile' }
+  | { type: 'inventory' | 'records' | 'profile' | 'moment' }
+
+interface PurchaseReceipt extends CheckoutQuote { itemId: ItemId }
 
 export function FeedScreen() {
   const { state, dispatch } = useGame()
@@ -35,10 +44,26 @@ export function FeedScreen() {
   const focusNodeId = state.pendingResultNodeId ?? state.currentNodeId
   const index = Math.max(0, nodes.findIndex(node => node.id === focusNodeId))
   const [overlay, setOverlay] = useState<Overlay | null>(null)
+  const [activeTab, setActiveTab] = useState<'feed' | 'messages'>('feed')
   const [completionOpen, setCompletionOpen] = useState(false)
-  const [purchaseFeedbackItemId, setPurchaseFeedbackItemId] = useState<ItemId | null>(null)
+  const [purchaseReceipt, setPurchaseReceipt] = useState<PurchaseReceipt | null>(null)
   const current = nodes[index] ?? nodes[0]
-  const feedLocked = !!overlay || completionOpen || state.pendingResultNodeId !== null
+  const feedLocked = activeTab === 'messages' || !!overlay || completionOpen || state.pendingResultNodeId !== null
+  const unreadMessages = selectUnreadMessageCount(state)
+  const debugEnabled = import.meta.env.DEV
+    && typeof window !== 'undefined'
+    && new URLSearchParams(window.location.search).get('debug') === 'ai'
+
+  const chooseMoment = (choiceId: MomentChoiceId) => {
+    const result = resolveMoment('PK_LAST_30_SECONDS', choiceId)
+    if (
+      !state.unlockedNodeIds.includes('E001')
+      || state.resolvedMomentIds.includes(result.resolution.momentId)
+      || state.coins < result.resolution.coinCost
+    ) return
+    dispatch({ type: 'MOMENT_RESOLVED', resolution: result.resolution })
+    setOverlay(null)
+  }
 
   const change = (next: number) => {
     if (nodes[next]) dispatch({ type: 'SET_CURRENT_NODE', nodeId: nodes[next].id })
@@ -71,7 +96,14 @@ export function FeedScreen() {
           onProduct={node => node.productItemId && setOverlay({ type: 'product', itemId: node.productItemId })}
           onGift={node => setOverlay({ type: 'gift', nodeId: node.id })}
           onComments={node => setOverlay({ type: 'comments', nodeId: node.id })}
+          likedNodeIds={state.likedNodeIds}
+          favoritedNodeIds={state.favoritedNodeIds}
+          onLike={node => dispatch({ type: 'VIDEO_LIKED', nodeId: node.id })}
+          onFavorite={node => dispatch({ type: 'VIDEO_FAVORITED', nodeId: node.id })}
+          onViewed={node => dispatch({ type: 'NODE_VIEWED', nodeId: node.id })}
+          onMoment={() => setOverlay({ type: 'moment' })}
         />
+        {activeTab === 'messages' && <MessageSheet />}
         {state.pendingResultNodeId === current?.id && (
           <button className="result-continue" onClick={finishResult}>
             {current.resultKind === 'wrong' ? '收进命运记录' : current.id === 'W400' ? '完成婚礼' : '继续刷'}
@@ -79,17 +111,21 @@ export function FeedScreen() {
         )}
         <TutorialCue step={state.tutorialStep} />
         <BottomNav
-          onRecords={() => setOverlay({ type: 'records' })}
-          onGift={() => current && setOverlay({ type: 'gift', nodeId: current.id })}
-          onInventory={() => setOverlay({ type: 'inventory' })}
-          onProfile={() => setOverlay({ type: 'profile' })}
+          activeTab={activeTab}
+          unreadMessages={unreadMessages}
+          onFeed={() => { setActiveTab('feed'); setOverlay(null) }}
+          onMessages={() => { setActiveTab('messages'); setOverlay(null) }}
+          onGift={() => { setActiveTab('feed'); if (current) setOverlay({ type: 'gift', nodeId: current.id }) }}
+          onInventory={() => { setActiveTab('feed'); setOverlay({ type: 'inventory' }) }}
+          onProfile={() => { setActiveTab('feed'); setOverlay({ type: 'profile' }) }}
         />
+        {overlay?.type === 'moment' && <MomentSheet coins={state.coins} onClose={() => setOverlay(null)} onChoose={chooseMoment} />}
         {overlay?.type === 'product' && (
           <ProductSheet
             item={ITEM_BY_ID[overlay.itemId]}
             onClose={() => setOverlay(overlay.returnToGiftNodeId ? { type: 'gift', nodeId: overlay.returnToGiftNodeId } : null)}
-            onPurchased={item => {
-              setPurchaseFeedbackItemId(item.id)
+            onPurchased={(item, quote) => {
+              setPurchaseReceipt({ itemId: item.id, ...quote })
               setOverlay(overlay.returnToGiftNodeId ? { type: 'gift', nodeId: overlay.returnToGiftNodeId } : null)
             }}
           />
@@ -106,12 +142,14 @@ export function FeedScreen() {
         {overlay?.type === 'inventory' && <InventorySheet onClose={() => setOverlay(null)} />}
         {overlay?.type === 'records' && <RecordsSheet onClose={() => setOverlay(null)} onReplay={nodeId => setOverlay({ type: 'replay', nodeId })} />}
         {overlay?.type === 'replay' && <ReplayOverlay node={NODE_BY_ID[overlay.nodeId]} onClose={() => setOverlay({ type: 'records' })} />}
-        {overlay?.type === 'profile' && <ProfileSheet onClose={() => setOverlay(null)} />}
-        {purchaseFeedbackItemId && (
+        {overlay?.type === 'profile' && <ProfileSheet onClose={() => setOverlay(null)} onRecords={() => setOverlay({ type: 'records' })} />}
+        {purchaseReceipt && (
           <PurchaseFeedback
-            item={ITEM_BY_ID[purchaseFeedbackItemId]}
+            item={ITEM_BY_ID[purchaseReceipt.itemId]}
+            paidAmount={purchaseReceipt.playerPaidAmount}
+            subsidyAmount={purchaseReceipt.subsidyAmount}
             onDone={() => {
-              setPurchaseFeedbackItemId(null)
+              setPurchaseReceipt(null)
               dispatch({ type: 'ADVANCE_TUTORIAL', step: 'gift' })
             }}
           />
@@ -125,6 +163,7 @@ export function FeedScreen() {
             }}
           />
         )}
+        {debugEnabled && <AiDebugSheet records={state.aiDebugTurns} />}
       </main>
     </PlaybackProvider>
   )

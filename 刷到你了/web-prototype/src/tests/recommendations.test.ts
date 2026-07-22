@@ -19,20 +19,21 @@ describe('gift recommendations', () => {
     })
   })
 
-  it('routes an undiscovered correct gift to its active discovery video', () => {
+  it('keeps the relationship product unavailable before its response video is delivered', () => {
     expect(selectGiftOptions(createInitialState(), 'W300').find(option => option.item.id === 'recorder')).toMatchObject({
       recommended: true,
-      availability: 'find',
-      destinationNodeId: 'K001',
+      availability: 'unavailable',
     })
   })
 
-  it('does not expose a clue route that is no longer active', () => {
+  it('routes an undiscovered relationship product to its active response video', () => {
     const state = createInitialState()
-    state.feedNodeIds = state.feedNodeIds.filter(id => id !== 'K001')
+    state.unlockedNodeIds.push('E201')
+    state.feedNodeIds.push('E201')
     expect(selectGiftOptions(state, 'W300').find(option => option.item.id === 'recorder')).toMatchObject({
       recommended: true,
-      availability: 'unavailable',
+      availability: 'find',
+      destinationNodeId: 'E201',
     })
   })
 })

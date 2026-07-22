@@ -34,6 +34,7 @@ function FallbackStoryStage({ node, active, paused, toggle }: FallbackProps) {
       <div className="scene-prop scene-prop--right" />
       {node.channel === 'knowledge' && <span className="rec-badge">● REC</span>}
       {node.channel === 'costume' && <span className="episode-badge">短剧 · 第八集</span>}
+      {node.channel === 'entertainment' && <span className="live-moment-badge">限时片段</span>}
       <div className="story-beat" key={`${node.id}-${beatIndex}`}>
         <strong>{beat.text}</strong>
         {beat.detail && <span>{beat.detail}</span>}
