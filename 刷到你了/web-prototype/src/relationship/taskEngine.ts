@@ -3,7 +3,7 @@ import type { NodeId } from '../content/types'
 export type CharacterTaskId = 'YANXIN_UNCUT_EVIDENCE'
 export type CharacterTaskStage = 'locked' | 'invited' | 'understood' | 'committed' | 'published'
 export type TaskEvidenceKind = 'recognized_malicious_editing' | 'accepted_complete_evidence_plan'
-export type TaskTransitionEffect = 'schedule_progress_report' | 'mark_published'
+export type TaskTransitionEffect = 'unlock_circulating_clip' | 'schedule_progress_report' | 'mark_published'
 export type TaskCheckpointSource = 'ai' | 'system_fallback'
 
 export interface TaskEvidenceCandidate {
@@ -16,6 +16,8 @@ export interface CharacterTaskState {
   stage: CharacterTaskStage
   lastEvidenceSourceId: string | null
   lastCheckpointSource: TaskCheckpointSource | null
+  familiarityExchangeSourceIds: string[]
+  circulatingClipUnlocked: boolean
   emittedEffects: TaskTransitionEffect[]
   unlockedResponseNodeIds: NodeId[]
 }
@@ -34,9 +36,40 @@ export function createCharacterTaskState(
     stage,
     lastEvidenceSourceId: null,
     lastCheckpointSource: null,
+    familiarityExchangeSourceIds: [],
+    circulatingClipUnlocked: false,
     emittedEffects: [],
     unlockedResponseNodeIds: [],
   }
+}
+
+export function recordFamiliarityExchange(
+  state: CharacterTaskState,
+  sourceMessageId: string,
+): TaskTransitionResult {
+  if (
+    state.stage !== 'locked'
+    || state.circulatingClipUnlocked
+    || state.familiarityExchangeSourceIds.includes(sourceMessageId)
+  ) return { state, effects: [] }
+  const familiarityExchangeSourceIds = [...state.familiarityExchangeSourceIds, sourceMessageId].slice(-2)
+  if (familiarityExchangeSourceIds.length < 2) {
+    return { state: { ...state, familiarityExchangeSourceIds }, effects: [] }
+  }
+  return {
+    state: { ...state, familiarityExchangeSourceIds, circulatingClipUnlocked: true },
+    effects: ['unlock_circulating_clip'],
+  }
+}
+
+export function inviteTaskAfterCirculatingClipViewed(
+  state: CharacterTaskState,
+  nodeId: NodeId,
+): TaskTransitionResult {
+  if (nodeId !== 'E103' || state.stage !== 'locked' || !state.circulatingClipUnlocked) {
+    return { state, effects: [] }
+  }
+  return enterStage(state, 'invited')
 }
 
 function enterStage(state: CharacterTaskState, stage: CharacterTaskStage): TaskTransitionResult {
@@ -67,11 +100,16 @@ export function applyTaskEvidence(
   return { state, effects: [] }
 }
 
-export function applySystemFallbackCheckpoint(state: CharacterTaskState): TaskTransitionResult {
+export function commitTaskWithSystemFallback(state: CharacterTaskState): TaskTransitionResult {
+  if (state.stage === 'locked' && !state.circulatingClipUnlocked) {
+    return {
+      state: { ...state, circulatingClipUnlocked: true },
+      effects: ['unlock_circulating_clip'],
+    }
+  }
+  if (state.stage !== 'invited' && state.stage !== 'understood') return { state, effects: [] }
   const checkpoint = { ...state, lastEvidenceSourceId: 'system_fallback', lastCheckpointSource: 'system_fallback' as const }
-  if (state.stage === 'invited') return enterStage(checkpoint, 'understood')
-  if (state.stage === 'understood') return enterStage(checkpoint, 'committed')
-  return { state, effects: [] }
+  return enterStage(checkpoint, 'committed')
 }
 
 export function markRelationshipResponseViewed(

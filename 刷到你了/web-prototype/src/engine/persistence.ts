@@ -185,7 +185,7 @@ function normalizeAiEffects(value: unknown): ChatAiEffects | null {
 }
 
 const debugTaskStages: AiTurnDebugRecord['taskStage'][] = ['locked', 'invited', 'understood', 'committed', 'published']
-const debugTurnKinds: AiTurnDebugRecord['turnKind'][] = ['first_contact', 'player_message', 'progress_report']
+const debugTurnKinds: AiTurnDebugRecord['turnKind'][] = ['first_contact', 'clip_followup', 'player_message', 'progress_report']
 const debugCharacterIntents: AiTurnDebugRecord['characterIntents'] = [
   'fan_maintenance', 'thank', 'banter', 'probe', 'explain', 'share', 'confirm_promise',
   'set_boundary', 'handle_conflict', 'end_topic', 'advance_task',
@@ -306,6 +306,7 @@ function normalizePendingDelivery(value: unknown): PendingChatDelivery | null {
     deliverAt: value.deliverAt,
     aiEffects,
     effect: value.effect,
+    sourceMessageId: typeof value.sourceMessageId === 'string' ? value.sourceMessageId : undefined,
     source: value.source === 'system_fallback' ? value.source : undefined,
   }
 }
@@ -411,12 +412,14 @@ function isEnding(value: unknown): value is EndingRecord {
 }
 
 const taskStages = ['locked', 'invited', 'understood', 'committed', 'published'] as const
-const transitionEffects: TaskTransitionEffect[] = ['schedule_progress_report', 'mark_published']
+const transitionEffects: TaskTransitionEffect[] = ['unlock_circulating_clip', 'schedule_progress_report', 'mark_published']
 interface StoredCharacterTask {
   taskId: CharacterTaskState['taskId']
   stage: CharacterTaskState['stage']
   lastEvidenceSourceId?: unknown
   lastCheckpointSource?: unknown
+  familiarityExchangeSourceIds?: unknown
+  circulatingClipUnlocked?: unknown
   emittedEffects: TaskTransitionEffect[]
   unlockedResponseNodeIds: NodeId[]
 }
@@ -440,6 +443,10 @@ function normalizeCharacterTask(value: unknown, fallback: CharacterTaskState): C
     lastCheckpointSource: value.lastCheckpointSource === 'ai' || value.lastCheckpointSource === 'system_fallback'
       ? value.lastCheckpointSource
       : null,
+    familiarityExchangeSourceIds: Array.isArray(value.familiarityExchangeSourceIds)
+      ? value.familiarityExchangeSourceIds.filter(isString).slice(-2)
+      : [],
+    circulatingClipUnlocked: value.circulatingClipUnlocked === true,
     emittedEffects: [...value.emittedEffects],
     unlockedResponseNodeIds: [...value.unlockedResponseNodeIds],
   }
@@ -480,26 +487,46 @@ function normalizeState(value: StoredState): GameState {
       isFiniteNumber(storedInventory[id]) ? storedInventory[id] : fresh.inventory[id],
     ])) as Record<ItemId, number>
     : fresh.inventory
-  const characterTasks = {
+  const storedCharacterTask = isRecord(value.characterTasks) ? value.characterTasks.YANXIN_UNCUT_EVIDENCE : undefined
+  let characterTasks = {
     YANXIN_UNCUT_EVIDENCE: normalizeCharacterTask(
-      isRecord(value.characterTasks) ? value.characterTasks.YANXIN_UNCUT_EVIDENCE : undefined,
+      storedCharacterTask,
       fresh.characterTasks.YANXIN_UNCUT_EVIDENCE,
     ),
   }
   const tutorialSteps: TutorialStep[] = ['product', 'gift', 'target', 'done']
   const messages = validArray(value.messages, isChatMessage)
+  let unlockedNodeIds = nodeIds(value.unlockedNodeIds, fresh.unlockedNodeIds)
+  let feedNodeIds = nodeIds(value.feedNodeIds, fresh.feedNodeIds)
+  const viewedNodeIds = nodeIds(value.viewedNodeIds)
+  if (
+    isRecord(storedCharacterTask)
+    && typeof storedCharacterTask.circulatingClipUnlocked !== 'boolean'
+    && characterTasks.YANXIN_UNCUT_EVIDENCE.stage !== 'locked'
+    && !characterTasks.YANXIN_UNCUT_EVIDENCE.circulatingClipUnlocked
+    && !viewedNodeIds.includes('E103')
+  ) {
+    unlockedNodeIds = appendUnique(unlockedNodeIds, 'E103')
+    feedNodeIds = appendUnique(feedNodeIds, 'E103')
+    characterTasks = {
+      YANXIN_UNCUT_EVIDENCE: {
+        ...characterTasks.YANXIN_UNCUT_EVIDENCE,
+        circulatingClipUnlocked: true,
+      },
+    }
+  }
 
   return {
     version: 5,
     coins: isFiniteNumber(value.coins) ? value.coins : fresh.coins,
     inventory,
     discoveredItemIds: validArray(value.discoveredItemIds, isItemId, fresh.discoveredItemIds),
-    unlockedNodeIds: nodeIds(value.unlockedNodeIds, fresh.unlockedNodeIds),
-    viewedNodeIds: nodeIds(value.viewedNodeIds),
+    unlockedNodeIds,
+    viewedNodeIds,
     likedNodeIds: nodeIds(value.likedNodeIds),
     favoritedNodeIds: nodeIds(value.favoritedNodeIds),
     resolvedNodeIds: nodeIds(value.resolvedNodeIds),
-    feedNodeIds: nodeIds(value.feedNodeIds, fresh.feedNodeIds),
+    feedNodeIds,
     triggeredKeys: validArray(value.triggeredKeys, isString),
     destinyNodeIds: nodeIds(value.destinyNodeIds),
     currentNodeId: isNodeId(value.currentNodeId) ? value.currentNodeId : fresh.currentNodeId,

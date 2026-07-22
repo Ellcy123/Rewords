@@ -23,7 +23,7 @@ describe('relationship selectors', () => {
       resolution: resolveMoment('PK_LAST_30_SECONDS', 'hold_back').resolution,
     })
     expect(selectCanOpenYanxinChat(invited)).toBe(true)
-    expect(selectYanxinTaskStage(invited)).toBe('invited')
+    expect(selectYanxinTaskStage(invited)).toBe('locked')
 
     const completed = { ...invited, completed: true }
     expect(selectCanGenerateEnding(completed)).toBe(true)

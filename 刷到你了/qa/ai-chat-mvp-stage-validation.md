@@ -146,6 +146,30 @@
 
 - 阶段结论：AUTO PASS / REAL MODEL SMOKE PASS；仍需用户在手机新存档上做最终主观自然度验收。
 
+## Phase C-Contextual-R2（熟悉门槛与可见十秒视频）
+
+- 测试提交：待本次提交
+- 日期：2026-07-22
+- 环境：Windows / PowerShell；本地 DeepSeek 非生产验收配置；Web `4173`、API `8787`
+- 自动化命令：服务端 `npm test`、`npm run typecheck`、`npm run build`；前端 `npm test`、`npm run typecheck`、`npm run build`；仓库 `git diff --check`
+- 自动化摘要：服务端 4 个文件、121 项通过；前端 24 个文件、171 项通过；两端类型检查与生产构建退出码均为 0。
+- 真实模型摘要：首信、`clip_followup`、两轮普通聊天、识别断章取义、接受完整取证方案共 6 个 DeepSeek 回合全部 HTTP 200 且通过七字段校验。
+
+| 用例 | 状态 | 证据或说明 |
+| --- | --- | --- |
+| CR2-01 首信节奏 | REAL + AUTO PASS | PK 后任务保持 `locked`；首信只承接 PK。服务端硬拒绝包含十秒剪辑、原片、录像、素材或证据的首信。 |
+| CR2-02 熟悉门槛 | AUTO PASS | 只有两条不同玩家消息对应的成功 AI 回复实际送达后才解锁 `E103`；失败/system 回复、重复来源和主动消息不计数。 |
+| CR2-03 十秒视频可见 | AUTO PASS | `E103` 是推荐流中的独立动态分镜节点；未观看时任务仍为 `locked`，观看后才进入 `invited`。 |
+| CR2-04 观看事实边界 | REAL + AUTO PASS | 未观看时请求不含观看记忆且禁止共同观看叙述；观看后只通过白名单记忆传入事实。真实 `clip_followup` 能询问看法而不替玩家判断。 |
+| CR2-05 日常聊天不复读 | REAL PASS | “输了会难过吗”“下播后做什么”均直接回答最新问题，没有重复十秒剪辑或取证背景。 |
+| CR2-06 语义任务推进 | REAL + AUTO PASS | “这是断章取义”只产出 `recognized_malicious_editing`；明确愿意找完整原片核对前后只产出 `accepted_complete_evidence_plan`。 |
+| CR2-07 提供方失败 | AUTO PASS | 连续失败只累计失败次数并显示系统提示，不再投递自动任务检查点；玩家必须显式点击离线保障。 |
+| CR2-08 存档兼容 | AUTO PASS | 新增熟悉来源、`E103` 解锁状态、投递来源 ID 和新 turn kind 均可保存及从旧存档安全补默认值。 |
+| CR2-09 移动端真实点按 | NOT RUN | 当前自动化会话没有可连接浏览器实例；需用户从全新存档在手机同网地址验证实际出现顺序与主观节奏。 |
+
+- 未解决缺陷：无自动化或真实模型阻断缺陷；尚缺手机端从全新存档的实际点按记录。
+- 阶段结论：AUTO PASS / REAL MODEL SMOKE PASS / MOBILE MANUAL NOT RUN
+
 ## Phase D
 
 - 测试提交：NOT RUN

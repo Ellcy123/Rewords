@@ -169,7 +169,7 @@ describe('AI-backed private messages', () => {
     expect(screen.getByText(YANXIN_REPLY_UNAVAILABLE_NOTICE).closest('article')?.className).toContain('message-system')
   })
 
-  it('schedules a system fallback checkpoint solely after repeated provider failures', async () => {
+  it('never auto-advances after repeated failures and requires an explicit offline fallback', async () => {
     vi.useFakeTimers()
     vi.setSystemTime(10_000)
     const fetcher = vi.fn(async () => { throw new Error('ai-server offline') })
@@ -195,18 +195,17 @@ describe('AI-backed private messages', () => {
       expect(savedState(storage).messages.filter(message => message.role === 'system' && message.id.startsWith('yanxin-reply-'))).toHaveLength(turn + 1)
     }
 
-    await act(async () => vi.advanceTimersByTimeAsync(4_250))
-    const settled = savedState(storage)
-    expect(settled.characterTasks.YANXIN_UNCUT_EVIDENCE).toMatchObject({
-      stage: 'understood',
+    const beforeConfirmation = savedState(storage)
+    expect(beforeConfirmation.characterTasks.YANXIN_UNCUT_EVIDENCE.stage).toBe('invited')
+    expect(beforeConfirmation.messages.some(message => message.id.startsWith('yanxin-system-fallback-checkpoint'))).toBe(false)
+    expect(beforeConfirmation.yanxinProviderFailureCount).toBe(2)
+
+    fireEvent.click(screen.getByRole('button', { name: '使用离线保障，继续取证' }))
+    expect(savedState(storage).characterTasks.YANXIN_UNCUT_EVIDENCE).toMatchObject({
+      stage: 'committed',
       lastEvidenceSourceId: 'system_fallback',
       lastCheckpointSource: 'system_fallback',
     })
-    expect(settled.messages.filter(message => message.id === 'yanxin-system-fallback-checkpoint-understood')).toHaveLength(1)
-    expect(settled.messages.filter(message => message.id === 'yanxin-progress-report')).toHaveLength(0)
-    expect(settled.unlockedNodeIds).not.toContain('E201')
-    expect(settled.yanxinProviderFailureCount).toBe(0)
-    expect(fetcher).toHaveBeenCalledTimes(2)
   })
 
   it('recovers an in-flight request with one fallback after a reload', async () => {

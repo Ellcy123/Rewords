@@ -93,6 +93,7 @@ export interface PendingChatDelivery {
   deliverAt: number
   aiEffects: ChatAiEffects
   effect: ChatDeliveryEffect
+  sourceMessageId?: string
   source?: ChatDeliverySource
 }
 

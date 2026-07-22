@@ -1,7 +1,7 @@
 export type NodeId =
   | 'W001' | 'W101' | 'W300' | 'W301' | 'W400'
   | 'C001' | 'C101' | 'K001' | 'K101'
-  | 'E001' | 'E101' | 'E102' | 'E201'
+  | 'E001' | 'E101' | 'E102' | 'E103' | 'E201'
   | 'X001' | 'X004' | 'X012' | 'X016' | 'X021' | 'X028'
 
 export type ItemId = 'ladder' | 'technician' | 'recorder' | 'projector'

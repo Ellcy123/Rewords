@@ -10,7 +10,8 @@ export const selectAvailableGifts = (state: GameState, nodeId: NodeId): ItemDefi
 export const selectDestinyNodes = (state: GameState): VideoNode[] => state.destinyNodeIds.map(id => NODE_BY_ID[id])
 export const selectResolvedNodes = (state: GameState): VideoNode[] => NODES.filter(node => state.resolvedNodeIds.includes(node.id) && node.resultKind !== 'wrong')
 export const selectProgress = (state: GameState): number => state.unlockedNodeIds.filter(id => !id.startsWith('X')).length
-export const selectCanOpenYanxinChat = (state: GameState): boolean => state.characterTasks.YANXIN_UNCUT_EVIDENCE.stage !== 'locked'
+export const selectCanOpenYanxinChat = (state: GameState): boolean => state.resolvedMomentIds.includes('PK_LAST_30_SECONDS')
+  || state.messages.length > 0
 export const selectYanxinTaskStage = (state: GameState) => state.characterTasks.YANXIN_UNCUT_EVIDENCE.stage
 export const selectCanViewRelationshipVideo = (state: GameState): boolean => state.unlockedNodeIds.includes('E201')
 export const selectCanGenerateEnding = (state: GameState): boolean => state.completed && state.ending === null

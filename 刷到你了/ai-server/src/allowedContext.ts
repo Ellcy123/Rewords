@@ -15,6 +15,10 @@ const MEMORY_FACTS: Record<AllowedMemoryId, MemoryFact> = {
     id: 'yanxin_pk_choice_hold_back',
     fact: '玩家在 PK 最后 30 秒选择不跟着场面上头。',
   },
+  yanxin_circulating_clip_viewed: {
+    id: 'yanxin_circulating_clip_viewed',
+    fact: '玩家已经在推荐页实际看过网上流传的炎鑫下播前十秒剪辑。',
+  },
   yanxin_evidence_task_completed: {
     id: 'yanxin_evidence_task_completed',
     fact: '炎鑫已经完成找回未剪辑完整证据并公开回应的任务。',
@@ -30,8 +34,8 @@ const MEMORY_FACTS: Record<AllowedMemoryId, MemoryFact> = {
 }
 
 export const STAGE_GUIDANCE = {
-  locked: '尚未邀请玩家参与取证，不得假定已有共同经历。',
-  invited: '可以回应玩家在 PK 后的选择，并自然说明想找回完整证据。',
+  locked: '尚未邀请玩家参与取证，只围绕刚结束的公开场面和自然闲聊建立熟悉感。',
+  invited: '玩家已经看过争议剪辑，可以结合当下对话逐步讨论被截断的语境和完整证据。',
   understood: '玩家已经理解取证方向，可以讨论核对完整素材的下一步。',
   committed: '取证计划已经确定，保持克制地说明正在核对完整素材。',
   published: '完整证据已经公开回应，后续聊天不得重新推进主线。',
@@ -137,7 +141,7 @@ export interface AllowedContext {
     repairMode: 'none' | 'repetition_complaint'
     goal: string
     playerHasSeenPkFinal: true
-    playerHasSeenCirculatingClip: false
+    playerHasSeenCirculatingClip: boolean
     uncutEvidenceStatus: 'missing' | 'reviewing' | 'ready' | 'published'
     constraints: string[]
   }
@@ -146,6 +150,7 @@ export interface AllowedContext {
 }
 
 export function buildAllowedContext(request: ChatRequest): AllowedContext {
+  const playerHasSeenCirculatingClip = request.allowedMemoryIds.includes('yanxin_circulating_clip_viewed')
   const evidenceStatus = request.turnKind === 'progress_report'
     ? 'ready' as const
     : request.taskStage === 'published'
@@ -160,7 +165,9 @@ export function buildAllowedContext(request: ChatRequest): AllowedContext {
   const turnGoal = repairMode === 'repetition_complaint'
     ? '玩家正在指出回复重复。先承认自己的表达问题，再针对玩家当前意思给出新的直接回应；不得把责任推给玩家，也不得复述刚刚被指出的任务背景。'
     : request.turnKind === 'first_contact'
-    ? '承接玩家刚刚的PK选择，并首次完整交代PK结束后才出现的剪辑争议，让玩家无需猜测背景。'
+    ? '只承接刚结束的PK和玩家当时的选择，像刚认识时自然说话；不得提及十秒剪辑、完整素材、证据或取证任务。'
+    : request.turnKind === 'clip_followup'
+      ? '玩家刚刚实际看过推荐页流传的十秒剪辑。自然询问玩家怎么看这段内容，允许表达在意，但先听玩家判断，不替玩家下结论。'
     : request.turnKind === 'progress_report'
       ? '主动报备完整证据已经核对完成，整理后的关系派生视频也已经发出；用角色口吻说明结果，不重复邀请阶段的话。'
       : '首先回应玩家最新一句，再结合最近对话、人设、关系和当前任务状态决定是否自然推进。'
@@ -219,11 +226,13 @@ export function buildAllowedContext(request: ChatRequest): AllowedContext {
       repairMode,
       goal: turnGoal,
       playerHasSeenPkFinal: true,
-      playerHasSeenCirculatingClip: false,
+      playerHasSeenCirculatingClip,
       uncutEvidenceStatus: evidenceStatus,
       constraints: [
         '固定事实和本轮目标不是固定台词，必须结合最近对话重新组织表达。',
-        '玩家尚未看过网上流传的十秒剪辑，不得把它当作双方已经看过的共同内容。',
+        playerHasSeenCirculatingClip
+          ? '玩家已经实际看过网上流传的十秒剪辑，可以承接这次观看，但不得虚构玩家的态度或判断。'
+          : '玩家尚未看过网上流传的十秒剪辑，不得提及或暗示玩家已经见过它；首次私信尤其不得提前讲取证任务。',
         evidenceStatus === 'missing'
           ? '完整证据尚未取得，不得声称已经持有完整录像。'
           : evidenceStatus === 'reviewing'

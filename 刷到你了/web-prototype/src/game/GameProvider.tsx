@@ -3,9 +3,9 @@ import { gameReducer, type GameAction } from '../engine/reducer'
 import { loadGame, saveGame, SAVE_KEY, type LoadResult } from '../engine/persistence'
 import { createInitialState, type GameState } from '../engine/state'
 import {
+  YANXIN_CLIP_FOLLOWUP_UNAVAILABLE_NOTICE,
   YANXIN_FIRST_CONTACT_UNAVAILABLE_NOTICE,
   YANXIN_PROGRESS_UNAVAILABLE_NOTICE,
-  YANXIN_SYSTEM_FALLBACK_CHECKPOINT,
 } from '../messages/character'
 import { isAllowedMemoryId, requestYanxinReply, type ChatRequest, type ChatTurnKind } from '../messages/aiClient'
 import { createAiTurnDebugRecord } from '../messages/debug'
@@ -29,7 +29,10 @@ function proactiveRequest(state: GameState, turnKind: Exclude<ChatTurnKind, 'pla
     taskStage: state.characterTasks.YANXIN_UNCUT_EVIDENCE.stage,
     momentChoice: state.relationshipEvidence.some(evidence => evidence.kind === 'support') ? 'support' : 'hold_back',
     recentMessages: recentMessages.map(message => ({ role: message.role, text: message.text })),
-    allowedMemoryIds: state.sharedMemories.map(memory => memory.id).filter(isAllowedMemoryId),
+    allowedMemoryIds: [
+      ...state.sharedMemories.map(memory => memory.id).filter(isAllowedMemoryId),
+      ...(state.viewedNodeIds.includes('E103') ? ['yanxin_circulating_clip_viewed' as const] : []),
+    ],
     postEnding: state.ending !== null,
     personaSnapshot: {
       relationshipIdentity: state.yanxinPersona.relationship.identity,
@@ -71,7 +74,7 @@ export function GameProvider({ children, storage }: { children: ReactNode; stora
   useEffect(() => {
     if (blocked) return
     const task = state.characterTasks.YANXIN_UNCUT_EVIDENCE
-    if (task.stage === 'locked') {
+    if (!state.resolvedMomentIds.includes('PK_LAST_30_SECONDS') && task.stage === 'locked') {
       proactiveRequestsStarted.current.clear()
       return
     }
@@ -83,6 +86,8 @@ export function GameProvider({ children, storage }: { children: ReactNode; stora
     const reportExists = state.messages.some(message => message.id.startsWith('yanxin-progress-report'))
       || state.pendingChatDeliveries.some(delivery => delivery.message.id.startsWith('yanxin-progress-report'))
       || task.unlockedResponseNodeIds.includes('E201')
+    const clipFollowupExists = state.messages.some(message => message.id.startsWith('yanxin-clip-followup'))
+      || state.pendingChatDeliveries.some(delivery => delivery.message.id.startsWith('yanxin-clip-followup'))
 
     let config: {
       requestKey: string
@@ -92,16 +97,7 @@ export function GameProvider({ children, storage }: { children: ReactNode; stora
       failureNotice: string
       effect: ChatDeliveryEffect
     } | null = null
-    if (task.stage === 'invited' && state.resolvedMomentIds.includes('PK_LAST_30_SECONDS') && !firstContactAttempted) {
-      config = {
-        requestKey: 'first_contact',
-        turnKind: 'first_contact',
-        currentMessageId: 'game-event:PK_LAST_30_SECONDS:first-contact',
-        messageId: 'yanxin-first-contact',
-        failureNotice: YANXIN_FIRST_CONTACT_UNAVAILABLE_NOTICE,
-        effect: 'none',
-      }
-    } else if (
+    if (
       task.stage === 'committed'
       && task.emittedEffects.includes('schedule_progress_report')
       && !reportExists
@@ -114,6 +110,24 @@ export function GameProvider({ children, storage }: { children: ReactNode; stora
         failureNotice: YANXIN_PROGRESS_UNAVAILABLE_NOTICE,
         effect: 'unlock_e201',
       }
+    } else if (state.resolvedMomentIds.includes('PK_LAST_30_SECONDS') && !firstContactAttempted) {
+      config = {
+        requestKey: 'first_contact',
+        turnKind: 'first_contact',
+        currentMessageId: 'game-event:PK_LAST_30_SECONDS:first-contact',
+        messageId: 'yanxin-first-contact',
+        failureNotice: YANXIN_FIRST_CONTACT_UNAVAILABLE_NOTICE,
+        effect: 'none',
+      }
+    } else if (task.stage === 'invited' && state.viewedNodeIds.includes('E103') && !clipFollowupExists) {
+      config = {
+        requestKey: 'clip_followup',
+        turnKind: 'clip_followup',
+        currentMessageId: 'game-event:E103:clip-followup',
+        messageId: 'yanxin-clip-followup',
+        failureNotice: YANXIN_CLIP_FOLLOWUP_UNAVAILABLE_NOTICE,
+        effect: 'none',
+      }
     }
     if (!config || proactiveRequestsStarted.current.has(config.requestKey)) return
     proactiveRequestsStarted.current.add(config.requestKey)
@@ -121,7 +135,7 @@ export function GameProvider({ children, storage }: { children: ReactNode; stora
     const selected = config
     void requestYanxinReply(proactiveRequest(state, selected.turnKind, selected.currentMessageId)).then(result => {
       const readyAt = Date.now()
-      if (!result.ok) dispatch({ type: 'CHAT_PROVIDER_FAILED' })
+      dispatch({ type: result.ok ? 'CHAT_PROVIDER_SUCCEEDED' : 'CHAT_PROVIDER_FAILED' })
       dispatch({
         type: 'CHAT_AI_DEBUG_RECORDED',
         record: createAiTurnDebugRecord({
@@ -153,31 +167,6 @@ export function GameProvider({ children, storage }: { children: ReactNode; stora
       })
     })
   }, [blocked, state])
-  useEffect(() => {
-    if (blocked || state.yanxinProviderFailureCount < 2) return
-    const task = state.characterTasks.YANXIN_UNCUT_EVIDENCE
-    if (task.stage !== 'invited' && task.stage !== 'understood') return
-    const checkpointStage = task.stage === 'invited' ? 'understood' : 'committed'
-    const checkpointId = `yanxin-system-fallback-checkpoint-${checkpointStage}`
-    const checkpointExists = state.messages.some(message => message.id === checkpointId)
-      || state.pendingChatDeliveries.some(delivery => delivery.message.id === checkpointId)
-    if (checkpointExists) return
-    const now = Date.now()
-    dispatch({
-      type: 'CHAT_DELIVERY_SCHEDULED',
-      delivery: scheduleChatDelivery({
-        id: `delivery-${checkpointId}`,
-        kind: 'system_fallback_checkpoint',
-        message: { id: checkpointId, role: 'system', text: YANXIN_SYSTEM_FALLBACK_CHECKPOINT, createdAt: now },
-        createdAt: now,
-        readyAt: now,
-        aiEffects: { taskEvidence: [], relationshipEvidence: [], memoryCandidates: [], openLoopUpdates: [] },
-        effect: 'none',
-        source: 'system_fallback',
-      }),
-    })
-    dispatch({ type: 'CHAT_SYSTEM_FALLBACK_CHECKPOINT_SCHEDULED' })
-  }, [blocked, state.yanxinProviderFailureCount, state.characterTasks.YANXIN_UNCUT_EVIDENCE, state.messages, state.pendingChatDeliveries])
   const value = useMemo(() => ({ state, dispatch, loadResult: initial }), [state, initial])
   if (blocked) return <main className="save-recovery"><span>存档版本不兼容</span><h1>存档需要更新</h1><p>旧存档不会覆盖当前内容。重新开始后即可进入试玩。</p><button onClick={() => { storage.removeItem(SAVE_KEY); dispatch({ type: 'RESET_GAME' }); setBlocked(false) }}>安全重新开始</button></main>
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>

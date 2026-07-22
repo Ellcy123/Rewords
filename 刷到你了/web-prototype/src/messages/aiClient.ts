@@ -6,11 +6,12 @@ import type { LongTermMemory, MemoryCandidate, OpenLoop, OpenLoopUpdate } from '
 export type CharacterIntent = 'fan_maintenance' | 'thank' | 'banter' | 'probe' | 'explain' | 'share' | 'confirm_promise' | 'set_boundary' | 'handle_conflict' | 'end_topic' | 'advance_task'
 export type TaskEvidenceKind = 'recognized_malicious_editing' | 'accepted_complete_evidence_plan'
 export type RelationshipEvidenceKind = 'showed_specific_care' | 'respected_boundary' | 'offered_actionable_help' | 'kept_promise' | 'contradicted_action_evidence' | 'revealed_unexplained_knowledge' | 'pressured_after_refusal' | 'public_financial_support'
-export type ChatTurnKind = 'first_contact' | 'player_message' | 'progress_report'
+export type ChatTurnKind = 'first_contact' | 'clip_followup' | 'player_message' | 'progress_report'
 
 export const AllowedMemoryIds = [
   'yanxin_pk_choice_support',
   'yanxin_pk_choice_hold_back',
+  'yanxin_circulating_clip_viewed',
   'yanxin_evidence_task_completed',
   'yanxin_evidence_method_helped_bride',
   'bride_wedding_result_completed',
@@ -72,6 +73,7 @@ const OPEN_LOOP_STATUSES = new Set<OpenLoopUpdate['status']>(['open', 'closed'])
 const TONES = new Set<ChatResponse['tone']>(['guarded', 'warm', 'teasing', 'serious'])
 const CHINESE_PUNCTUATION = new Set(Array.from('，。！？、；：…（）《》“”‘’—'))
 const HAN_CHARACTER = /^\p{Script=Han}$/u
+const ARABIC_DIGIT = /^[0-9]$/
 const ALLOWED_MEMORY_IDS = new Set<string>(AllowedMemoryIds)
 
 export function isAllowedMemoryId(value: string): value is AllowedMemoryId {
@@ -92,7 +94,7 @@ function isBoundedString(value: unknown, maximum = 120): value is string {
 
 function isChineseReply(value: unknown): value is string {
   return isBoundedString(value)
-    && Array.from(value.replaceAll('PK', '')).every(character => HAN_CHARACTER.test(character) || CHINESE_PUNCTUATION.has(character))
+    && Array.from(value.replaceAll('PK', '')).every(character => HAN_CHARACTER.test(character) || ARABIC_DIGIT.test(character) || CHINESE_PUNCTUATION.has(character))
 }
 
 function isTaskEvidence(value: unknown): value is TaskEvidenceCandidate {

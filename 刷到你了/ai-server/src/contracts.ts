@@ -7,7 +7,7 @@ export const TaskSignals = [
   'respect_boundary',
 ] as const
 
-export const ChatTurnKinds = ['first_contact', 'player_message', 'progress_report'] as const
+export const ChatTurnKinds = ['first_contact', 'clip_followup', 'player_message', 'progress_report'] as const
 
 export const Tones = ['guarded', 'warm', 'teasing', 'serious'] as const
 
@@ -48,6 +48,7 @@ export const OpenLoopStatuses = ['open', 'closed'] as const
 export const AllowedMemoryIds = [
   'yanxin_pk_choice_support',
   'yanxin_pk_choice_hold_back',
+  'yanxin_circulating_clip_viewed',
   'yanxin_evidence_task_completed',
   'yanxin_evidence_method_helped_bride',
   'bride_wedding_result_completed',
@@ -57,6 +58,7 @@ const AllowedMemoryIdSchema = z.enum(AllowedMemoryIds)
 
 const ChinesePunctuation = new Set(Array.from('，。！？、；：…（）《》“”‘’—'))
 const HanCharacterPattern = /^\p{Script=Han}$/u
+const ArabicDigitPattern = /^[0-9]$/
 const NodeIdPattern = /[A-Z]\d{3}/i
 const DirectContentAccessClaimPattern = /(?:节点|视频|内容|入口).{0,12}(?:开(?:通|放|启|了)?|打开|解锁)|(?:我|为你|给你|已|已经|会|将|现在|马上).{0,12}(?:开(?:通|放|启|了)?|打开|解锁).{0,12}(?:节点|视频|内容|入口)/
 const TransactionOrTransferPattern = /给你|送你|送给|赠送|卖给|出售|售卖|购买|买|卖|换成|商品/
@@ -95,7 +97,7 @@ function isHanCharacter(character: string): boolean {
 
 function isChineseReplyText(value: string): boolean {
   return Array.from(value.replaceAll('PK', '')).every(
-    character => isHanCharacter(character) || ChinesePunctuation.has(character),
+    character => isHanCharacter(character) || ArabicDigitPattern.test(character) || ChinesePunctuation.has(character),
   )
 }
 
@@ -208,8 +210,20 @@ export const ChatRequestSchema = z.object({
   if (request.turnKind !== 'player_message' && codePointLength(request.userText) !== 0) {
     addIssue(['userText'], 'proactive turns require empty userText')
   }
-  if (request.turnKind === 'first_contact' && request.taskStage !== 'invited') {
-    addIssue(['taskStage'], 'first_contact requires invited stage')
+  if (request.turnKind === 'first_contact' && request.taskStage !== 'locked') {
+    addIssue(['taskStage'], 'first_contact requires locked stage')
+  }
+  if (
+    request.turnKind === 'first_contact'
+    && memories.has('yanxin_circulating_clip_viewed')
+  ) {
+    addIssue(['allowedMemoryIds'], 'first_contact must happen before the circulating clip is viewed')
+  }
+  if (
+    request.turnKind === 'clip_followup'
+    && (request.taskStage !== 'invited' || !memories.has('yanxin_circulating_clip_viewed'))
+  ) {
+    addIssue(['allowedMemoryIds'], 'clip_followup requires invited stage and viewed clip memory')
   }
   if (request.turnKind === 'progress_report' && request.taskStage !== 'committed') {
     addIssue(['taskStage'], 'progress_report requires committed stage')
@@ -314,11 +328,24 @@ export function parseChatResponseForRequest(request: ChatRequest, value: unknown
       }
     : value
   const parsed = ChatResponseSchema.superRefine((response, context) => {
-    if (inventsSharedClipViewing(response.replyText)) {
+    if (
+      !request.allowedMemoryIds.includes('yanxin_circulating_clip_viewed')
+      && inventsSharedClipViewing(response.replyText)
+    ) {
       context.addIssue({
         code: 'custom',
         path: ['replyText'],
         message: 'reply must not invent a shared viewing of the circulating clip',
+      })
+    }
+    if (
+      request.turnKind === 'first_contact'
+      && /十秒|剪辑|原片|原视频|录像|素材|证据|断章取义|完整(?:视频|录像|素材|经过|前后)/.test(response.replyText)
+    ) {
+      context.addIssue({
+        code: 'custom',
+        path: ['replyText'],
+        message: 'first contact must only respond to the PK and must not expose the later evidence task',
       })
     }
     if (

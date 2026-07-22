@@ -138,7 +138,7 @@ describe('game reducer', () => {
     expect(gameReducer(empty, { type: 'RECOVER_FEED' }).feedNodeIds).toEqual(['C001', 'K001'])
   })
 
-  it('applies a moment resolution once, including evidence, spend and task invitation', () => {
+  it('applies a moment resolution once while keeping the evidence task locked', () => {
     const resolution = resolveMoment('PK_LAST_30_SECONDS', 'support').resolution
     const beforeEntry = createInitialState()
     expect(gameReducer(beforeEntry, { type: 'MOMENT_RESOLVED', resolution })).toEqual(beforeEntry)
@@ -160,9 +160,43 @@ describe('game reducer', () => {
         sourceId: 'game-event:PK_LAST_30_SECONDS',
       }),
     ]))
-    expect(first.characterTasks.YANXIN_UNCUT_EVIDENCE.stage).toBe('invited')
+    expect(first.characterTasks.YANXIN_UNCUT_EVIDENCE.stage).toBe('locked')
     expect(first.unlockedNodeIds).toContain('E101')
     expect(repeated).toEqual(first)
+  })
+
+  it('unlocks the public ten-second clip after two delivered player replies without inviting the task', () => {
+    const entry = createInitialState()
+    entry.resolvedMomentIds = ['PK_LAST_30_SECONDS']
+    entry.messages = [{
+      id: 'yanxin-first-contact', role: 'assistant', text: '刚才那局我记住了。', createdAt: 0,
+    }]
+
+    let state = entry
+    for (let index = 1; index <= 2; index += 1) {
+      state = gameReducer(state, {
+        type: 'CHAT_USER_SENT',
+        message: { id: `user-casual-${index}`, role: 'user', text: `普通聊天${index}`, createdAt: index },
+      })
+      const delivery = scheduleChatDelivery({
+        id: `casual-delivery-${index}`,
+        kind: 'reply',
+        message: { id: `yanxin-reply-${index}`, role: 'assistant', text: `普通回复${index}`, createdAt: index },
+        createdAt: index,
+        readyAt: index,
+        aiEffects: { taskEvidence: [], relationshipEvidence: [], memoryCandidates: [], openLoopUpdates: [] },
+        effect: 'none',
+        sourceMessageId: `user-casual-${index}`,
+      }, () => 0)
+      state = gameReducer(state, { type: 'CHAT_DELIVERY_SCHEDULED', delivery })
+      state = gameReducer(state, { type: 'CHAT_DUE_DELIVERIES_FLUSHED', now: delivery.deliverAt })
+      expect(state.unlockedNodeIds.includes('E103')).toBe(index === 2)
+    }
+
+    expect(state.feedNodeIds).toContain('E103')
+    expect(state.characterTasks.YANXIN_UNCUT_EVIDENCE.stage).toBe('locked')
+    const afterClip = gameReducer(state, { type: 'NODE_VIEWED', nodeId: 'E103' })
+    expect(afterClip.characterTasks.YANXIN_UNCUT_EVIDENCE.stage).toBe('invited')
   })
 
   it('deduplicates user messages, scheduled deliveries, delivered effects and E201 unlock', () => {
@@ -275,9 +309,9 @@ describe('game reducer', () => {
     const settled = gameReducer(state, { type: 'CHAT_DUE_DELIVERIES_FLUSHED', now: delivery.deliverAt })
 
     expect(settled.characterTasks.YANXIN_UNCUT_EVIDENCE).toMatchObject({
-      stage: 'understood',
-      lastEvidenceSourceId: 'system_fallback',
-      lastCheckpointSource: 'system_fallback',
+      stage: 'invited',
+      lastEvidenceSourceId: null,
+      lastCheckpointSource: null,
     })
     expect(settled.yanxinPersona.relationship.changes).toEqual([])
     expect(settled.longTermMemories).toEqual([])
@@ -285,7 +319,7 @@ describe('game reducer', () => {
     expect(settled.unlockedNodeIds).not.toContain('E201')
   })
 
-  it('does not advance an invited task after any number of ordinary replies', () => {
+  it('does not advance a locked task from ordinary replies without player-linked deliveries', () => {
     const entryState = createInitialState()
     entryState.unlockedNodeIds.push('E001')
     let state = gameReducer(entryState, {
@@ -305,7 +339,7 @@ describe('game reducer', () => {
       state = gameReducer(state, { type: 'CHAT_DELIVERY_SCHEDULED', delivery })
       state = gameReducer(state, { type: 'CHAT_DUE_DELIVERIES_FLUSHED', now: delivery.deliverAt })
     }
-    expect(state.characterTasks.YANXIN_UNCUT_EVIDENCE.stage).toBe('invited')
+    expect(state.characterTasks.YANXIN_UNCUT_EVIDENCE.stage).toBe('locked')
     expect(state.characterTasks.YANXIN_UNCUT_EVIDENCE.emittedEffects).toEqual([])
   })
 

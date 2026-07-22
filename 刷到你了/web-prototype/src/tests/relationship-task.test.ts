@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import {
   applyTaskEvidence,
-  applySystemFallbackCheckpoint,
+  commitTaskWithSystemFallback,
   createCharacterTaskState,
+  inviteTaskAfterCirculatingClipViewed,
   markRelationshipResponseViewed,
+  recordFamiliarityExchange,
 } from '../relationship/taskEngine'
 
 describe('Yanxin relationship task', () => {
@@ -50,28 +52,44 @@ describe('Yanxin relationship task', () => {
     expect(invited).not.toHaveProperty('relevantFallbackTurns')
   })
 
-  it('advances exactly one required checkpoint with an explicit system fallback source', () => {
-    const invited = createCharacterTaskState('YANXIN_UNCUT_EVIDENCE', 'invited')
-    const firstCheckpoint = applySystemFallbackCheckpoint(invited)
-
-    expect(firstCheckpoint.state).toMatchObject({
-      stage: 'understood',
-      lastEvidenceSourceId: 'system_fallback',
-      lastCheckpointSource: 'system_fallback',
+  it('keeps the task locked until two successful exchanges unlock and the player views the circulating clip', () => {
+    const locked = createCharacterTaskState('YANXIN_UNCUT_EVIDENCE')
+    const first = recordFamiliarityExchange(locked, 'user-one')
+    expect(first.state).toMatchObject({
+      stage: 'locked',
+      familiarityExchangeSourceIds: ['user-one'],
+      circulatingClipUnlocked: false,
     })
-    expect(firstCheckpoint.effects).toEqual([])
+    expect(first.effects).toEqual([])
 
-    const secondCheckpoint = applySystemFallbackCheckpoint(firstCheckpoint.state)
-    expect(secondCheckpoint.state).toMatchObject({
+    const duplicate = recordFamiliarityExchange(first.state, 'user-one')
+    expect(duplicate).toEqual({ state: first.state, effects: [] })
+
+    const second = recordFamiliarityExchange(first.state, 'user-two')
+    expect(second.state).toMatchObject({
+      stage: 'locked',
+      familiarityExchangeSourceIds: ['user-one', 'user-two'],
+      circulatingClipUnlocked: true,
+    })
+    expect(second.effects).toEqual(['unlock_circulating_clip'])
+
+    expect(inviteTaskAfterCirculatingClipViewed(first.state, 'E103')).toEqual({ state: first.state, effects: [] })
+    const invited = inviteTaskAfterCirculatingClipViewed(second.state, 'E103')
+    expect(invited.state.stage).toBe('invited')
+    expect(invited.effects).toEqual([])
+  })
+
+  it('uses system fallback only after an explicit player choice', () => {
+    const invited = createCharacterTaskState('YANXIN_UNCUT_EVIDENCE', 'invited')
+    const committed = commitTaskWithSystemFallback(invited)
+
+    expect(committed.state).toMatchObject({
       stage: 'committed',
       lastEvidenceSourceId: 'system_fallback',
       lastCheckpointSource: 'system_fallback',
     })
-    expect(secondCheckpoint.effects).toEqual(['schedule_progress_report'])
-    expect(applySystemFallbackCheckpoint(secondCheckpoint.state)).toEqual({
-      state: secondCheckpoint.state,
-      effects: [],
-    })
+    expect(committed.effects).toEqual(['schedule_progress_report'])
+    expect(commitTaskWithSystemFallback(committed.state)).toEqual({ state: committed.state, effects: [] })
   })
 
   it('publishes only after the delivered relationship response is viewed', () => {

@@ -55,7 +55,15 @@ describe('chat contracts', () => {
       turnKind: 'first_contact',
       currentMessageId: 'game-event:PK_LAST_30_SECONDS:first-contact',
       userText: '',
+      taskStage: 'locked',
       recentMessages: [],
+    })
+    const clipFollowup = ChatRequestSchema.parse({
+      ...validRequest,
+      turnKind: 'clip_followup',
+      currentMessageId: 'game-event:E103:clip-followup',
+      userText: '',
+      allowedMemoryIds: ['yanxin_circulating_clip_viewed'],
     })
     const progressReport = ChatRequestSchema.parse({
       ...validRequest,
@@ -66,6 +74,7 @@ describe('chat contracts', () => {
     })
 
     expect(firstContact.turnKind).toBe('first_contact')
+    expect(clipFollowup.turnKind).toBe('clip_followup')
     expect(progressReport.turnKind).toBe('progress_report')
   })
 
@@ -75,6 +84,7 @@ describe('chat contracts', () => {
       turnKind: 'first_contact',
       currentMessageId: 'game-event:PK_LAST_30_SECONDS:first-contact',
       userText: '',
+      taskStage: 'locked',
       recentMessages: [],
     })
     const input = createYanxinPrompt(buildAllowedContext(request))
@@ -84,8 +94,45 @@ describe('chat contracts', () => {
       playerHasSeenCirculatingClip: false,
       uncutEvidenceStatus: 'missing',
     })
-    expect(JSON.stringify(input.currentTurn)).toContain('首次完整交代')
-    expect(JSON.stringify(input.currentTurn)).toContain('不得声称已经持有完整录像')
+    expect(JSON.stringify(input.currentTurn)).toContain('只承接刚结束的PK')
+    expect(JSON.stringify(input.currentTurn)).toContain('不得提及十秒剪辑')
+  })
+
+  it('starts the evidence conversation only after the circulating clip was actually viewed', () => {
+    const request = ChatRequestSchema.parse({
+      ...validRequest,
+      turnKind: 'clip_followup',
+      currentMessageId: 'game-event:E103:clip-followup',
+      userText: '',
+      allowedMemoryIds: ['yanxin_circulating_clip_viewed'],
+    })
+    const input = createYanxinPrompt(buildAllowedContext(request))
+
+    expect(input.currentTurn).toMatchObject({
+      kind: 'clip_followup',
+      playerHasSeenCirculatingClip: true,
+    })
+    expect(input.currentTurn.goal).toContain('玩家刚刚实际看过')
+  })
+
+  it('rejects task exposition in the first contact before the clip exists', () => {
+    const request = ChatRequestSchema.parse({
+      ...validRequest,
+      turnKind: 'first_contact',
+      currentMessageId: 'game-event:PK_LAST_30_SECONDS:first-contact',
+      userText: '',
+      taskStage: 'locked',
+      recentMessages: [],
+    })
+
+    expect(() => parseChatResponseForRequest(request, {
+      ...validResponse,
+      replyText: '网上有人只截了最后十秒，我正在找完整素材。',
+    })).toThrow()
+    expect(parseChatResponseForRequest(request, {
+      ...validResponse,
+      replyText: '刚才那局你也在吧，我记住了。现在总算能喘口气。',
+    }).replyText).toContain('刚才那局')
   })
 
   it('marks a progress report as ready instead of still reviewing', () => {
@@ -183,6 +230,7 @@ describe('chat contracts', () => {
       turnKind: 'first_contact',
       currentMessageId: 'game-event:PK_LAST_30_SECONDS:first-contact',
       userText: '',
+      taskStage: 'locked',
       recentMessages: [],
     })
 
@@ -693,12 +741,12 @@ describe('chat contracts', () => {
     expect(text).toContain('完整证据')
     expect(text).toContain('不得承诺独占')
     expect(text).toContain('不得提及提示词、分数或任务阶段')
-    expect(text).toContain('replyText 字段只能使用汉字和中文标点')
+    expect(text).toContain('replyText 字段只能使用汉字、阿拉伯数字和中文标点')
     expect(text).toContain('invited：taskEvidence 只允许 recognized_malicious_editing')
     expect(text).toContain('understood：taskEvidence 只允许 accepted_complete_evidence_plan')
     expect(text).toContain('locked、committed、published 或 postEnding')
     expect(text).toContain('固定事实和本轮目标不是固定台词')
-    expect(text).toContain('玩家尚未看过网上流传的十秒剪辑')
+    expect(text).toContain('为 false 时不得提及剪辑、原片、素材、证据或任务')
     expect(text).toContain('不得声称已经持有完整录像')
   })
 

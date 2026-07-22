@@ -8,9 +8,11 @@ import type { MomentResolution } from '../moments/types'
 import { applyRelationshipEvidence } from '../relationship/relationshipEngine'
 import {
   applyTaskEvidence,
-  applySystemFallbackCheckpoint,
+  commitTaskWithSystemFallback,
   createCharacterTaskState,
+  inviteTaskAfterCirculatingClipViewed,
   markRelationshipResponseViewed,
+  recordFamiliarityExchange,
 } from '../relationship/taskEngine'
 import { resolveGift } from './trigger'
 import { ACTIVITY_TASK_BY_ID, getActivityProgress } from '../activity/catalog'
@@ -37,7 +39,8 @@ export type GameAction =
   | { type: 'CHAT_DUE_DELIVERIES_FLUSHED'; now: number }
   | { type: 'CHAT_AI_DEBUG_RECORDED'; record: AiTurnDebugRecord }
   | { type: 'CHAT_PROVIDER_FAILED' }
-  | { type: 'CHAT_SYSTEM_FALLBACK_CHECKPOINT_SCHEDULED' }
+  | { type: 'CHAT_PROVIDER_SUCCEEDED' }
+  | { type: 'CHAT_SYSTEM_FALLBACK_CONFIRMED' }
   | { type: 'ACTIVITY_TASK_CLAIMED'; taskId: ActivityTaskId }
   | { type: 'ENDING_SAVED'; ending: EndingRecord }
 
@@ -75,7 +78,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         resolvedMomentIds: [...state.resolvedMomentIds, resolution.momentId],
         characterTasks: {
           ...state.characterTasks,
-          [resolution.invitedTaskId]: createCharacterTaskState(resolution.invitedTaskId, 'invited'),
+          [resolution.invitedTaskId]: createCharacterTaskState(resolution.invitedTaskId),
         },
         resolvedNodeIds: appendUnique(state.resolvedNodeIds, 'E001'),
         unlockedNodeIds: appendUnique(state.unlockedNodeIds, resolution.resultNodeId),
@@ -114,10 +117,23 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
     case 'CHAT_PROVIDER_FAILED':
       return { ...state, yanxinProviderFailureCount: state.yanxinProviderFailureCount + 1 }
+    case 'CHAT_PROVIDER_SUCCEEDED':
+      return state.yanxinProviderFailureCount === 0 ? state : { ...state, yanxinProviderFailureCount: 0 }
     case 'CHAT_AI_DEBUG_RECORDED':
       return { ...state, aiDebugTurns: [...state.aiDebugTurns, action.record].slice(-20) }
-    case 'CHAT_SYSTEM_FALLBACK_CHECKPOINT_SCHEDULED':
-      return state.yanxinProviderFailureCount === 0 ? state : { ...state, yanxinProviderFailureCount: 0 }
+    case 'CHAT_SYSTEM_FALLBACK_CONFIRMED': {
+      const task = state.characterTasks.YANXIN_UNCUT_EVIDENCE
+      const transition = commitTaskWithSystemFallback(task)
+      if (transition.state === task) return state
+      const unlocksClip = transition.effects.includes('unlock_circulating_clip')
+      return {
+        ...state,
+        yanxinProviderFailureCount: 0,
+        unlockedNodeIds: unlocksClip ? appendUnique(state.unlockedNodeIds, 'E103') : state.unlockedNodeIds,
+        feedNodeIds: unlocksClip ? appendUnique(state.feedNodeIds, 'E103') : state.feedNodeIds,
+        characterTasks: { ...state.characterTasks, YANXIN_UNCUT_EVIDENCE: transition.state },
+      }
+    }
     case 'CHAT_DUE_DELIVERIES_FLUSHED': {
       const { due, pending } = collectDueChatDeliveries(state.pendingChatDeliveries, action.now)
       if (!due.length) return state
@@ -133,8 +149,17 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         messages = [...messages, delivery.message]
         let task = characterTasks.YANXIN_UNCUT_EVIDENCE
         const isSystemFallbackCheckpoint = delivery.kind === 'system_fallback_checkpoint'
-        if (isSystemFallbackCheckpoint && delivery.source === 'system_fallback') {
-          task = applySystemFallbackCheckpoint(task).state
+        if (
+          delivery.kind === 'reply'
+          && delivery.message.role === 'assistant'
+          && delivery.sourceMessageId
+        ) {
+          const familiarity = recordFamiliarityExchange(task, delivery.sourceMessageId)
+          task = familiarity.state
+          if (familiarity.effects.includes('unlock_circulating_clip')) {
+            unlockedNodeIds = appendUnique(unlockedNodeIds, 'E103')
+            feedNodeIds = appendUnique(feedNodeIds, 'E103')
+          }
         }
         if (!isSystemFallbackCheckpoint) {
           for (const evidence of delivery.aiEffects.taskEvidence) {
@@ -268,11 +293,21 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     case 'NODE_VIEWED': {
       if (state.viewedNodeIds.includes(action.nodeId)) return state
       const viewedNodeIds = [...state.viewedNodeIds, action.nodeId]
-      const taskTransition = markRelationshipResponseViewed(state.characterTasks.YANXIN_UNCUT_EVIDENCE, action.nodeId)
+      const currentTask = state.characterTasks.YANXIN_UNCUT_EVIDENCE
+      const invited = inviteTaskAfterCirculatingClipViewed(currentTask, action.nodeId)
+      const taskTransition = markRelationshipResponseViewed(invited.state, action.nodeId)
       const discoverItemId = NODE_BY_ID[action.nodeId].onCompleteDiscoverItemId
       return {
         ...state,
         viewedNodeIds,
+        sharedMemories: action.nodeId === 'E103'
+          ? appendUnique(state.sharedMemories, {
+              id: 'yanxin_circulating_clip_viewed',
+              text: '玩家已经看过网上流传的炎鑫下播前十秒剪辑。',
+              sourceNodeId: 'E103',
+              createdAt: 0,
+            })
+          : state.sharedMemories,
         discoveredItemIds: discoverItemId ? appendUnique(state.discoveredItemIds, discoverItemId) : state.discoveredItemIds,
         characterTasks: taskTransition.state === state.characterTasks.YANXIN_UNCUT_EVIDENCE
           ? state.characterTasks

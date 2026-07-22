@@ -131,7 +131,7 @@ describe('persistence', () => {
     expect(loaded.state.yanxinPersona.relationship.identity).toBe('new_viewer')
   })
 
-  it('migrates a legacy task without using its fallback turn count', () => {
+  it('migrates a legacy invited task by exposing the missing circulating clip', () => {
     const storage = memoryStorage()
     const legacy = createInitialState() as unknown as Record<string, unknown>
     legacy.characterTasks = {
@@ -154,9 +154,13 @@ describe('persistence', () => {
       stage: 'invited',
       lastEvidenceSourceId: null,
       lastCheckpointSource: null,
+      familiarityExchangeSourceIds: [],
+      circulatingClipUnlocked: true,
       emittedEffects: [],
       unlockedResponseNodeIds: [],
     })
+    expect(loaded.state.unlockedNodeIds).toContain('E103')
+    expect(loaded.state.feedNodeIds).toContain('E103')
   })
 
   it('migrates a legacy pending delivery without applying its task signals', () => {

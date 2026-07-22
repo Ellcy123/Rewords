@@ -39,6 +39,7 @@ export function MessageSheet() {
       deliverAt: now + 8_000,
       aiEffects: { taskEvidence: [], relationshipEvidence: [], memoryCandidates: [], openLoopUpdates: [] },
       effect: 'none',
+      sourceMessageId: userMessageId,
     }
     dispatch({ type: 'CHAT_DELIVERY_SCHEDULED', delivery: recoveryDelivery })
     setText('')
@@ -46,7 +47,10 @@ export function MessageSheet() {
     const recentMessages = state.messages
       .filter((message): message is ChatMessage & { role: 'user' | 'assistant' } => message.role !== 'system')
       .slice(-12)
-    const allowedMemoryIds = state.sharedMemories.map(memory => memory.id).filter(isAllowedMemoryId)
+    const allowedMemoryIds = [
+      ...state.sharedMemories.map(memory => memory.id).filter(isAllowedMemoryId),
+      ...(state.viewedNodeIds.includes('E103') ? ['yanxin_circulating_clip_viewed' as const] : []),
+    ]
     const memories = state.longTermMemories.filter(memory => memory.active).slice(-10)
     const openLoops = state.openLoops.slice(-5)
     const result = await requestYanxinReply({
@@ -88,7 +92,7 @@ export function MessageSheet() {
           openLoopUpdates: result.data.openLoopUpdates,
         }
       : { taskEvidence: [], relationshipEvidence: [], memoryCandidates: [], openLoopUpdates: [] }
-    if (!result.ok) dispatch({ type: 'CHAT_PROVIDER_FAILED' })
+    dispatch({ type: result.ok ? 'CHAT_PROVIDER_SUCCEEDED' : 'CHAT_PROVIDER_FAILED' })
     const readyAt = Date.now()
     const debugRecord = createAiTurnDebugRecord({
       state,
@@ -114,10 +118,16 @@ export function MessageSheet() {
         readyAt,
         aiEffects,
         effect: 'none',
+        sourceMessageId: userMessageId,
       }),
     })
     setRequesting(false)
   }
+
+  const fallbackAvailable = state.yanxinProviderFailureCount >= 2
+    && state.resolvedMomentIds.includes('PK_LAST_30_SECONDS')
+    && taskStage !== 'committed'
+    && taskStage !== 'published'
 
   return <section className="message-screen" aria-label="与炎鑫的私信">
     <header className="message-header">
@@ -131,6 +141,12 @@ export function MessageSheet() {
       {state.messages.map(message => <article key={message.id} className={`message-bubble message-${message.role}`}>
         <p>{message.text}</p>
       </article>)}
+      {fallbackAvailable && <aside className="message-recovery" aria-label="离线保障">
+        <p>AI 对话连续失败，你可以手动使用离线保障继续试玩。</p>
+        <button type="button" onClick={() => dispatch({ type: 'CHAT_SYSTEM_FALLBACK_CONFIRMED' })}>
+          {taskStage === 'locked' ? '使用离线保障，解锁争议视频' : '使用离线保障，继续取证'}
+        </button>
+      </aside>}
     </div>
     {hasContact && <form className="message-composer" onSubmit={send}>
       <input value={text} maxLength={300} onChange={event => setText(event.target.value)} placeholder="给炎鑫发消息" aria-label="给炎鑫发消息" />
