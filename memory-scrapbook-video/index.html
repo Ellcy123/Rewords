@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>首尔夜行记录</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="stage" aria-label="闺蜜旅程动态手账预览">
+      <div class="grain"></div>
+      <div class="stars" aria-hidden="true">
+        <i style="--x: 14%; --y: 12%; --d: .3s">✦</i>
+        <i style="--x: 78%; --y: 9%; --d: 1.1s">✧</i>
+        <i style="--x: 63%; --y: 41%; --d: .7s">✦</i>
+        <i style="--x: 19%; --y: 73%; --d: 1.5s">✧</i>
+        <i style="--x: 86%; --y: 82%; --d: .9s">✦</i>
+      </div>
+
+      <header class="masthead">
+        <p class="eyebrow">SEOUL, KR · A LITTLE ARCHIVE OF US · 2026.07</p>
+        <h1>首尔<br /><em>夜行</em>记录</h1>
+        <p class="dek">三个人，一顿晚饭，和一条舍不得结束的路。</p>
+      </header>
+
+      <section class="collage" aria-label="动态照片拼贴">
+        <div class="paper paper-a"></div>
+        <div class="paper paper-b"></div>
+
+        <figure class="snapshot snapshot-main">
+          <div class="photo photo-main" role="img" aria-label="主照片示意"></div>
+          <img class="generated-frame frame-torn" src="./assets/seoul-night-kit/asset-01.png" alt="" aria-hidden="true" />
+          <figcaption>summer / 01</figcaption>
+        </figure>
+
+        <figure class="snapshot snapshot-small snapshot-small-a">
+          <div class="photo photo-cafe" role="img" aria-label="咖啡店照片示意"></div>
+          <figcaption>late lunch</figcaption>
+        </figure>
+
+        <figure class="snapshot snapshot-small snapshot-small-b">
+          <div class="photo photo-sky" role="img" aria-label="天空照片示意"></div>
+          <img class="generated-frame frame-polaroid" src="./assets/seoul-night-kit/asset-05.png" alt="" aria-hidden="true" />
+          <figcaption>look up</figcaption>
+        </figure>
+
+        <div class="filmstrip" aria-label="胶片照片条">
+          <span class="film-hole"></span><span class="film-hole"></span><span class="film-hole"></span>
+          <div class="film-photo film-photo-1"></div>
+          <div class="film-photo film-photo-2"></div>
+          <div class="film-photo film-photo-3"></div>
+          <span class="film-hole"></span><span class="film-hole"></span><span class="film-hole"></span>
+        </div>
+
+        <div class="cutout-wrap">
+          <div class="cutout cutout-one" aria-label="人物抠图示意"></div>
+          <span class="cutout-outline"></span>
+          <span class="sticker sticker-heart">♥</span>
+          <span class="sticker sticker-note">best<br />day</span>
+        </div>
+
+        <div class="caption-card">
+          <span class="caption-index">03</span>
+          <p>“下次还要<br />一起逃跑。”</p>
+          <small>— from us, to us</small>
+        </div>
+
+        <div class="date-stamp">07<br /><span>JUL</span></div>
+
+        <img class="generated generated-seoul" src="./assets/seoul-night-kit/asset-21.png" alt="" aria-hidden="true" />
+        <img class="generated generated-skyline" src="./assets/seoul-night-kit/asset-07.png" alt="" aria-hidden="true" />
+        <img class="generated generated-camera" src="./assets/seoul-night-kit/asset-19.png" alt="" aria-hidden="true" />
+        <img class="generated generated-ticket" src="./assets/seoul-night-kit/asset-18.png" alt="" aria-hidden="true" />
+      </section>
+
+      <footer class="footer-note">
+        <span>FRIENDSHIP IS A PLACE</span>
+        <span class="footer-rule"></span>
+        <span>SWIPE TO REMEMBER</span>
+      </footer>
+
+      <aside class="upload-panel" data-ui-only>
+        <label class="upload-button">
+          <input id="assetInput" type="file" accept="image/*" multiple />
+          <span>＋</span> 换入你的照片
+        </label>
+        <button id="replayButton" type="button">重播动效</button>
+        <p id="assetStatus">当前为示例素材，可上传 1～6 张照片替换。</p>
+      </aside>
+    </main>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

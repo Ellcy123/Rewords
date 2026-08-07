@@ -1,0 +1,15 @@
+{
+  "format": "9:16",
+  "duration": 8,
+  "fps": 30,
+  "theme": "seoul-night-friendship-trip",
+  "title": "首尔夜行记录",
+  "caption": "三个人，一顿晚饭，和一条舍不得结束的路。",
+  "assets": [
+    { "file": "inputs/IMG_4750.JPG", "role": "hero", "note": "三人夜间合照" },
+    { "file": "inputs/dji_export_20260726_photo_0009.jpg", "role": "secondary", "note": "餐厅双人合照" },
+    { "file": "inputs/IMG_4766.JPG", "role": "secondary", "note": "三人夜间合照" },
+    { "file": "inputs/IMG_4769.JPG", "role": "cutout-fallback", "note": "双人餐厅合照，暂用边框照片" },
+    { "file": "inputs/dji_export_20260726_photo_0012.jpg", "role": "filmstrip", "note": "餐厅双人合照" }
+  ]
+}

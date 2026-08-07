@@ -1,0 +1,12 @@
+{
+  "name": "memory-scrapbook-video",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "npx --yes serve . -l 4173",
+    "capture": "node capture.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.62.1"
+  }
+}
