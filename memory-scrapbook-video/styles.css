@@ -56,7 +56,9 @@ h1 em { color: var(--pink); font-style: italic; }
 .snapshot-small-a { right: 6%; top: 8%; aspect-ratio: 558 / 458; padding: 0; background: transparent; transform: rotate(8deg); animation: photo-in 1.15s 2.55s both; }
 .snapshot-small-b { right: 8%; bottom: 5%; aspect-ratio: 417 / 445; padding: 0; background: transparent; transform: rotate(-8deg); animation: photo-in 1.15s 3.25s both; }
 .photo { position: relative; overflow: hidden; aspect-ratio: 4 / 3; background: #334; }
-.snapshot-main .photo, .snapshot-small-a .photo, .snapshot-small-b .photo { width: 100%; height: 100%; aspect-ratio: auto; }
+.snapshot-main .photo, .snapshot-small-a .photo, .snapshot-small-b .photo { position: absolute; width: auto; height: auto; aspect-ratio: auto; }
+.snapshot-main .photo, .snapshot-small-a .photo { inset: 13% 10% 14%; }
+.snapshot-small-b .photo { inset: 9% 8% 23%; }
 .generated-frame { position: absolute; inset: 0; z-index: 3; display: block; width: 100%; height: 100%; object-fit: fill; pointer-events: none; filter: drop-shadow(0 10px 10px #0008); }
 .snapshot figcaption { z-index: 4; }
 .photo::after { content: ''; position: absolute; inset: 0; background: linear-gradient(140deg, transparent 42%, rgba(255,255,255,.18)); mix-blend-mode: screen; }
