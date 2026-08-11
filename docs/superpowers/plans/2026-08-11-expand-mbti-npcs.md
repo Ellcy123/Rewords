@@ -39,8 +39,8 @@
 - `未能输出/NPC设计/ENFP_唤犬师_V0.1.md` — genuine laughter summons a transparent dog that recalls today’s happiest ten seconds.
 - `未能输出/NPC设计/ESTJ_执法官_V0.1.md` — one observable mutual rule produces tickets for violations.
 - `未能输出/NPC设计/ESFJ_食神_V0.1.md` — the first bite tastes like the target’s remembered home.
-- `未能输出/NPC设计/ENFJ_伯乐_V0.1.md` — one handshake reveals the skill the target currently learns fastest.
-- `未能输出/NPC设计/ENTJ_加速师_V0.1.md` — an accepted explicit task doubles related action speed for ten minutes.
+- `未能输出/NPC设计/ENFJ_伯乐_V0.1.md` — one handshake reveals which recently practiced skill shows the strongest peer-relative progress.
+- `未能输出/NPC设计/ENTJ_加速师_V0.1.md` — an accepted explicit task doubles mastered repetitive-operation speed for ten minutes.
 
 **Modify**
 
@@ -166,7 +166,7 @@ Expected: `TARGETS_ABSENT=3`.
 
 - [ ] **Step 2: Write all three complete NPC documents**
 
-ENFP must require genuine audible laughter, summon only one transparent noncombat dog, recall an uncontrollable happiest ten-second memory, and expose compulsive positivity. ESTJ must place one observable ten-minute rule between herself and one other person, issue consequence-free tickets equally, exclude thoughts/feelings/truth, and expose the gap between equality and fairness. ESFJ must alter only the first bite to the target’s remembered home taste, provide no healing or memory playback, hide the tasted flavor from her, and expose care becoming coercion.
+ENFP must require genuine audible laughter, summon only one transparent noncombat dog for at most ten seconds, allow one successful lick before it disappears, affect each target at most once daily, recall an uncontrollable happiest ten-second memory, and expose compulsive positivity. ESTJ must place one observable ten-minute rule between herself and one other person, issue consequence-free tickets equally, exclude thoughts/feelings/truth, and expose the gap between equality and fairness. ESFJ must alter only the first bite to the target's remembered home taste, provide no healing or memory playback, hide the tasted flavor from her, and expose care becoming coercion.
 
 - [ ] **Step 3: Validate required sections and approved ability names**
 
@@ -208,7 +208,7 @@ Expected: `TARGETS_ABSENT=2`.
 
 - [ ] **Step 2: Write both complete NPC documents**
 
-ENFJ must reveal only the currently fastest-learned concrete skill once per person, show neither desire nor happiness, and expose love for potential becoming control. ENTJ must require a understood explicit task and voluntary “收到”, double only task-related action speed for ten minutes, preserve fatigue/error/cost, and expose completion being mistaken for agreement.
+ENFJ must reveal only the highest peer-relative progress rank among concrete skills personally practiced for at least ten minutes in the previous thirty days, once per person, show neither desire nor happiness, and expose love for potential becoming control. ENTJ must require an understood explicit task and voluntary “收到”, double only already-mastered noncombat repetitive-operation speed for ten minutes, preserve fatigue/error/cost, and expose completion being mistaken for agreement.
 
 - [ ] **Step 3: Validate required sections and approved ability names**
 
@@ -274,8 +274,8 @@ Confirm all of the following exact distinctions:
 - 唤犬师 recalls one happy memory; it does not erase grief.
 - 执法官 records observable rule violations; it does not force obedience or detect lies.
 - 食神 recreates a taste; it does not read or heal memories.
-- 伯乐 reveals learning aptitude; it does not reveal destiny or desire.
-- 加速师 increases movement speed for an accepted task; it does not compel consent or grant skill.
+- 伯乐 compares a bounded set of recently practiced skills; it does not reveal unknown talents, destiny, or desire.
+- 加速师 increases mastered repetitive-operation speed for an accepted task; it does not accelerate movement, combat, tools, compel consent, or grant skill.
 
 - [ ] **Step 5: Commit roster integration**
 
