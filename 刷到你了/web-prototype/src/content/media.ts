@@ -16,7 +16,7 @@ function media(id: NodeId, captions: CaptionCue[]): VideoMedia {
   }
 }
 
-export const MEDIA_BY_NODE_ID: Record<NodeId, VideoMedia> = {
+export const MEDIA_BY_NODE_ID: Partial<Record<NodeId, VideoMedia>> = {
   W001: media('W001', cues('婚礼开始第 7 秒，新娘死亡', '婚礼未完成', '这么高，谁够得到？')),
   W101: media('W101', cues('有梯子，新娘还是死了', '他解决了身高，没有解决专业', '够得到，不等于会修')),
   W300: media('W300', cues('新娘活下来了，婚礼却死了', '救命的握手，被剪成了私会', '前后内容呢？有证据吗？')),
@@ -25,7 +25,6 @@ export const MEDIA_BY_NODE_ID: Record<NodeId, VideoMedia> = {
   C001: media('C001', cues('王妃翻墙私逃，被抓现行', '国师：娘娘有证据吗？', '三丈宫墙，一梯到顶')),
   C101: media('C101', cues('国师抵赖，被录下来了', '证据太小，满朝文武看不清', '把证据投到影壁上')),
   K001: media('K001', cues('结论：电脑先冻关机了', '你要的是散热，不是把电脑送走', '关键数据在墙外')),
-  K101: media('K101', cues('梯子连接成功', '知识区的梯子，当然是 VPN', '翻了半天，先精准投放我')),
   X001: media('X001', cues('师傅到了，还是够不着', '专业到了，高度没到', '现场不具备登高条件')),
   X004: media('X004', cues('两把梯子，还是不会修', '高度翻倍，知识没有', '脑子问题：仍未解决')),
   X012: media('X012', cues('师傅开始维修这段感情', '深度服务，指的是吊顶深度', '感情温度 16 度，建议检修')),

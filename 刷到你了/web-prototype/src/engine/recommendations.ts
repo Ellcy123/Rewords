@@ -1,6 +1,6 @@
 import { ITEM_BY_ID } from '../content/items'
 import { NODE_BY_ID } from '../content/nodes'
-import { findCorrectTrigger, findDiscoveryTrigger } from '../content/triggers'
+import { findCorrectTrigger } from '../content/triggers'
 import type { ItemDefinition, NodeId } from '../content/types'
 import type { GameState } from './state'
 
@@ -21,7 +21,9 @@ export function selectGiftOptions(state: GameState, nodeId: NodeId): GiftOption[
     if (state.inventory[itemId] > 0) return { item, recommended, availability: 'owned' }
     if (state.discoveredItemIds.includes(itemId)) return { item, recommended, availability: 'buy' }
 
-    const destinationNodeId = findDiscoveryTrigger(itemId)?.targetNodeId
+    const destinationNodeId = item.sourceNodeIds.find(sourceNodeId => (
+      state.feedNodeIds.includes(sourceNodeId) && !state.resolvedNodeIds.includes(sourceNodeId)
+    ))
     if (destinationNodeId && state.feedNodeIds.includes(destinationNodeId) && !state.resolvedNodeIds.includes(destinationNodeId)) {
       return { item, recommended, availability: 'find', destinationNodeId }
     }

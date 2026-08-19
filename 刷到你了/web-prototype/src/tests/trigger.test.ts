@@ -18,4 +18,8 @@ describe('prototype trigger graph', () => {
   ] as const)('%s + %s resolves to %s', (target, item, result) => {
     expect(findTrigger(target, item)?.resultNodeId).toBe(result)
   })
+
+  it('opens the PK relationship entry alongside W300 after the lamp rig is repaired', () => {
+    expect(findTrigger('W101', 'technician')?.additionalUnlockNodeIds).toEqual(['E001'])
+  })
 })

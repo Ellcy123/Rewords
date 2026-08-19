@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { NODE_BY_ID } from '../content/nodes'
 import { PlaybackProvider } from '../feed/PlaybackContext'
@@ -7,6 +7,17 @@ import '../styles/feed.css'
 import '../styles/stage.css'
 
 describe('video product card', () => {
+  it('counts a view only after the active node duration has elapsed', () => {
+    vi.useFakeTimers()
+    const onViewed = vi.fn()
+    render(<PlaybackProvider><VideoCard node={NODE_BY_ID.W001} active onViewed={onViewed} /></PlaybackProvider>)
+    act(() => vi.advanceTimersByTime(NODE_BY_ID.W001.duration * 1_000 - 1))
+    expect(onViewed).not.toHaveBeenCalled()
+    act(() => vi.advanceTimersByTime(1))
+    expect(onViewed).toHaveBeenCalledTimes(1)
+    vi.useRealTimers()
+  })
+
   it('presents a product link as a prominent yellow cart', () => {
     render(
       <PlaybackProvider>

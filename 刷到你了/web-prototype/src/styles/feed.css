@@ -354,3 +354,4 @@
     transition-duration: 40ms !important;
   }
 }
+.action-rail button.is-engaged { color: #ff4d6d; }

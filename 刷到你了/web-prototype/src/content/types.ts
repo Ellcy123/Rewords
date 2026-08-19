@@ -1,12 +1,14 @@
 export type NodeId =
   | 'W001' | 'W101' | 'W300' | 'W301' | 'W400'
   | 'C001' | 'C101' | 'K001' | 'K101'
+  | 'E001' | 'E101' | 'E102' | 'E103' | 'E201'
   | 'X001' | 'X004' | 'X012' | 'X016' | 'X021' | 'X028'
 
 export type ItemId = 'ladder' | 'technician' | 'recorder' | 'projector'
-export type Channel = 'wedding' | 'costume' | 'knowledge'
-export type ResultKind = 'main' | 'resource' | 'wrong' | 'completion'
+export type Channel = 'wedding' | 'costume' | 'knowledge' | 'entertainment'
+export type ResultKind = 'main' | 'resource' | 'wrong' | 'completion' | 'relationship'
 export type CaptionStyle = 'result' | 'explanation' | 'comment'
+export type MediaMode = 'video' | 'storyboard'
 
 export interface CaptionCue {
   start: number
@@ -41,7 +43,9 @@ export interface ItemDefinition {
   name: string
   shortName: string
   price: number
-  sourceNodeId: NodeId
+  sourceNodeIds: NodeId[]
+  mainlineUseNodeIds: NodeId[]
+  requiredForMainline: boolean
   description: string
   icon: string
   repeatable: true
@@ -62,8 +66,10 @@ export interface VideoNode {
   selectableItemIds: ItemId[]
   resultKind: ResultKind
   visualMotif: string
+  mediaMode: MediaMode
   media?: VideoMedia
   onCompleteUnlock?: NodeId
+  onCompleteDiscoverItemId?: ItemId
 }
 
 export interface TriggerDefinition {
@@ -72,6 +78,7 @@ export interface TriggerDefinition {
   resultNodeId: NodeId
   kind: ResultKind
   discoverItemId?: ItemId
+  additionalUnlockNodeIds?: NodeId[]
 }
 
 export interface ContentCatalog {
