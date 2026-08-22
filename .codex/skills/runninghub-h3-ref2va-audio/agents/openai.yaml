@@ -1,0 +1,4 @@
+interface:
+  display_name: "RunningHub H3 Audio REF2VA"
+  short_description: "Generate H3 video with three images and two audio refs"
+  default_prompt: "Use $runninghub-h3-ref2va-audio to generate an H3 video from my images, audio references, and prompt."
