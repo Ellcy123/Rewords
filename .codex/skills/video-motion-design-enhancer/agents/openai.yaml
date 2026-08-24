@@ -1,0 +1,4 @@
+interface:
+  display_name: "视频动作设计增强器"
+  short_description: "强化视频镜头中的动作节奏、重量表现、环境响应与首尾帧衔接"
+  default_prompt: "使用 $video-motion-design-enhancer 增强这个视频镜头的动作设计和生成提示词。"
