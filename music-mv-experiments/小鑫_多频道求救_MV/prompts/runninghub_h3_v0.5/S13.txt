@@ -1,0 +1,11 @@
+Picture 1 is the exact opening frame and controls the abandoned radio in the wet foreground, four green channel lights, distant soft silhouette, industrial corridor, rain reflections, and cold teal atmosphere. Picture 2 is Xiaoxin's identity and wardrobe reference: use only the blurred standing views to preserve the distant silhouette's body proportions and black survival clothing; the face remains unrecognizable at this distance. Picture 3 duplicates Picture 1 and is only a scene reference. Reference Audio 1 is the exact outro segment and controls the off-screen calls, radio-static rhythm, SOS peak, and final channel cutoff.
+
+Create a six-second cinematic outro with three clearly edited shots. The callers remain off-screen; no visible person lip-syncs. Preserve the same radio, exactly four green lights, and one distant Xiaoxin silhouette.
+
+[Shot 1] From 00:00.000 to 00:01.700, begin from Picture 1 in a locked 85mm macro shot of the radio. On <d>[Chinese] 小鑫，请回答。</d>, the four green lights pulse together once, then continue a weak uneven flicker. Rain beads move slowly across the casing; the silhouette stays soft and still in the distance.
+
+[Shot 2] At 00:01.700, hard cut to a 135mm telephoto shot focused on the distant silhouette from behind. On <d>[Chinese] 小鑫——</d>, he takes exactly one slow step away from camera and stops beneath the cold overhead light. The radio remains a blurred green glow at the extreme foreground edge. The camera is locked and does not follow.
+
+[Shot 3] At 00:03.400, hard cut back to an extreme low-angle macro of the four channel lights. Static intensifies; on <d>[Chinese] SOS！</d>, all four lights cut out simultaneously and permanently. The image falls to near-black while faint rain reflection remains for at least twelve frames. No light turns back on.
+
+No extra silhouette, visible caller, lip-sync, readable radio text, random light count, relighting, camera shake, pulse zoom, horror face, gore, subtitle, logo, or watermark. Reference Audio 1 is the temporary source and the original master audio will be restored in the final edit.

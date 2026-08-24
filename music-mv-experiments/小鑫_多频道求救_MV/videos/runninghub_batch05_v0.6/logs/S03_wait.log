@@ -1,0 +1,43 @@
+Task 2091480185043120130: RUNNING
+Task 2091480185043120130: SUCCESS
+Downloading node 122 -> runninghub_h3_audio_2091480185043120130.mp4
+{
+  "taskId": "2091480185043120130",
+  "status": "SUCCESS",
+  "errorCode": "",
+  "errorMessage": "",
+  "results": [
+    {
+      "url": "https://rh-images-1252422369.cos.ap-beijing.myqcloud.com/57bb5f946e4ed5b2d068ef37c4dadc0a/output/MiniMaxH3/stable_4v4a_00001_p83-audio_zhzbk_1787483169.mp4",
+      "nodeId": "122",
+      "outputType": "mp4",
+      "text": null
+    }
+  ],
+  "clientId": "",
+  "promptTips": "",
+  "failedReason": {},
+  "usage": {
+    "consumeMoney": null,
+    "consumeCoins": "94",
+    "taskCostTime": "467",
+    "thirdPartyConsumeMoney": null
+  },
+  "parentTaskId": null,
+  "taskUsageList": [
+    {
+      "taskId": "2091480185043120130",
+      "parentTaskId": null,
+      "taskStatus": "SUCCESS",
+      "usage": {
+        "consumeMoney": null,
+        "consumeCoins": "94",
+        "taskCostTime": "467",
+        "thirdPartyConsumeMoney": null
+      }
+    }
+  ],
+  "saved": [
+    "/Users/m4/project/rewords/music-mv-experiments/小鑫_多频道求救_MV/videos/runninghub_batch05_v0.6/S03/runninghub_h3_audio_2091480185043120130.mp4"
+  ]
+}

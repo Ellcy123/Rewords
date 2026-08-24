@@ -1,0 +1,24 @@
+Create a 15-second vertical 9:16 flat 2D dark-fairy-tale music-video ending. The original song content lasts approximately 14.48 seconds and Reference Audio 1 includes a short silent pad at the end.
+
+REFERENCE ROLES
+Picture 1 is the exact first frame showing the knight, the flat cursor, the unopened bone-white doorway, and the moon eye motif. Picture 2 is the only identity reference for the knight and must preserve his exact armor, helmet, sword, and proportions. Picture 3 defines only the flat gothic-tarot, ornamental folk-horror, and printed storybook art direction; do not copy its characters. Reference Audio 1 controls the final vocal line, emotional suspension, visual beats, and tail hold. Do not invent dialogue or lip movement. Final audio will be replaced by the original song.
+
+NARRATIVE INTENT
+The knight asks whether waking up was itself an error. The expected deletion begins, but the player stops before completing it. This is not a triumphant escape and not a resolved happy ending. The last image must hold the fragile possibility that he may be allowed to remain.
+
+0.0–4.0s: Continue directly from S05. The white cursor moves toward a wine-red rectangular deletion field that descends from the top like a flat guillotine card. As the field approaches, the knight's outer paper edges begin breaking into square black fragments. He stays still and looks at the cursor. Do not distort his core identity.
+
+4.0–8.0s: On the phrase about being wrong, the moon eye closes. The chessboard, doorway, and tarot border progressively lose color until only charcoal black, bone white, and one wine-red line remain. The knight's shadow detaches and stands behind him like the outline of the red-haired princess, but only as a simple silhouette. No second detailed character.
+
+8.0–11.5s: On the final plea, the cursor stops one small distance before touching the deletion field. Freeze every element for a brief beat. The falling red field also freezes. One burnt-gold crack of light appears between cursor and field, preventing contact. The knight's dissolving paper fragments reverse once and return to his body through a hard backward match cut.
+
+11.5–14.2s: Compress the closed moon eye into an infinitesimal wine-red dot. The dot falls into the center of the knight's visor and becomes a tiny steady light. The princess-shaped shadow returns beneath his feet without disappearing. The bone-white doorway remains closed but visible.
+
+14.2–15.0s: During the padded silence, hold a completely static final tarot frame: one intact ordinary knight in shadow, one stopped cursor, one frozen deletion field, one closed doorway, and one tiny gold-red light in the visor. End abruptly with no fade and no additional action.
+
+STYLE AND MOTION RULES
+Pure flat 2D cel animation, paper-cut disintegration and exact reversal, printed grain, hard graphic freeze, limited palette, stepped motion, symbolic shadow, editorial match cut. Emotional restraint is essential; fear is carried by stillness and the stopped cursor.
+
+STRICT NEGATIVE CONSTRAINTS
+No successful deletion, no full escape, no celebratory ending, no live action, no photorealism, no 3D, no realistic lighting, no volumetric glow, no depth of field, no camera orbit, no readable delete text, no subtitles, no logos, no watermark, no duplicated knight, no detailed second character, no armor drift, no face drift, no sword deformation, no gore, no screaming, no lip-sync dialogue, and no fade-out.
+

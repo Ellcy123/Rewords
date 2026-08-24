@@ -1,0 +1,50 @@
+{
+  "webappId": "2087127180013817858",
+  "nodeInfoList": [
+    {
+      "nodeId": "34",
+      "fieldName": "image",
+      "fieldValue": "LOCAL_FILE:/Users/m4/project/rewords/music-mv-experiments/小鑫_多频道求救_MV/keyframes/selected/P02_group_cluster_start_v03.png"
+    },
+    {
+      "nodeId": "35",
+      "fieldName": "image",
+      "fieldValue": "LOCAL_FILE:/Users/m4/project/rewords/music-mv-experiments/小鑫_多频道求救_MV/references/小鑫_MiniMax专用角色卡_站立面部模糊_V0.2.png"
+    },
+    {
+      "nodeId": "36",
+      "fieldName": "image",
+      "fieldValue": "LOCAL_FILE:/Users/m4/project/rewords/music-mv-experiments/小鑫_多频道求救_MV/keyframes/selected/P03_group_wall_start_v03.png"
+    },
+    {
+      "nodeId": "37",
+      "fieldName": "value",
+      "fieldValue": 4
+    },
+    {
+      "nodeId": "39",
+      "fieldName": "value",
+      "fieldValue": "Picture 1 is the exact opening frame and controls the clean five-person compact asymmetric formation, 35mm left-front viewpoint, wet underground junction, foreground-to-background depth, reflections, and cyan-amber-red lighting. Picture 2 is Xiaoxin's identity and wardrobe reference: only the sharp large portrait controls the lead's face; the blurred standing views control his black survival clothing, harness, gloves, boots, and left-forearm bandage. Picture 3 preserves the same four distinct rescued men and their separate faces and outfits, but its human-wall pose is only a cast reference. Reference Audio 1 is the exact target segment and controls the 136 BPM beat timing, Xiaoxin's sung phrase, and the hard cut.\n\nCreate a four-second teaser of hard-hitting, cinematic K-pop boy-group choreography with exactly five young East Asian men and two clearly edited angles. Xiaoxin remains the center lead and only singer, identified as (S1), singing <d>[Chinese] 一辆车，一条隧道。</d> This is urgent choreographic movement, not a pose reveal: all five begin moving in the first quarter-second and complete a visible short phrase before each cut. The group faces real escape routes under pressure rather than an abstract audience.\n\n[Shot 1] From 00:00.000 to 00:01.100, begin exactly from Picture 1 in a 32mm full-body medium-wide shot, 25 degrees left-front at chest height. Use a smooth, fast-but-stable 20-degree lateral dolly arc; no handheld shake. On the very first beat, Xiaoxin drives one grounded diagonal step forward with his right foot, pulls his bandaged left forearm sharply from low right to his sternum, then snaps his right forearm outward toward the cyan route. The four dancers execute one coordinated two-count response: the two behind his shoulders make opposite low-to-high arm sweeps while stepping on separate diagonals, the low dancer rises into a sharp shoulder hit, and the tall rear dancer slices one forearm toward the red route. All bodies travel a small but clearly visible distance, then land in separate depths. No one touches or crosses another path.\n\n[Shot 2] At 00:01.100, make a beat-matched hard cut to a true vertical overhead wide shot. On “一条隧道,” the four dancers perform a brisk two-count heel-toe travel outward along four unequal route directions while their inside elbows pull to their ribs and outside forearms carve forward. Xiaoxin stays centered, performs one crisp chest hit, steps a half-foot forward, and raises one right palm to shoulder height on the final count. The formation changes visibly from compact arrowhead into a broken, asymmetric directional fan by 00:01.700, then holds only for the final fraction of a second.\n\nMovement must feel immediate, 136 BPM, sharp, grounded, and continuously motivated; clean short travels are required. Keep five separate heads, hands, forearms, legs, and feet. No slow introductory stillness, mannequin posing, crouching bounce, freestyle, flailing, fighting, grabbing, touching, flat lineup, W, V, diamond, equal spacing, jumping, spinning, complete orbit, camera shake, speed ramp, sixth person, cloned face, merged limbs, new stains, texture boiling, skin speckle, text, logo, or watermark. Reference Audio 1 is temporary and will be replaced by the original master song.\n"
+    },
+    {
+      "nodeId": "84",
+      "fieldName": "audio",
+      "fieldValue": "LOCAL_FILE:/Users/m4/project/rewords/music-mv-experiments/小鑫_多频道求救_MV/references/audio/segments/P02A_32.934-34.934.wav"
+    },
+    {
+      "nodeId": "85",
+      "fieldName": "audio",
+      "fieldValue": "LOCAL_FILE:/Users/m4/project/rewords/music-mv-experiments/小鑫_多频道求救_MV/references/audio/segments/P02A_32.934-34.934.wav"
+    },
+    {
+      "nodeId": "89",
+      "fieldName": "aspect_ratio",
+      "fieldValue": "16:9 (Widescreen)"
+    },
+    {
+      "nodeId": "138",
+      "fieldName": "aspect_ratio",
+      "fieldValue": "16:9 (Widescreen)"
+    }
+  ]
+}

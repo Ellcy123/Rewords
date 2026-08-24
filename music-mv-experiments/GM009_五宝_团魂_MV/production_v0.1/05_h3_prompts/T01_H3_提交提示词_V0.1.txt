@@ -1,0 +1,11 @@
+Picture 1 is the exact opening frame and controls the huge blast-door hall, Xiaoxin's full-body position, cyan opening, wet reflections, distant silhouettes, and teal-amber lighting. Picture 2 controls the later 85mm facial close-up, radio placement, eyeline and expression. Picture 3 is C01 Xiaoxin's identity and wardrobe reference: only the sharp right portrait controls his facial identity; the blurred standing views control his body proportions, black work shirt, harness, gloves, boots and the white bandage on his left forearm. Reference Audio 1 is the exact 00.000–08.000 master segment and controls the group-chant rhythm and cut points.
+
+Create an eight-second cinematic three-shot intro with one Xiaoxin and no other clear uninfected person. Xiaoxin carries the visible lead performance for the exact sung text “One beat, one team / 全员同频.” His objective is to answer the first signal and silently commit to finding the others.
+
+[Shot 1 — 00:00.000–00:02.600] Begin exactly from Picture 1 in a low 28mm environment wide. Use one slow stable push-in of low amplitude. Xiaoxin takes one measured step into the hall, stops, and raises the shoulder radio once. The two tiny infected silhouettes remain far beyond the door and move only one uneven step.
+
+[Shot 2 — 00:02.600–00:05.300] Beat-matched hard cut to Picture 2's 85mm three-quarter face close-up. On the audible group chant, his lips form the exact short phrase “全员同频,” matching Reference Audio 1 syllable-for-syllable. His eyeline stays on the green radio light; on the last syllable, his lower eyelids tighten and he gives one tiny decisive inhale. His head and shoulders remain steady.
+
+[Shot 3 — 00:05.300–00:08.000] Hard cut to an extreme insert of his gloved thumb pressing the push-to-talk switch once. Five small channel lights illuminate one after another on separate beats. His bandaged left forearm remains anatomically correct. End on the fifth light holding steady.
+
+No direct blank lens stare, no repeated nodding, no body vibration, no extra Xiaoxin, no clear infected face, no attack, no random light count, no malformed hand, no camera shake, no pulse zoom, no text, logo or watermark. Generated audio is temporary and will be replaced by the master song.

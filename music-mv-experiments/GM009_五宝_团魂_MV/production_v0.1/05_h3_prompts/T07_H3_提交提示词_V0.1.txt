@@ -1,0 +1,11 @@
+Picture 1 controls the exact three-person diagonal, E10 corridor, two infected, action lanes and lighting. Picture 2 controls C02's Rap close-up, baton position, eyeline and foreground parallax. Picture 3 is C02's identity and wardrobe reference: use its sharp portrait for the only clear face and blurred standing views for the blue-gray jacket, radio, body and boots. Reference Audio 1 is the exact 36.000–42.000 master segment and controls the fast Rap delivery, four action accents and hard cuts.
+
+Create a six-second three-member Rap combat relay with exactly three uninfected men and two infected. The exact Rap words in Reference Audio 1 are: “Step in, chin up, ready now / 不同声线，同一拍点落下 / No copy paste, each one got style / 五种锋芒，把规则改写.”
+
+[Shot 1 — 00:00.000–00:02.000] Begin from Picture 1 in a stabilized 28mm environment wide. C01 blocks the first infected's reach once with his forearm guard and separates. C03 pulls the fallen barrier sideways once to open a lane. C02 advances two grounded steps between them. No three actions happen at the same instant; use a readable left-to-right relay.
+
+[Shot 2 — 00:02.000–00:04.000] Beat-matched hard cut to Picture 2's 60mm C02 close-up. He performs only the Rap syllables currently heard in Reference Audio 1, especially “No copy paste, each one got style,” with precise lips and still shoulders. On the final word “style,” he gives one brief chin lift, never a repeated nod, and breaks his eyeline toward the nearest infected.
+
+[Shot 3 — 00:04.000–00:06.000] Action-match cut to a low 35mm full-body side shot. C02 performs one clean baton-to-forearm parry, immediately retracts the baton, and runs through the opened lane. C01 and C03 follow in separate depths while the two infected remain behind.
+
+No simultaneous chaotic brawl, no repeated strikes, no head hit, no body crossing, no cloned member, no clear infected face, no gore, no freestyle gesturing, no camera shake, no speed ramp, no text or logo. Generated audio is only a guide; final edit restores the master.

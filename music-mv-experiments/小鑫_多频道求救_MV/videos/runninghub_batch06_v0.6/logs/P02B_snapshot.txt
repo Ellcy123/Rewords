@@ -1,0 +1,38 @@
+{
+  "taskId": "2091487436277501953",
+  "status": "FAILED",
+  "errorCode": "805",
+  "errorMessage": "工作流运行失败",
+  "results": null,
+  "clientId": "",
+  "promptTips": "",
+  "failedReason": {
+    "current_outputs": "{}",
+    "exception_type": "RuntimeError",
+    "node_name": "llama_cpp_model_loader",
+    "current_inputs": "{}",
+    "traceback": "[\"  File \\\"/workspace/ComfyUI/execution.py\\\", line 1767, in execute\\n    output_data, output_ui, has_subgraph, has_pending_tasks = await get_output_data(prompt_id, unique_id, obj, input_data_all, execution_block_cb=execution_block_cb, pre_execute_cb=pre_execute_cb, v3_data=v3_data)\\n\",\"  File \\\"/workspace/ComfyUI/execution.py\\\", line 553, in get_output_data\\n    return_values = await _async_map_node_over_list(prompt_id, unique_id, obj, input_data_all, obj.FUNCTION, allow_interrupt=True, execution_block_cb=execution_block_cb, pre_execute_cb=pre_execute_cb, v3_data=v3_data)\\n\",\"  File \\\"/workspace/ComfyUI/execution.py\\\", line 527, in _async_map_node_over_list\\n    await process_inputs(input_dict, i)\\n\",\"  File \\\"/workspace/ComfyUI/execution.py\\\", line 515, in process_inputs\\n    result = f(**inputs)\\n\",\"  File \\\"/workspace/ComfyUI/custom_nodes/ComfyUI-llama-cpp_vlm/nodes.py\\\", line 618, in loadmodel\\n    LLAMA_CPP_STORAGE.load_model(custom_config)\\n\",\"  File \\\"/workspace/ComfyUI/custom_nodes/ComfyUI-llama-cpp_vlm/nodes.py\\\", line 464, in load_model\\n    raise RuntimeError(f\\\"Failed to load model: {model}\\\\n{error_detail}\\\")\\n\"]",
+    "node_id": "51",
+    "exception_message": "Failed to load model: gemma-4-26b-a4b-it-heretic.q4_k_m.gguf\n2026-08-23 19:28:48.628 ggml_backend_cuda_buffer_type_alloc_buffer: allocating 16071.80 MiB on device 0: cudaMalloc failed: out of memory\n2026-08-23 19:28:48.628 alloc_tensor_range: failed to allocate CUDA0 buffer of size 16852508160\n2026-08-23 19:28:49.179 llama_model_load: error loading model: unable to allocate CUDA0 buffer\n2026-08-23 19:28:49.180 llama_model_load_from_file_impl: failed to load model"
+  },
+  "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": null
+  },
+  "parentTaskId": null,
+  "taskUsageList": [
+    {
+      "taskId": "2091487436277501953",
+      "parentTaskId": null,
+      "taskStatus": "FAILED",
+      "usage": {
+        "consumeMoney": null,
+        "consumeCoins": null,
+        "taskCostTime": "0",
+        "thirdPartyConsumeMoney": null
+      }
+    }
+  ]
+}

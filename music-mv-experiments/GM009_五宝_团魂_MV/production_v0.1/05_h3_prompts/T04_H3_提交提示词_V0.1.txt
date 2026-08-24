@@ -1,0 +1,11 @@
+Picture 1 controls the door-hall wide composition, C04's full-body position, control lever, five red lamps, distant crowd, wet geometry and lighting. Picture 2 controls the later 90mm profile close-up and exact eyeline. Picture 3 is C04's identity and wardrobe reference: the sharp right portrait controls his face; the blurred standing views control his dark olive hooded jacket, shoulder radio, body proportions, trousers and boots. Reference Audio 1 is the exact 17.800–23.000 master segment and controls the countdown rhythm, singing mouth timing and first “All in” impact.
+
+Create a six-second three-shot warning-and-door sequence. C04 sings while counting the remaining seconds and committing to the shared route. The exact sung text within this segment is: “倒数三、二、一，全场安静 / 下一拍，看我们接管风景 / We go all in, all in.”
+
+[Shot 1 — 00:00.000–00:02.000] Begin from Picture 1 in a stable 28mm environment wide. Five red lamps extinguish one at a time on separate beats while C04 turns only his upper body toward the distant crowd. The crowd takes one slow collective step but remains far outside the safety radius.
+
+[Shot 2 — 00:02.000–00:04.000] Hard cut to Picture 2's 90mm close-up. His lips sing the exact short countdown phrase currently audible in Reference Audio 1, then form “下一拍，看我们接管风景” precisely and naturally. His eyes make one controlled movement from the crowd to the radio; on “下一拍,” he takes one shallow inhale and sets his jaw. Head and shoulders stay steady.
+
+[Shot 3 — 00:04.000–00:06.000] Beat-matched cut back to a low 35mm medium-wide. On the first audible “All in,” C04 pulls the control once with both hands. The blast door begins closing and a narrow cyan gap remains. He completes the pull and recovers into a balanced stance.
+
+No sprinting horde, no clear infected face, no extra lamp, no lamp relighting, no repeated lever pumping, no duplicated C04, no shaking body, no gore, no malformed hands, no text or logo. Final edit replaces generated sound with the master.

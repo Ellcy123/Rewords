@@ -1,0 +1,50 @@
+{
+  "webappId": "2087127180013817858",
+  "nodeInfoList": [
+    {
+      "nodeId": "34",
+      "fieldName": "image",
+      "fieldValue": "LOCAL_FILE:/Users/m4/project/rewords/music-mv-experiments/小鑫_多频道求救_MV/keyframes/selected/P03_group_wall_start_v03.png"
+    },
+    {
+      "nodeId": "35",
+      "fieldName": "image",
+      "fieldValue": "LOCAL_FILE:/Users/m4/project/rewords/music-mv-experiments/小鑫_多频道求救_MV/references/小鑫_MiniMax专用角色卡_站立面部模糊_V0.2.png"
+    },
+    {
+      "nodeId": "36",
+      "fieldName": "image",
+      "fieldValue": "LOCAL_FILE:/Users/m4/project/rewords/music-mv-experiments/小鑫_多频道求救_MV/keyframes/selected/P03_group_wall_start_v03.png"
+    },
+    {
+      "nodeId": "37",
+      "fieldName": "value",
+      "fieldValue": 8
+    },
+    {
+      "nodeId": "39",
+      "fieldName": "value",
+      "fieldValue": "Picture 1 is the exact opening frame and is the complete five-person cast roster, opening composition, wet underground junction, foreground shoulder framing, layered spacing, and cyan-amber-red lighting. Picture 2 is Xiaoxin's identity and wardrobe reference. Picture 3 is an automatic duplicate of Picture 1: it is the same single opening frame and must not introduce any new person. Reference Audio 1 controls 136 BPM timing, Xiaoxin's Chinese singing timing only when his mouth is visible, and the final “三、二、一” choreography accents. Reference Audio 2 is an automatic duplicate of Reference Audio 1 and adds no independent instruction.\n\nThere are exactly five people in the entire video, with a fixed non-interchangeable cast. (S1) Xiaoxin is the only lead and only singer: he alone has the Picture 2 face, black survival harness, black gloves, and white bandage on his left forearm. There must be exactly one Xiaoxin body and exactly one Xiaoxin face in every frame. (S2) has black short textured hair, blue-gray waterproof jacket, black inner layer, dark harness and communicator. (S3) has center-parted slightly wavy black hair, charcoal rescue vest, dark burgundy inner layer and first-aid pouch. (S4) has soft layered brown short hair, deep olive communication jacket, cross-body pouch and simulated radio. (S5) has up-swept black short hair with one loose fringe, sand-gray mechanic shirt, charcoal work vest, tool belt and fingerless gloves. S2–S5 are four distinct backup dancers only; none may borrow S1's face, hairstyle, harness, gloves, or white left-arm bandage. Picture 1's S1 and Picture 3's S1 are the same one person, never two separate people.\n\nCreate an eight-second cinematic, high-energy K-pop boy-group sequence. Xiaoxin remains the single center lead and only singer, identified as (S1), singing <d>[Chinese] 不是不想把你们救，是我还没学会说不，当所有频道一起求救，三、二、一。</d> The group is under pressure but moves with determined choreography: the human wall breaks open quickly, then five distinct bodies execute a readable directional phrase. This is dance, never an attack.\n\n[Shot 1] From 00:00.000 to 00:01.400, begin exactly from Picture 1 in a 38mm full-body medium-wide shot about 35 degrees right-front. S2 and S5 are foreground shoulder anchors; on the first beat they each make one forceful outward shoulder-and-forearm sweep and one quick side step, opening the central sightline. S3 and S4 answer with a low-to-high arm pull and grounded diagonal half-step. S1 Xiaoxin is revealed before 00:01.000; he steps once into the gap, brings his white-bandaged left forearm across his own sternum, and turns his torso toward the blue route. The camera makes a smooth short forward dolly at constant speed; no body crosses another path.\n\n[Shot 2] At 00:01.400, hard cut to a 55mm off-axis chest-to-knee medium shot. Keep only S2 and S5 as blurred shoulder edges at opposite sides, but leave S1 Xiaoxin as the sole centered lead. On “是我还没学会说不,” S1 executes one decisive two-count: a grounded forward rock with a chest hit, then a recoil with eyes breaking from the green radio light toward the red exit. S3 and S4 are visible behind in staggered levels, performing a fast clean elbow-cannon from left to right plus one synchronized half-turn of their torsos toward separate routes. The camera stays stable and moves only a small diagonal track.\n\n[Shot 3] At 00:03.300, hard cut to a locked high 70-degree overhead wide shot with all five full bodies and the junction routes visible. Begin already in motion, not in a held spiral. On “当所有频道一起求救,” all five execute a full four-count route phrase: one grounded inward gather step, one hard outward heel-toe travel step, an arm carve from chest to assigned route, then a clean planted stop. On “三,” S2–S5 drop into one low shallow lunge facing four different exits while S1 stays centered. On “二,” S2–S5 take one additional brisk traveling step outward and strike angular forearm lines along their own body paths. On “一,” S1 drives one counter-step forward and raises a firm right stop palm while S2–S5 snap their heads to their exits and freeze in a broken four-ray rupture. The final 0.8 second has only settling breath and wet-floor reflections.\n\nRequire immediate first-frame movement, continuous 136 BPM kinetic flow, clear footwork, sharp arm paths, strong grounded levels, exactly five distinct bodies, and clean anatomical separation. Absolute identity rule: no second Xiaoxin, no Xiaoxin double, no duplicate S1 face, no second white bandage, no duplicated harness, no cloned dancer, no sixth person. No slow reveal, pose counting, flat row, W, V, perfect diamond, equal spacing, complete orbit, jumping, spinning, zombie attack, grabbing, touching, body merging, extra arms, weapon, microphone, stage lights, camera shake, speed ramp, new stains, texture boiling, skin speckle, text, logo, or watermark. Reference Audio 1 is temporary guidance; restore the original master song in post-production.\n"
+    },
+    {
+      "nodeId": "84",
+      "fieldName": "audio",
+      "fieldValue": "LOCAL_FILE:/Users/m4/project/rewords/music-mv-experiments/小鑫_多频道求救_MV/references/audio/segments/P03_47.856-54.697.wav"
+    },
+    {
+      "nodeId": "85",
+      "fieldName": "audio",
+      "fieldValue": "LOCAL_FILE:/Users/m4/project/rewords/music-mv-experiments/小鑫_多频道求救_MV/references/audio/segments/P03_47.856-54.697.wav"
+    },
+    {
+      "nodeId": "89",
+      "fieldName": "aspect_ratio",
+      "fieldValue": "16:9 (Widescreen)"
+    },
+    {
+      "nodeId": "138",
+      "fieldName": "aspect_ratio",
+      "fieldValue": "16:9 (Widescreen)"
+    }
+  ]
+}

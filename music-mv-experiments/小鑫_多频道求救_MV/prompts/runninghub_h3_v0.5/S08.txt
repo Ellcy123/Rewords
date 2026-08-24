@@ -1,0 +1,11 @@
+Picture 1 is the exact opening frame and controls the single-lane industrial tunnel, rescue vehicle, Xiaoxin's position beside it, five red warning lights along the wet track, distant crowd silhouettes, mist, and teal-orange lighting. Picture 2 is Xiaoxin's identity and wardrobe reference: only the sharp portrait controls his face if visible; the blurred standing views control body proportions, black survival clothing, harness, gloves, boots, and left-forearm bandage. Picture 3 duplicates Picture 1 and is only a scene reference. Reference Audio 1 is the exact target song segment and controls the five-light countdown and the crowd's final advance.
+
+Create a six-second cinematic threat sequence with three stable shots. The distant crowd remains atmospheric pressure, never becomes a gore close-up, and never reaches Xiaoxin.
+
+[Shot 1] From 00:00.000 to 00:01.700, begin from Picture 1 in a 32mm medium-wide shot behind and slightly beside Xiaoxin. He stands next to the vehicle, raises the radio once, and extends one open palm toward the tunnel as if asking for five more seconds. The first red warning light goes dark. The camera makes a slow, stable push of low amplitude.
+
+[Shot 2] At 00:01.700, hard cut to a ground-level 85mm insert looking along the five red warning lights. Lights two, three, four, and five extinguish one at a time on separate beats. Each lamp goes dark permanently; none relights. Reflections disappear correspondingly from the wet floor while the camera remains locked.
+
+[Shot 3] At 00:03.900, hard cut to a compressed 100mm telephoto long shot down the tunnel. The distant crowd silhouettes take only two slow collective steps closer through fog while remaining indistinct. Xiaoxin occupies a sharp foreground edge in three-quarter profile, lowers his open hand, tightens his jaw, and stays beside the vehicle. End before any contact.
+
+No extra countdown numbers, relighting lamps, sprinting horde, clear zombie faces, gore, fighting, weapon use, duplicate Xiaoxin, body jitter, handheld shake, warping tunnel, text, logo, or watermark. Reference Audio 1 is temporary timing guidance; restore the original master song in post-production.

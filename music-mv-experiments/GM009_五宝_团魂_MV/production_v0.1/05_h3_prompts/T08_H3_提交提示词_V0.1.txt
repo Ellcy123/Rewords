@@ -1,0 +1,11 @@
+Picture 1 controls the exact two-member wide composition, door wheel, C04's covering position, two distant infected and industrial lighting. Picture 2 controls C05's later Rap close-up, radio position and eyeline toward C04. Picture 3 is C05's identity and wardrobe reference: the sharp right portrait controls his face; blurred standing views control his gray rolled sleeves, black vest, belt equipment, body and boots. Reference Audio 1 is the exact 42.000–49.000 master segment and controls Rap handoffs, door action and cuts.
+
+Create an eight-second two-member support sequence with three edited shots. C04 and C05 remain distinct and never swap wardrobe. C05 carries the visible Rap close-up while C04 performs route cover. The exact Rap words in this segment are: “左边接应，右边补位 / 一眼读懂，不需要口令 / Five on the move, never solo / 同一颗心，刻进 tempo.”
+
+[Shot 1 — 00:00.000–00:02.700] Begin from Picture 1 in a 30mm environment wide with a short stable truck-left. C05 turns the door wheel exactly half a rotation with believable body weight. C04 speaks one silent visual report into his shoulder radio, then points one open hand toward the clear route. The two infected take one uneven step but remain far behind.
+
+[Shot 2 — 00:02.700–00:05.100] Hard cut to Picture 2's 70mm close-up. C05 performs only the Rap words currently audible in Reference Audio 1—especially “Five on the move, never solo”—with quick clean lips, a still head and one controlled breath. His eyes check C04 once and return to the door mechanism. No direct lens contact or mouth wobble.
+
+[Shot 3 — 00:05.100–00:08.000] Beat cut to a low 35mm two-shot. The door opens enough for one body. C04 steps through first while keeping the route in view; C05 holds the door, then follows. One infected reaches the closing edge but never contacts either man. The door closes between them and the silhouettes.
+
+Exactly two heroes and two infected. No duplicated door wheel, no repeated spinning, no wardrobe swap, no merged bodies, no head strike, no gore, no mouth wobble, no body shake, no camera shake, no readable route text, no logo. Restore the master audio in post.

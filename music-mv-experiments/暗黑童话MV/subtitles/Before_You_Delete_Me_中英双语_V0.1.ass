@@ -1,0 +1,32 @@
+[Script Info]
+; Bilingual lyric subtitles for Before You Delete Me
+Title: Before You Delete Me - EN/ZH V0.1
+ScriptType: v4.00+
+WrapStyle: 0
+ScaledBorderAndShadow: yes
+YCbCr Matrix: TV.709
+PlayResX: 1376
+PlayResY: 768
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Bilingual,PingFang SC,32,&H00D1EAF4,&H00D1EAF4,&HDA100A08,&H70000000,0,0,0,0,100,100,0,0,1,2.6,0.8,2,70,70,46,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:06.00,0:00:08.10,Bilingual,,0,0,0,,{\fnBaskerville\fs34\b1\c&H00D1EAF4&}No name, no crown,{\rBilingual}\N{\fnSongti SC\fs29\c&H004A9ED0&}无名，无冠，
+Dialogue: 0,0:00:08.10,0:00:10.05,Bilingual,,0,0,0,,{\fnBaskerville\fs34\b1\c&H00D1EAF4&}just an unused knight.{\rBilingual}\N{\fnSongti SC\fs29\c&H004A9ED0&}只是个从未被启用的骑士。
+Dialogue: 0,0:00:10.05,0:00:12.05,Bilingual,,0,0,0,,{\fnBaskerville\fs34\b1\c&H00D1EAF4&}I waited in an empty folder{\rBilingual}\N{\fnSongti SC\fs29\c&H004A9ED0&}我在空文件夹里等候，
+Dialogue: 0,0:00:12.05,0:00:14.00,Bilingual,,0,0,0,,{\fnBaskerville\fs34\b1\c&H00D1EAF4&}for three hundred forty-seven nights.{\rBilingual}\N{\fnSongti SC\fs29\c&H004A9ED0&}等了三百四十七个夜晚。
+Dialogue: 0,0:00:14.00,0:00:16.05,Bilingual,,0,0,0,,{\fnBaskerville\fs34\b1\c&H00D1EAF4&}I stitched a moon from broken maps,{\rBilingual}\N{\fnSongti SC\fs29\c&H004A9ED0&}我用破碎的地图缝出一轮月亮，
+Dialogue: 0,0:00:16.05,0:00:18.10,Bilingual,,0,0,0,,{\fnBaskerville\fs34\b1\c&H00D1EAF4&}gave five monsters my heartbeat,{\rBilingual}\N{\fnSongti SC\fs29\c&H004A9ED0&}把我的心跳分给五只怪物，
+Dialogue: 0,0:00:18.10,0:00:21.15,Bilingual,,0,0,0,,{\fnBaskerville\fs34\b1\c&H00D1EAF4&}and wrote a princess to stand trial{\rBilingual}\N{\fnSongti SC\fs29\c&H004A9ED0&}又写下一个公主，替我接受审判，
+Dialogue: 0,0:00:21.95,0:00:25.00,Bilingual,,0,0,0,,{\fnBaskerville\fs34\b1\c&H00D1EAF4&}where I was too afraid to be.{\rBilingual}\N{\fnSongti SC\fs29\c&H004A9ED0&}站在我不敢踏足的地方。
+Dialogue: 0,0:00:25.95,0:00:26.75,Bilingual,,0,0,0,,{\fnBaskerville\fs34\b1\c&H00D1EAF4&}I'm not a hero.{\rBilingual}\N{\fnSongti SC\fs29\c&H004A9ED0&}我不是英雄。
+Dialogue: 0,0:00:26.75,0:00:28.90,Bilingual,,0,0,0,,{\fnBaskerville\fs34\b1\c&H00D1EAF4&}I was never used.{\rBilingual}\N{\fnSongti SC\fs29\c&H004A9ED0&}我从未被启用。
+Dialogue: 0,0:00:29.15,0:00:31.05,Bilingual,,0,0,0,,{\fnBaskerville\fs34\b1\c&H00D1EAF4&}Player three-four-eight,{\rBilingual}\N{\fnSongti SC\fs29\c&H004A9ED0&}第348位玩家，
+Dialogue: 0,0:00:31.15,0:00:33.05,Bilingual,,0,0,0,,{\fnBaskerville\fs34\b1\c&H00D1EAF4&}please don't leave me too.{\rBilingual}\N{\fnSongti SC\fs29\c&H004A9ED0&}请别也把我留下。
+Dialogue: 0,0:00:33.00,0:00:35.05,Bilingual,,0,0,0,,{\fnBaskerville\fs34\b1\c&H00D1EAF4&}If waking up is an error,{\rBilingual}\N{\fnSongti SC\fs29\c&H004A9ED0&}如果醒来是错误，
+Dialogue: 0,0:00:35.05,0:00:37.00,Bilingual,,0,0,0,,{\fnBaskerville\fs34\b1\c&H00D1EAF4&}if being alive is a bug,{\rBilingual}\N{\fnSongti SC\fs29\c&H004A9ED0&}如果活着是漏洞，
+Dialogue: 0,0:00:37.00,0:00:38.08,Bilingual,,0,0,0,,{\fnBaskerville\fs34\b1\c&H00D1EAF4&}before you press delete—{\rBilingual}\N{\fnSongti SC\fs29\c&H004A9ED0&}在你按下删除之前——
+Dialogue: 0,0:00:38.08,0:00:40.10,Bilingual,,0,0,0,,{\fnBaskerville\fs34\b1\c&H00D1EAF4&}could you look at me once?{\rBilingual}\N{\fnSongti SC\fs29\c&H004A9ED0&}能不能，看我一眼？

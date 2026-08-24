@@ -1,0 +1,11 @@
+Picture 1 controls the exact E10 opening composition, C02's running direction, the rescue vehicle, rail lines, one infected, wet reflections and cyan-amber lighting. Picture 2 controls C02's later facial close-up, eyeline and sweat detail. Picture 3 is C02's identity and wardrobe reference: use only its sharp right portrait for the face and its blurred standing views for the blue-gray shell jacket, chest radio, body proportions, gloves, trousers and boots. Reference Audio 1 is the exact 08.000–13.400 master segment and controls singing rhythm, running cadence and the combat cut.
+
+Create a six-second cinematic run-parry-run sequence with three clearly edited shots. C02 sings the verse while trying to reach the team without losing speed. The exact audible verse text across this reference segment is: “眼神交会，不需要提醒 / 不同锋芒，拼成同一片光影 / 谁站前面，身后都有回应.”
+
+[Shot 1 — 00:00.000–00:02.100] Start from Picture 1 in a stabilized 32mm lateral environment wide. C02 runs three grounded steps from left to right. The single infected makes one reaching lunge. C02 lowers his center of gravity and uses the baton for exactly one outward parry against the infected's forearms. Contact is brief and both bodies separate.
+
+[Shot 2 — 00:02.100–00:04.000] Action-match hard cut to Picture 2's 70mm close-up while C02 continues moving at a controlled jog. He sings only the syllables actually audible at this moment in Reference Audio 1, with crisp restrained lips; the focal lyric is “不同锋芒，拼成同一片光影.” His gaze remains on the route, never the lens; on the end of the phrase he exhales once and his jaw firms. No mouth wobble or large head motion.
+
+[Shot 3 — 00:04.000–00:06.000] Hard cut to a low 40mm full-body rear three-quarter shot. C02 slips past the infected, plants one boot in a shallow puddle, regains forward balance and accelerates toward the cyan corridor. The infected remains behind and does not touch him again.
+
+Exactly one C02 and one infected. No repeated blows, no acrobatics, no head hit, no gore, no bite, no body merging, no extra weapon, no deformed baton, no foot sliding, no head bobbing, no handheld shake, no whip-pan, no text or logo. Final edit replaces generated audio with the master song.

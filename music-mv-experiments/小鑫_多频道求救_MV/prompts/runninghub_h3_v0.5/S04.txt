@@ -1,0 +1,11 @@
+Picture 1 is the exact opening frame and controls the rescue-vehicle interior, Xiaoxin's rear three-quarter position, single steering wheel, dashboard radio bank, four green channel lights, wet windshield, city lights, and teal-amber lighting. Picture 2 is Xiaoxin's identity and wardrobe reference: use the sharp portrait only if his profile becomes visible; use the blurred standing views for black survival clothing, harness, gloves, and left-forearm bandage. Picture 3 duplicates Picture 1 and is only a scene reference. Reference Audio 1 is the exact target song segment and controls the rhythm of channel switching and listening beats; it is not physically sung on camera.
+
+Create a six-second cinematic vehicle-interior montage with three stable shots. Preserve one vehicle layout, one Xiaoxin, one steering wheel, the same four-channel device, and consistent rain outside.
+
+[Shot 1] From 00:00.000 to 00:01.700, begin from Picture 1 in a 35mm over-shoulder medium-wide shot from the rear passenger seat. Xiaoxin's right hand turns the first channel knob once, then the second knob once. The first two green lights respond separately. The camera performs one short, smooth truck-right movement of low amplitude; his torso remains steady.
+
+[Shot 2] At 00:01.700, hard cut to an extreme dashboard insert. Four separate channel meters pulse one after another in a left-to-right sequence, each only once, matching the phrase “语音拆成一条一条”. The gloved fingertip switches channels with one clean press per channel. The camera is locked; no numbers or readable interface text are created.
+
+[Shot 3] At 00:03.500, hard cut to a passenger-side three-quarter profile medium close-up. Xiaoxin stops operating the radio and listens as all four green lights remain active in soft foreground. His eyes shift once across the four devices, then settle on the rain-covered road as “每个频道都等我回报” finishes. His mouth stays closed and his breathing remains controlled.
+
+No repeated knob spinning, duplicated controls, extra steering wheel, random hand motion, mouth singing, camera shake, body vibration, dashboard warping, new text, logo, or watermark. Reference Audio 1 is temporary timing guidance and will be replaced by the original master song.

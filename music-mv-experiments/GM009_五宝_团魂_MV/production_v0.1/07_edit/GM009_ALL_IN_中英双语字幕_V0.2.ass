@@ -1,0 +1,46 @@
+[Script Info]
+Title: GM009《全员同频》中文／英文字幕
+ScriptType: v4.00+
+PlayResX: 1664
+PlayResY: 928
+WrapStyle: 2
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name,Fontname,Fontsize,PrimaryColour,SecondaryColour,OutlineColour,BackColour,Bold,Italic,Underline,StrikeOut,ScaleX,ScaleY,Spacing,Angle,BorderStyle,Outline,Shadow,Alignment,MarginL,MarginR,MarginV,Encoding
+Style: Subtitle,PingFang SC,46,&H00FFFFFF,&H000000FF,&HE00000000,&H90000000,0,0,0,0,100,100,0,0,1,2.6,0,2,56,56,54,1
+
+[Events]
+Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text
+Dialogue: 0,0:00:02.450,0:00:04.050,Subtitle,,0,0,0,,{\fad(80,100)}One beat, one team\N{\fs34\c&H00F2FFD8&}一拍同心，一支队伍
+Dialogue: 0,0:00:04.150,0:00:07.100,Subtitle,,0,0,0,,{\fad(80,120)}全员同频\N{\fs34\c&H00F2FFD8&}All in sync
+Dialogue: 0,0:00:08.000,0:00:09.720,Subtitle,,0,0,0,,{\fad(70,80)}眼神交会，不需要提醒\N{\fs34\c&H00F2FFD8&}One glance is all it takes
+Dialogue: 0,0:00:09.720,0:00:11.420,Subtitle,,0,0,0,,不同锋芒，拼成同一片光影\N{\fs34\c&H00F2FFD8&}Different edges, one shared light
+Dialogue: 0,0:00:11.420,0:00:13.400,Subtitle,,0,0,0,,谁站前面，身后都有回应\N{\fs34\c&H00F2FFD8&}Whoever leads, the rest answer behind
+Dialogue: 0,0:00:13.400,0:00:14.850,Subtitle,,0,0,0,,这一秒，只认同一个决定\N{\fs34\c&H00F2FFD8&}This second, one decision only
+Dialogue: 0,0:00:14.850,0:00:16.300,Subtitle,,0,0,0,,抬起头，让心跳锁定\N{\fs34\c&H00F2FFD8&}Heads up, lock onto the heartbeat
+Dialogue: 0,0:00:16.300,0:00:17.800,Subtitle,,0,0,0,,肩并肩，就没有风能把我们分离\N{\fs34\c&H00F2FFD8&}Shoulder to shoulder, no wind breaks us apart
+Dialogue: 0,0:00:17.800,0:00:19.600,Subtitle,,0,0,0,,倒数三、二、一，全场安静\N{\fs34\c&H00F2FFD8&}Three, two, one — the whole place goes still
+Dialogue: 0,0:00:19.600,0:00:21.500,Subtitle,,0,0,0,,下一拍，看我们接管风景\N{\fs34\c&H00F2FFD8&}Next beat, watch us take the scene
+Dialogue: 0,0:00:21.500,0:00:23.000,Subtitle,,0,0,0,,We go all in, all in\N{\fs34\c&H00F2FFD8&}我们全力以赴，孤注一掷
+Dialogue: 0,0:00:23.000,0:00:24.300,Subtitle,,0,0,0,,五道光合成唯一\N{\fs34\c&H00F2FFD8&}Five beams of light become one
+Dialogue: 0,0:00:24.300,0:00:25.800,Subtitle,,0,0,0,,No one falls, no one leaves\N{\fs34\c&H00F2FFD8&}无人倒下，无人离开
+Dialogue: 0,0:00:25.800,0:00:29.000,Subtitle,,0,0,0,,每一步都有彼此的回音\N{\fs34\c&H00F2FFD8&}Every step echoes with each other
+Dialogue: 0,0:00:29.000,0:00:31.200,Subtitle,,0,0,0,,越过边界，再升一级\N{\fs34\c&H00F2FFD8&}Cross the line, rise one level higher
+Dialogue: 0,0:00:31.200,0:00:33.400,Subtitle,,0,0,0,,当所有目光向这里靠近\N{\fs34\c&H00F2FFD8&}When every eye turns our way
+Dialogue: 0,0:00:33.400,0:00:36.000,Subtitle,,0,0,0,,这一局，全员同频\N{\fs34\c&H00F2FFD8&}This round, we move in sync
+Dialogue: 0,0:00:36.000,0:00:37.400,Subtitle,,0,0,0,,Step in, chin up, ready now\N{\fs34\c&H00F2FFD8&}迈进来，抬起头，此刻就绪
+Dialogue: 0,0:00:37.400,0:00:38.800,Subtitle,,0,0,0,,不同声线，同一拍点落下\N{\fs34\c&H00F2FFD8&}Different voices land on the same beat
+Dialogue: 0,0:00:38.800,0:00:40.250,Subtitle,,0,0,0,,No copy paste, each one got style\N{\fs34\c&H00F2FFD8&}不必复制，每个人都有自己的风格
+Dialogue: 0,0:00:40.250,0:00:42.000,Subtitle,,0,0,0,,五种锋芒，把规则改写\N{\fs34\c&H00F2FFD8&}Five sharp edges rewrite the rules
+Dialogue: 0,0:00:42.000,0:00:43.450,Subtitle,,0,0,0,,左边接应，右边补位\N{\fs34\c&H00F2FFD8&}Cover left, fill the gap on the right
+Dialogue: 0,0:00:43.450,0:00:44.850,Subtitle,,0,0,0,,一眼读懂，不需要口令\N{\fs34\c&H00F2FFD8&}One look says it all, no command needed
+Dialogue: 0,0:00:44.850,0:00:46.550,Subtitle,,0,0,0,,Five on the move, never solo\N{\fs34\c&H00F2FFD8&}Five on the move, never alone
+Dialogue: 0,0:00:46.550,0:00:49.000,Subtitle,,0,0,0,,同一颗心，刻进 tempo\N{\fs34\c&H00F2FFD8&}One heart engraved in the tempo
+Dialogue: 0,0:00:49.000,0:00:50.450,Subtitle,,0,0,0,,We go all in, all in\N{\fs34\c&H00F2FFD8&}我们全力以赴，孤注一掷
+Dialogue: 0,0:00:50.450,0:00:52.000,Subtitle,,0,0,0,,五道光合成唯一\N{\fs34\c&H00F2FFD8&}Five beams of light become one
+Dialogue: 0,0:00:52.000,0:00:53.500,Subtitle,,0,0,0,,No one falls, no one leaves\N{\fs34\c&H00F2FFD8&}无人倒下，无人离开
+Dialogue: 0,0:00:53.500,0:00:55.000,Subtitle,,0,0,0,,这一局，全员同频\N{\fs34\c&H00F2FFD8&}This round, we move in sync
+Dialogue: 0,0:01:00.000,0:01:01.350,Subtitle,,0,0,0,,Ready now\N{\fs34\c&H00F2FFD8&}此刻就绪
+Dialogue: 0,0:01:01.350,0:01:03.700,Subtitle,,0,0,0,,One beat, one team\N{\fs34\c&H00F2FFD8&}一拍同心，一支队伍
+Dialogue: 0,0:01:03.700,0:01:06.000,Subtitle,,0,0,0,,All in\N{\fs34\c&H00F2FFD8&}全力以赴

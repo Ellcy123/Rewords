@@ -1,0 +1,22 @@
+Create a 15-second vertical 9:16 flat 2D dark-fairy-tale music-video segment about the knight's five emotional heartbeats and the creation of the princess.
+
+REFERENCE ROLES
+Picture 1 is the exact first frame: the knight beneath a moon surrounded by five connected empty emblems. Picture 2 is the only identity reference for the knight. Picture 3 is only the flat gothic tarot, decorative storybook, and folk-horror art-direction reference; never copy its characters. Reference Audio 1 controls five emblem pulses, the emotional progression, and the transition into the princess motif. Do not add dialogue. The original full song will replace generated audio.
+
+NARRATIVE INTENT
+The five bosses are not random enemies. They are five stages of the knight's abandoned life: anger, desperate creation, exhausted repetition, calculated temptation, and rebellion. The princess is then drawn from the part of himself he no longer knows how to carry.
+
+0.0–5.5s: Keep the knight still at lower center. Activate the five emblems clockwise, exactly one at a time. Each emblem reveals one simple graphic icon: a serpent eye, a stitched heart, a broken clock face, a singing mouth inside a wave, and a five-pointed dragon crown. With every pulse, the knight's shadow changes shape slightly, but the knight himself does not transform. Use five distinct hard flashes, never show five detailed bodies at once.
+
+5.5–9.5s: The five icons collapse into five wine-red heartbeats traveling down the connecting thread. They enter the knight's shadow. The shadow detaches, rises as flat black paper, and unfolds into the silhouette of an adult red-haired princess. Her hair is a single scarlet paper ribbon; her face remains graphic and simple. She must not resemble a second knight.
+
+9.5–12.5s: The princess stands inside a bone-white circular trial frame while the knight remains outside it in shadow. The frame rotates by ninety degrees in two stepped poses and becomes a target ring. The princess smiles once; the knight lowers his sword. No lip movement and no physical contact.
+
+12.5–15.0s: The target ring compresses into a flat quest-marker diamond above the princess, then closes around both figures like a dark lock. On the final beat, the lock's vertical center line extends downward and becomes the dividing line of a chessboard for S05.
+
+STYLE AND MOTION RULES
+Pure flat 2D cel animation, tarot-card symmetry, printed paper grain, graphic emblems, stepped two-pose transformations, hard color blocks, controlled wine-red accents, no smooth morphing. The princess is a symbolic mirror, not a romantic partner and not a villain performance.
+
+STRICT NEGATIVE CONSTRAINTS
+No live action, no photorealism, no 3D, no realistic lighting, no depth of field, no free orbit, no detailed multi-character battle, no more than one knight and one princess, no duplicated faces, no childlike princess, no physical touching, no readable text, no subtitles, no logos, no watermark, no gore, no random extra bosses, no anatomy drift, no armor drift, and no continuous realistic acting.
+

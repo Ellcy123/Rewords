@@ -1,0 +1,15 @@
+Create a 15-second horizontal 16:9 dark-fairy-tale mystery PV in pure flat 2D cel illustration mixed with editorial motion graphics. The style is a printed storybook game: sharp black ink contours, paper grain, charcoal black, cold bone white, moss green, muted indigo, old gold and deliberate wine-red warning marks. No photorealism, no 3D objects, no readable text or numbers, no lip-sync.
+
+Picture 1 is the only knight identity. Keep the exact blond young adult male knight with red cape, brown armor and sword. Picture 2 is the looping thorn forest / ritual court reference: use its stone tile path, thorn loops and empty circular platform. Picture 3 is the unfinished terminal chamber reference: use it only as flat architecture and empty slots; erase its original in-game character and interface.
+
+Reference Audio 1 is the song. The final question-like phrases trigger the strongest visual reversals. The knight does not speak.
+
+0–3 seconds: subjective close view of an armored hand entering a black safe-shadow grid. A bone-white moonlight scanner crawls from fingertips toward the wrist. Instead of a realistic wound, each scanned area breaks into paper polygons, small square cells and clean geometric fragments. Use a wine-red route line as warning.
+
+3–6 seconds: the entire moon ring shatters into five flat pieces that land in the open palm. Each piece briefly contains a nonverbal sanctuary symbol, then a red diagonal stroke deletes it. When the hand closes, the fragments become one blank princess dossier card.
+
+6–9 seconds: the card turns with flat match cuts, never 3D. First side: adult red-haired princess paper silhouette. Second side: empty file outline. Third side: the same knight’s side-face from Picture 1. All three share an identical circular head cutout so the transformation feels like an unsettling UI flip.
+
+9–12 seconds: within an indigo circular mirror from the looping forest, princess and knight shadows overlap but are delayed half a beat. When the princess shape opens its eyes, the knight shape closes his; when he opens his, she disappears. The mirror rim becomes a moon-eclipse dial with five nodes switching off.
+
+12–15 seconds: deconstruct the frame into twelve small UI windows containing the same knight in different frozen key poses. Eleven remain perfectly still. One window shows a single subtle chest rise. All windows compress sideways into a thin eye-level scan strip. End with a sharp wine-red target line cutting across the strip.

@@ -1,0 +1,44 @@
+{
+  "tasks": [
+    {
+      "segment": "S01",
+      "taskId": "2091580658496532482",
+      "status": "SUBMITTED",
+      "outputDir": "/Users/m4/project/rewords/music-mv-experiments/暗黑童话MV/V2.0/outputs/S01_H3_二维PV正式片_V0.1",
+      "stage1Megapixels": 0.4,
+      "stage2Megapixels": 1.0
+    },
+    {
+      "segment": "S02",
+      "taskId": "2091580657892548609",
+      "status": "SUBMITTED",
+      "outputDir": "/Users/m4/project/rewords/music-mv-experiments/暗黑童话MV/V2.0/outputs/S02_H3_二维PV正式片_V0.1",
+      "stage1Megapixels": 0.4,
+      "stage2Megapixels": 1.0
+    },
+    {
+      "segment": "S04",
+      "taskId": "2091580657263407106",
+      "status": "SUBMITTED",
+      "outputDir": "/Users/m4/project/rewords/music-mv-experiments/暗黑童话MV/V2.0/outputs/S04_H3_二维PV正式片_V0.1",
+      "stage1Megapixels": 0.4,
+      "stage2Megapixels": 1.0
+    },
+    {
+      "segment": "S05",
+      "taskId": "2091580656189669377",
+      "status": "SUBMITTED",
+      "outputDir": "/Users/m4/project/rewords/music-mv-experiments/暗黑童话MV/V2.0/outputs/S05_H3_二维PV正式片_V0.1",
+      "stage1Megapixels": 0.4,
+      "stage2Megapixels": 1.0
+    },
+    {
+      "segment": "S06",
+      "taskId": "2091580656747507713",
+      "status": "SUBMITTED",
+      "outputDir": "/Users/m4/project/rewords/music-mv-experiments/暗黑童话MV/V2.0/outputs/S06_H3_二维PV正式片_V0.1",
+      "stage1Megapixels": 0.4,
+      "stage2Megapixels": 1.0
+    }
+  ]
+}

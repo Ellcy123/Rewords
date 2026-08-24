@@ -1,0 +1,47 @@
+[Script Info]
+Title: Dark Fairy Tale MV V2.0 — Bilingual Subtitles
+ScriptType: v4.00+
+PlayResX: 1376
+PlayResY: 768
+ScaledBorderAndShadow: yes
+WrapStyle: 2
+
+[V4+ Styles]
+Format: Name,Fontname,Fontsize,PrimaryColour,SecondaryColour,OutlineColour,BackColour,Bold,Italic,Underline,StrikeOut,ScaleX,ScaleY,Spacing,Angle,BorderStyle,Outline,Shadow,Alignment,MarginL,MarginR,MarginV,Encoding
+Style: CN,PingFang SC,42,&H00F8F3E8,&H000000FF,&H00130F12,&H90000000,1,0,0,0,100,100,0,0,1,2.8,1.2,2,70,70,108,1
+Style: EN,Georgia,28,&H00D8E7F4,&H000000FF,&H00130F12,&H90000000,0,0,0,0,100,100,0.2,0,1,2.2,1.0,2,70,70,63,1
+
+[Events]
+Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text
+Dialogue: 0,0:00:00.35,0:00:04.50,CN,,0,0,0,,{\fad(180,140)}月光落下。
+Dialogue: 1,0:00:00.35,0:00:04.50,EN,,0,0,0,,{\fad(180,140)}The moonlight falls.
+Dialogue: 0,0:00:04.50,0:00:07.18,CN,,0,0,0,,{\fad(150,140)}嘘，别抬头。
+Dialogue: 1,0:00:04.50,0:00:07.18,EN,,0,0,0,,{\fad(150,140)}Hush. Don't look up.
+Dialogue: 0,0:00:08.67,0:00:14.44,CN,,0,0,0,,{\fad(160,120)}王国无名，
+Dialogue: 1,0:00:08.67,0:00:14.44,EN,,0,0,0,,{\fad(160,120)}The kingdom has no name.
+Dialogue: 0,0:00:14.44,0:00:17.79,CN,,0,0,0,,{\fad(120,120)}所有人睡去，
+Dialogue: 1,0:00:14.44,0:00:17.79,EN,,0,0,0,,{\fad(120,120)}Everyone has fallen asleep.
+Dialogue: 0,0:00:18.50,0:00:24.00,CN,,0,0,0,,{\fad(140,130)}只有我还睁着眼睛。
+Dialogue: 1,0:00:18.50,0:00:24.00,EN,,0,0,0,,{\fad(140,130)}Only I still keep my eyes open.
+Dialogue: 0,0:00:24.45,0:00:28.80,CN,,0,0,0,,{\fad(140,120)}龙把公主锁在尽头，
+Dialogue: 1,0:00:24.45,0:00:28.80,EN,,0,0,0,,{\fad(140,120)}The dragon locked the princess at the end.
+Dialogue: 0,0:00:28.92,0:00:33.64,CN,,0,0,0,,{\fad(140,120)}五座圣地，门门无声。
+Dialogue: 1,0:00:28.92,0:00:33.64,EN,,0,0,0,,{\fad(140,120)}Five sacred places. Every door is silent.
+Dialogue: 0,0:00:33.91,0:00:38.48,CN,,0,0,0,,{\fad(130,120)}跟我走，穿过月光，
+Dialogue: 1,0:00:33.91,0:00:38.48,EN,,0,0,0,,{\fad(130,120)}Follow me, through the moonlight.
+Dialogue: 0,0:00:39.32,0:00:43.64,CN,,0,0,0,,{\fad(130,120)}踩着影子，别出声响。
+Dialogue: 1,0:00:39.32,0:00:43.64,EN,,0,0,0,,{\fad(130,120)}Step on the shadows. Don't make a sound.
+Dialogue: 0,0:00:44.64,0:00:49.80,CN,,0,0,0,,{\fad(130,120)}我在尽头等你，
+Dialogue: 1,0:00:44.64,0:00:49.80,EN,,0,0,0,,{\fad(130,120)}I'll wait for you at the end.
+Dialogue: 0,0:00:50.21,0:00:54.70,CN,,0,0,0,,{\fad(130,120)}等你叫出她的名字。
+Dialogue: 1,0:00:50.21,0:00:54.70,EN,,0,0,0,,{\fad(130,120)}Until you call out her name.
+Dialogue: 0,0:00:55.30,0:01:00.14,CN,,0,0,0,,{\fad(130,120)}跟我走，不要回头，
+Dialogue: 1,0:00:55.30,0:01:00.14,EN,,0,0,0,,{\fad(130,120)}Follow me. Don't look back.
+Dialogue: 0,0:01:00.66,0:01:04.86,CN,,0,0,0,,{\fad(130,120)}月光正爬上你的手。
+Dialogue: 1,0:01:00.66,0:01:04.86,EN,,0,0,0,,{\fad(130,120)}The moonlight is crawling up your hand.
+Dialogue: 0,0:01:05.34,0:01:09.33,CN,,0,0,0,,{\fad(180,180)}公主真的存在吗？
+Dialogue: 1,0:01:05.34,0:01:09.33,EN,,0,0,0,,{\fad(180,180)}Does the princess really exist?
+Dialogue: 0,0:01:09.65,0:01:15.60,CN,,0,0,0,,{\fad(180,180)}醒着的……真的是我吗？
+Dialogue: 1,0:01:09.65,0:01:15.60,EN,,0,0,0,,{\fad(180,180)}Am I really the one who's awake?
+Dialogue: 0,0:01:15.60,0:01:18.05,CN,,0,0,0,,{\fad(180,260)}嘘——它看见你了。
+Dialogue: 1,0:01:15.60,0:01:18.05,EN,,0,0,0,,{\fad(180,260)}Hush — it sees you.

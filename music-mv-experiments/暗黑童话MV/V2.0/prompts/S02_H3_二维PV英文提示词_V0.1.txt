@@ -1,0 +1,15 @@
+Create a 15-second horizontal 16:9 dark-fairy-tale game promotional PV, entirely flat 2D cel animation plus aggressive Editorial Motion Graphics. Bold black ink contours, dry paper grain, charcoal black, cold bone white, moss green, tarnished gold and controlled wine red. No photorealism, no 3D depth, no readable text, no numbers, no lip-sync and no continuous fight animation.
+
+Picture 1 is the only knight reference. Preserve exactly the same blond young adult male knight, red cape, brown armor and sword; no redesign. Picture 2 is the five-sanctuary mission-wheel UI reference: use its wine-red routing lines, bone-white rings, old-gold targets and abstract card borders. Picture 3 is the dragon-vault architecture reference: use it only as a flat dark environment. Do not make a literal dragon body or any boss detail.
+
+Reference Audio 1 drives every pose change and match cut. The knight never sings or speaks; the song is outside the scene.
+
+0–3 seconds: sleeping black chess-pawn outlines scroll left across a moon-and-shadow plaza. The knight’s boots, sword tip and red cape hem enter from the foreground shadow lane. Bone-white moon tiles sweep close to his feet but never touch him. Each step is only a strong 2D freeze pose with a small old-gold target ring.
+
+3–6 seconds: compress the frame into an extremely narrow horizontal close-up of the knight’s eyes. He is first a pure black silhouette, then one-frame inverted bone white, then returns to his exact flat color design. A tiny wine-red X-shaped lock symbol flashes in both pupils for one frame. His mouth stays closed.
+
+6–9 seconds: reveal the knight in a three-quarter side key pose. Black, bone white, moss green and wine-red diagonal planes segment his body without changing his outfit. His red cape becomes a long paper ribbon that pulls horizontally through the frame and cuts the moon ring into five pieces.
+
+9–12 seconds: behind him, a huge incomplete dragon threat is only negative space: five crown-like head-shaped voids and claw-shaped black cutouts around a sealed moon-crescent cell. Inside the cell, show a tiny adult red-haired princess as a flat paper silhouette, never a child, never detailed facial animation. The image breaks into flat red-and-white shard layers instead of a fight.
+
+12–15 seconds: the five dragon-crown voids collapse into five circular mission nodes. The nodes become a spinning paper map wheel from Picture 2. Stone eye, stitched heart, broken loop, wave wing and five-crown symbols ignite in order; the fifth old-gold node expands until it fills the whole screen as a circular wipe.

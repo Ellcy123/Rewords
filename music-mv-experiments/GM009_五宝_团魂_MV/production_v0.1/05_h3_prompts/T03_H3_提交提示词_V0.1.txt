@@ -1,0 +1,11 @@
+Picture 1 controls the complete vehicle interior, map, controls, rain, C03's seated position and teal-amber lighting. Picture 2 controls the exact later facial close-up and eyeline. Picture 3 is C03's identity and wardrobe reference: the sharp right portrait controls his face; the blurred standing views control his black vest, dark red lining, medical pouches, body proportions and boots. Reference Audio 1 is the exact 13.400–17.800 master segment and controls the sung phrasing and channel-switch rhythm.
+
+Create a six-second cinematic information-relay sequence with one C03 and three edited shots. C03 sings while finding a route that keeps every member connected. The exact sung text within this segment is: “这一秒，只认同一个决定 / 抬起头，让心跳锁定 / 肩并肩，就没有风能把我们分离.”
+
+[Shot 1 — 00:00.000–00:02.000] Begin from Picture 1 in a locked 28mm environment wide. C03 traces one route on the map with his left index finger, then presses one radio channel key with his right hand. Only one green meter responds. The three distant silhouettes outside remain small and soft.
+
+[Shot 2 — 00:02.000–00:04.300] Hard cut to Picture 2's 85mm close-up. On the exact lyric “抬起头，让心跳锁定,” his eyes lift from the map. While the next audible phrase begins, his brow smooths and his jaw releases into controlled certainty. He sings toward the radio and road, never directly into the lens; mouth shapes follow Reference Audio 1 precisely. The camera performs one very slow push-in of low amplitude.
+
+[Shot 3 — 00:04.300–00:06.000] Hard cut to a true overhead insert of the map. His two gloved fingers place one small metal marker on the single shared route. Four separate route lights pulse once in response. End with his hand becoming still.
+
+No duplicate steering wheel, no duplicated radio bank, no readable map text, no random finger motion, no malformed hand, no mouth wobble, no extra person inside, no infected entering the vehicle, no camera shake, no text or logo. Generated audio is temporary; use the master in the final edit.

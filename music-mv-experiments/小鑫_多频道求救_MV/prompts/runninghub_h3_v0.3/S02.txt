@@ -1,0 +1,13 @@
+Picture 1 is the exact starting frame and controls the composition, Xiaoxin's initial pose, the mechanical lever, the blast door, the wet industrial hall, and all lighting. Picture 2 is Xiaoxin's identity and wardrobe reference: use only the sharp large portrait on its right side for facial identity; the blurred standing views control body proportions, black work clothing, harness, gloves, boots, and the white bandage on his left forearm. Picture 3 duplicates Picture 1 and is only a scene and composition reference. Reference Audio 1 is the exact target song segment; follow its spoken-word timing and mouth rhythm. Reference Audio 2 is Xiaoxin's voice-timbre reference; bind its timbre, pace, and restrained delivery specifically to Xiaoxin in Picture 1, while the written target dialogue remains authoritative.
+
+Create one continuous 8-second scene with three clearly edited shots. Preserve Xiaoxin's face, clothing, left-forearm bandage, body proportions, door geometry, lever geometry, and red-blue lighting across every cut. His lips and jaw follow Reference Audio 1 timing; his vocal quality follows Reference Audio 2.
+
+[Shot 1 — 00:00.000–00:02.400] Medium-wide establishing shot. Xiaoxin braces both hands on the mechanical lever and pushes with believable full-body weight while the huge steel door steadily closes and sparks fall from its track. Use a restrained rightward camera truck and keep the lever, his full upper body, and the narrowing doorway visible.
+
+[Hard cut at 00:02.400]
+[Shot 2 — 00:02.400–00:04.900] Tight face and shoulder close-up from a clear 30-degree angle change. Sweat, fatigue, and radio glow are visible. Xiaoxin speaks in Chinese: “我没有丢下你们，刚刚在封三号门。” Keep precise Chinese mouth movement and restrained urgency; no heroic posing.
+
+[Action-matched hard cut at 00:04.900]
+[Shot 3 — 00:04.900–00:08.000] Extreme insert close-up of his gloved hands, the white bandage on his left forearm, the lever teeth, and vibrating metal. His hands complete the same push begun in Shot 1; the door gap narrows to almost closed. End on the lever locking into place and one short exhausted breath. No location jump, time jump, extra people, costume drift, malformed hands, new text, or logo.
+
+The generated soundtrack is only a motion, lip-sync, and timbre reference. It does not need to reproduce the master audio sample-exactly; the final edit will replace it with the original master song.

@@ -1,0 +1,22 @@
+Create a 15-second vertical 9:16 flat 2D dark-fairy-tale music-video segment that transforms waiting into creation.
+
+REFERENCE ROLES
+Picture 1 is the exact start frame with the knight's sword aligned to a single bone-white vertical line. Picture 2 is the only identity reference for the knight. Picture 3 defines only the flat illustrated gothic-tarot style, ornamental density, folk-horror palette, and paper-cut composition; do not copy its characters. Reference Audio 1 guides the timing of the waiting phrases, the rhythmic build, and every assembly beat. Do not invent dialogue. Replace generated audio with the original song in post.
+
+NARRATIVE INTENT
+After waiting through hundreds of failed openings, the knight uses abandoned fragments to build his own moon-shadow kingdom. He creates because nobody returns. The act is desperate craft, not heroic magic.
+
+0.0–3.5s: Continue from the sword-line match. The knight slowly drags the blade downward. The bone-white line splits into many flat scraps: torn map corners, broken castle arches, empty speech ribbons, moon fragments, chessboard tiles, and disconnected event symbols. All pieces remain two-dimensional and hover on one graphic plane.
+
+3.5–8.0s: The sword becomes a sewing needle without changing its overall silhouette. One wine-red thread runs from its tip. With three deliberate beats, the knight stitches together a castle arch, a crescent moon, and a strip of shadow-road. Each object snaps into place as cold white line art, dark green blocks, and burnt-gold circles. No flowing magical particle cloud.
+
+8.0–12.0s: The assembled pieces slide in from four flat directions and lock together like an editorial collage, forming the Moon-Shadow Kingdom as a vertical tarot map. Buildings remain silhouettes; streets are geometric shadow bands; the moon is a large incomplete printed disc. The knight is now standing at the exact lower-center axis but remains visually small.
+
+12.0–15.0s: Five empty circular emblems appear around the moon, one after another, synchronized to five low pulses in Reference Audio 1. Each emblem contains only a simple blank black silhouette, not a detailed creature yet. The final pulse turns the wine-red sewing thread into a circular ring connecting all five emblems. Hold the five-emblem composition for S04.
+
+STYLE AND MOTION RULES
+Flat 2D cel illustration, paper collage assembly, hard snapping movement, stepped timing, black silhouettes, bone-white line drawings, forest-green blocks, burnt-gold circles, wine-red thread, printed halftone and rough storybook grain. Use graphic scale changes and layer replacement only; no physical 3D construction.
+
+STRICT NEGATIVE CONSTRAINTS
+No live action, no photorealism, no 3D castle, no realistic depth, no perspective fly-through, no volumetric glow, no particle explosion, no readable writing, no subtitles, no logos, no watermark, no duplicated knight, no extra people, no armor drift, no face drift, no sword deformation except the explicitly directed needle-like graphic match, no random monsters, no gore, and no continuous realistic motion.
+

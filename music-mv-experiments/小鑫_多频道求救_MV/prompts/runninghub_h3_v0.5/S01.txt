@@ -1,0 +1,11 @@
+Picture 1 is the exact opening frame and controls the old four-channel radio, Xiaoxin's bandaged left forearm and gloved hand, wet floor reflections, green indicator lights, and teal-amber industrial lighting. Picture 2 is Xiaoxin's identity and wardrobe reference: use the blurred standing views only for body proportions, black survival clothing, glove design, and the white bandage on his left forearm; his face appears only as a tiny reflection and must not become a second visible person. Picture 3 duplicates Picture 1 and is only a scene reference. Reference Audio 1 is the exact target intro segment and controls the timing of the Chinese radio line and the four channel-light pulses. Reference Audio 2 is Xiaoxin's voice-timbre reference and binds its restrained timbre and pace to Xiaoxin's off-screen voice.
+
+Create a six-second cinematic radio-intro sequence with three precise macro shots. Xiaoxin (S1) remains off-screen and says <d>[Chinese] 喂，收到请回答。</d> with timing from Reference Audio 1 and vocal quality from Reference Audio 2.
+
+[Shot 1] From 00:00.000 to 00:01.700, use a locked extreme macro shot beginning from Picture 1. Xiaoxin's bandaged left thumb presses the push-to-talk switch exactly once and holds it. Moisture beads on the scratched radio casing. Only the first green channel light turns on. The camera is fixed; the hand performs no extra tapping.
+
+[Shot 2] At 00:01.700, hard cut to a shallow diagonal close-up running along the row of four channel lights. The camera makes one slow, smooth lateral slide of low amplitude while lights two, three, and four illuminate one at a time in rhythm with Reference Audio 1. A tiny soft reflection of one of Xiaoxin's eyes appears in the dark radio glass and blinks once; no full face appears.
+
+[Shot 3] At 00:03.900, hard cut to a top-down macro of the radio and bandaged hand. All four green lights remain steadily on while the thumb releases the switch once. Hold the final arrangement without camera movement through the last frame.
+
+No random blinking pattern, extra hands, repeated button pressing, malformed fingers, changing bandage side, camera shake, pulse zoom, readable UI text, subtitles, logo, or watermark. The generated audio is temporary and will be replaced with the original master song.

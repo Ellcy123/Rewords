@@ -1,0 +1,15 @@
+Create a 15-second horizontal 16:9 dark-fairy-tale game promotional PV. Pure flat 2D cel animation fused with dense Editorial Motion Graphics: hard black ink contour, dry printed-paper grain, charcoal black, moss green, cold bone white, tarnished old gold, and tiny wine-red accents. Everything is a flat poster plane or paper-theater cutout. No photorealism, no cinematic depth, no readable text, no numbers, no HUD labels, no lip-sync.
+
+Picture 1 is the only knight identity reference. Preserve this exact blond young adult male knight, red cape, brown armor and sword; do not redesign him. He appears only in the final seconds as boots, sword tip and a partial lower-body key pose. Picture 2 is the empty nameless kingdom reference: use its architecture as a flat paper-theater city. Picture 3 is the moon-and-shadow chessboard plaza reference: use its black safe lanes, pale moon tiles and gothic scale.
+
+Reference Audio 1 is the song. Its sparse music-box opening and first vocal phrases control all visual changes. Keep it as external soundtrack only; nobody speaks.
+
+0–3 seconds: pure black. A massive broken bone-white moon ring slowly assembles from incomplete circular scales, thin gold dividers and tiny UI tick marks. It is graphic, not realistic. The moon ring reveals black paper rooftops underneath. One wine-red line briefly slices the ring, then disappears.
+
+3–6 seconds: the nameless kingdom assembles from flat architectural panels sliding in from left, right, top and bottom: sealed windows, folded bridges, arches, blank balconies. Each panel locks with a cold-white horizontal scan line. A large moonlit region remains bright while all inhabited zones collapse into solid black silhouettes.
+
+6–9 seconds: the scene unfolds into the moon-and-shadow chessboard plaza. In each moonlit tile, sleeping residents are suggested only by flat black chess-pawn-like outlines, never faces or detailed people. The pawn outlines fold into paper tiles one by one. The black shadow lanes stay empty and safe.
+
+9–12 seconds: a wine-red selection rectangle moves through the shadow lanes but refuses to select any sleeping pawn. Each rejected target creates one-frame black-and-white inversion, thin red route lines and a brief paper fold. The camera is a flat horizontal scroll across the plaza, never realistic.
+
+12–15 seconds: all resident silhouettes flatten into a single dark chessboard. The selection rectangle shrinks into a narrow horizontal eye-shaped slit. At the bottom edge, only the knight’s black boots, sword tip and red cape hem from Picture 1 enter the frame; cold-white scan lines and old-gold markers burst under his feet. End on the narrow slit snapping shut to black.

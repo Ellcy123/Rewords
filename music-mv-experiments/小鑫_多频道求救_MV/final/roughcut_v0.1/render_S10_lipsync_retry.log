@@ -1,0 +1,291 @@
+Input #0, mov,mp4,m4a,3gp,3g2,mj2, from '/Users/m4/project/rewords/music-mv-experiments/小鑫_多频道求救_MV/videos/runninghub_batch05_v0.6/S01/runninghub_h3_audio_2091480190634131458.mp4':
+  Metadata:
+    minor_version   : 512
+    major_brand     : isom
+    compatible_brands: isomiso2avc1mp41
+    AIGC            : {"Label": "1", "ContentProducer": "001191340100MAEB4N8H7600000", "ProduceID": "57bb5f946e4ed5b2d068ef37c4dadc0a_20260823_b39933", "ReservedCode1": "", "ContentPropagator": "001191340100MAEB4N8H7600000", "PropagateID": "RH_2091480190634131458_20260823_b399
+    encoder         : Lavf62.13.102
+  Duration: 00:00:06.58, start: 0.000000, bitrate: 4312 kb/s
+  Stream #0:0[0x1]: Video: h264 (High) (avc1 / 0x31637661), yuv420p(tv, bt709, progressive), 1664x928, 4176 kb/s, 24 fps, 24 tbr, 12288 tbn (default)
+    Metadata:
+      handler_name    : VideoHandler
+      vendor_id       : FFMP
+  Stream #0:1[0x2]: Audio: aac (LC) (mp4a / 0x6134706D), 32000 Hz, stereo, fltp, 127 kb/s (default)
+    Metadata:
+      handler_name    : SoundHandler
+      vendor_id       : [0][0][0][0]
+Input #1, mov,mp4,m4a,3gp,3g2,mj2, from '/Users/m4/project/rewords/music-mv-experiments/小鑫_多频道求救_MV/videos/runninghub_batch01/S02/runninghub_h3_audio_2091220408509620226.mp4':
+  Metadata:
+    minor_version   : 512
+    major_brand     : isom
+    compatible_brands: isomiso2avc1mp41
+    AIGC            : {"Label": "1", "ContentProducer": "001191340100MAEB4N8H7600000", "ProduceID": "57bb5f946e4ed5b2d068ef37c4dadc0a_20260823_f8d9f2", "ReservedCode1": "", "ContentPropagator": "001191340100MAEB4N8H7600000", "PropagateID": "RH_2091220408509620226_20260823_f8d9
+    encoder         : Lavf62.13.102
+  Duration: 00:00:08.00, start: 0.000000, bitrate: 4334 kb/s
+  Stream #1:0[0x1]: Video: h264 (High) (avc1 / 0x31637661), yuv420p(tv, bt709, progressive), 1664x928, 4198 kb/s, 24 fps, 24 tbr, 12288 tbn (default)
+    Metadata:
+      handler_name    : VideoHandler
+      vendor_id       : FFMP
+  Stream #1:1[0x2]: Audio: aac (LC) (mp4a / 0x6134706D), 32000 Hz, stereo, fltp, 127 kb/s (default)
+    Metadata:
+      handler_name    : SoundHandler
+      vendor_id       : [0][0][0][0]
+Input #2, mov,mp4,m4a,3gp,3g2,mj2, from '/Users/m4/project/rewords/music-mv-experiments/小鑫_多频道求救_MV/videos/runninghub_batch05_v0.6/S03/runninghub_h3_audio_2091480185043120130.mp4':
+  Metadata:
+    minor_version   : 512
+    major_brand     : isom
+    compatible_brands: isomiso2avc1mp41
+    AIGC            : {"Label": "1", "ContentProducer": "001191340100MAEB4N8H7600000", "ProduceID": "57bb5f946e4ed5b2d068ef37c4dadc0a_20260823_09238b", "ReservedCode1": "", "ContentPropagator": "001191340100MAEB4N8H7600000", "PropagateID": "RH_2091480185043120130_20260823_0923
+    encoder         : Lavf62.13.102
+  Duration: 00:00:06.58, start: 0.000000, bitrate: 3877 kb/s
+  Stream #2:0[0x1]: Video: h264 (High) (avc1 / 0x31637661), yuv420p(tv, bt709, progressive), 1664x928, 3740 kb/s, 24 fps, 24 tbr, 12288 tbn (default)
+    Metadata:
+      handler_name    : VideoHandler
+      vendor_id       : FFMP
+  Stream #2:1[0x2]: Audio: aac (LC) (mp4a / 0x6134706D), 32000 Hz, stereo, fltp, 128 kb/s (default)
+    Metadata:
+      handler_name    : SoundHandler
+      vendor_id       : [0][0][0][0]
+Input #3, mov,mp4,m4a,3gp,3g2,mj2, from '/Users/m4/project/rewords/music-mv-experiments/小鑫_多频道求救_MV/videos/runninghub_batch04_v0.6/S04/runninghub_h3_audio_2091472358014672898.mp4':
+  Metadata:
+    minor_version   : 512
+    major_brand     : isom
+    compatible_brands: isomiso2avc1mp41
+    AIGC            : {"Label": "1", "ContentProducer": "001191340100MAEB4N8H7600000", "ProduceID": "57bb5f946e4ed5b2d068ef37c4dadc0a_20260823_7bfc16", "ReservedCode1": "", "ContentPropagator": "001191340100MAEB4N8H7600000", "PropagateID": "RH_2091472358014672898_20260823_7bfc
+    encoder         : Lavf62.13.102
+  Duration: 00:00:06.58, start: 0.000000, bitrate: 2950 kb/s
+  Stream #3:0[0x1]: Video: h264 (High) (avc1 / 0x31637661), yuv420p(tv, bt709, progressive), 1664x928, 2809 kb/s, 24 fps, 24 tbr, 12288 tbn (default)
+    Metadata:
+      handler_name    : VideoHandler
+      vendor_id       : FFMP
+  Stream #3:1[0x2]: Audio: aac (LC) (mp4a / 0x6134706D), 32000 Hz, stereo, fltp, 132 kb/s (default)
+    Metadata:
+      handler_name    : SoundHandler
+      vendor_id       : [0][0][0][0]
+Input #4, mov,mp4,m4a,3gp,3g2,mj2, from '/Users/m4/project/rewords/music-mv-experiments/小鑫_多频道求救_MV/videos/runninghub_batch05_v0.6/P01/runninghub_h3_audio_2091480184309116929.mp4':
+  Metadata:
+    minor_version   : 512
+    major_brand     : isom
+    compatible_brands: isomiso2avc1mp41
+    AIGC            : {"Label": "1", "ContentProducer": "001191340100MAEB4N8H7600000", "ProduceID": "57bb5f946e4ed5b2d068ef37c4dadc0a_20260823_f77d39", "ReservedCode1": "", "ContentPropagator": "001191340100MAEB4N8H7600000", "PropagateID": "RH_2091480184309116929_20260823_f77d
+    encoder         : Lavf62.13.102
+  Duration: 00:00:06.58, start: 0.000000, bitrate: 4157 kb/s
+  Stream #4:0[0x1]: Video: h264 (High) (avc1 / 0x31637661), yuv420p(tv, bt709, progressive), 1664x928, 4019 kb/s, 24 fps, 24 tbr, 12288 tbn (default)
+    Metadata:
+      handler_name    : VideoHandler
+      vendor_id       : FFMP
+  Stream #4:1[0x2]: Audio: aac (LC) (mp4a / 0x6134706D), 32000 Hz, stereo, fltp, 128 kb/s (default)
+    Metadata:
+      handler_name    : SoundHandler
+      vendor_id       : [0][0][0][0]
+Input #5, mov,mp4,m4a,3gp,3g2,mj2, from '/Users/m4/project/rewords/music-mv-experiments/小鑫_多频道求救_MV/videos/runninghub_batch05_v0.6/S06/runninghub_h3_audio_2091480186011996162.mp4':
+  Metadata:
+    minor_version   : 512
+    major_brand     : isom
+    compatible_brands: isomiso2avc1mp41
+    AIGC            : {"Label": "1", "ContentProducer": "001191340100MAEB4N8H7600000", "ProduceID": "57bb5f946e4ed5b2d068ef37c4dadc0a_20260823_4c4718", "ReservedCode1": "", "ContentPropagator": "001191340100MAEB4N8H7600000", "PropagateID": "RH_2091480186011996162_20260823_4c47
+    encoder         : Lavf62.13.102
+  Duration: 00:00:08.00, start: 0.000000, bitrate: 5386 kb/s
+  Stream #5:0[0x1]: Video: h264 (High) (avc1 / 0x31637661), yuv420p(tv, bt709, progressive), 1664x928, 5249 kb/s, 24 fps, 24 tbr, 12288 tbn (default)
+    Metadata:
+      handler_name    : VideoHandler
+      vendor_id       : FFMP
+  Stream #5:1[0x2]: Audio: aac (LC) (mp4a / 0x6134706D), 32000 Hz, stereo, fltp, 128 kb/s (default)
+    Metadata:
+      handler_name    : SoundHandler
+      vendor_id       : [0][0][0][0]
+Input #6, mov,mp4,m4a,3gp,3g2,mj2, from '/Users/m4/project/rewords/music-mv-experiments/小鑫_多频道求救_MV/videos/runninghub_batch05_v0.6/S07/runninghub_h3_audio_2091480185550635009.mp4':
+  Metadata:
+    minor_version   : 512
+    major_brand     : isom
+    compatible_brands: isomiso2avc1mp41
+    AIGC            : {"Label": "1", "ContentProducer": "001191340100MAEB4N8H7600000", "ProduceID": "57bb5f946e4ed5b2d068ef37c4dadc0a_20260823_402220", "ReservedCode1": "", "ContentPropagator": "001191340100MAEB4N8H7600000", "PropagateID": "RH_2091480185550635009_20260823_4022
+    encoder         : Lavf62.13.102
+  Duration: 00:00:04.46, start: 0.000000, bitrate: 5168 kb/s
+  Stream #6:0[0x1]: Video: h264 (High) (avc1 / 0x31637661), yuv420p(tv, bt709, progressive), 1664x928, 5030 kb/s, 24 fps, 24 tbr, 12288 tbn (default)
+    Metadata:
+      handler_name    : VideoHandler
+      vendor_id       : FFMP
+  Stream #6:1[0x2]: Audio: aac (LC) (mp4a / 0x6134706D), 32000 Hz, stereo, fltp, 126 kb/s (default)
+    Metadata:
+      handler_name    : SoundHandler
+      vendor_id       : [0][0][0][0]
+Input #7, mov,mp4,m4a,3gp,3g2,mj2, from '/Users/m4/project/rewords/music-mv-experiments/小鑫_多频道求救_MV/videos/runninghub_batch06_v0.6/P02A/runninghub_h3_audio_2091487430871052289.mp4':
+  Metadata:
+    minor_version   : 512
+    major_brand     : isom
+    compatible_brands: isomiso2avc1mp41
+    AIGC            : {"Label": "1", "ContentProducer": "001191340100MAEB4N8H7600000", "ProduceID": "57bb5f946e4ed5b2d068ef37c4dadc0a_20260823_78f367", "ReservedCode1": "", "ContentPropagator": "001191340100MAEB4N8H7600000", "PropagateID": "RH_2091487430871052289_20260823_78f3
+    encoder         : Lavf62.13.102
+  Duration: 00:00:04.46, start: 0.000000, bitrate: 4962 kb/s
+  Stream #7:0[0x1]: Video: h264 (High) (avc1 / 0x31637661), yuv420p(tv, bt709, progressive), 1664x928, 4824 kb/s, 24 fps, 24 tbr, 12288 tbn (default)
+    Metadata:
+      handler_name    : VideoHandler
+      vendor_id       : FFMP
+  Stream #7:1[0x2]: Audio: aac (LC) (mp4a / 0x6134706D), 32000 Hz, stereo, fltp, 126 kb/s (default)
+    Metadata:
+      handler_name    : SoundHandler
+      vendor_id       : [0][0][0][0]
+Input #8, mov,mp4,m4a,3gp,3g2,mj2, from '/Users/m4/project/rewords/music-mv-experiments/小鑫_多频道求救_MV/videos/runninghub_batch03_v0.6/S08/runninghub_h3_audio_2091401228310507521.mp4':
+  Metadata:
+    minor_version   : 512
+    major_brand     : isom
+    compatible_brands: isomiso2avc1mp41
+    AIGC            : {"Label": "1", "ContentProducer": "001191340100MAEB4N8H7600000", "ProduceID": "57bb5f946e4ed5b2d068ef37c4dadc0a_20260823_88e2ac", "ReservedCode1": "", "ContentPropagator": "001191340100MAEB4N8H7600000", "PropagateID": "RH_2091401228310507521_20260823_88e2
+    encoder         : Lavf62.13.102
+  Duration: 00:00:06.58, start: 0.000000, bitrate: 4044 kb/s
+  Stream #8:0[0x1]: Video: h264 (High) (avc1 / 0x31637661), yuv420p(tv, bt709, progressive), 1664x928, 3908 kb/s, 24 fps, 24 tbr, 12288 tbn (default)
+    Metadata:
+      handler_name    : VideoHandler
+      vendor_id       : FFMP
+  Stream #8:1[0x2]: Audio: aac (LC) (mp4a / 0x6134706D), 32000 Hz, stereo, fltp, 127 kb/s (default)
+    Metadata:
+      handler_name    : SoundHandler
+      vendor_id       : [0][0][0][0]
+Input #9, mov,mp4,m4a,3gp,3g2,mj2, from '/Users/m4/project/rewords/music-mv-experiments/小鑫_多频道求救_MV/videos/runninghub_batch06_v0.6/P02B_final/runninghub_h3_audio_2091490400455061506.mp4':
+  Metadata:
+    minor_version   : 512
+    major_brand     : isom
+    compatible_brands: isomiso2avc1mp41
+    AIGC            : {"Label": "1", "ContentProducer": "001191340100MAEB4N8H7600000", "ProduceID": "57bb5f946e4ed5b2d068ef37c4dadc0a_20260823_ed5b7f", "ReservedCode1": "", "ContentPropagator": "001191340100MAEB4N8H7600000", "PropagateID": "RH_2091490400455061506_20260823_ed5b
+    encoder         : Lavf62.13.102
+  Duration: 00:00:06.58, start: 0.000000, bitrate: 5980 kb/s
+  Stream #9:0[0x1]: Video: h264 (High) (avc1 / 0x31637661), yuv420p(tv, bt709, progressive), 1664x928, 5844 kb/s, 24 fps, 24 tbr, 12288 tbn (default)
+    Metadata:
+      handler_name    : VideoHandler
+      vendor_id       : FFMP
+  Stream #9:1[0x2]: Audio: aac (LC) (mp4a / 0x6134706D), 32000 Hz, stereo, fltp, 126 kb/s (default)
+    Metadata:
+      handler_name    : SoundHandler
+      vendor_id       : [0][0][0][0]
+Input #10, mov,mp4,m4a,3gp,3g2,mj2, from '/Users/m4/project/rewords/music-mv-experiments/小鑫_多频道求救_MV/videos/runninghub_batch07_v0.7/S10_lipsync_retry/runninghub_h3_audio_2091500833299722241.mp4':
+  Metadata:
+    minor_version   : 512
+    major_brand     : isom
+    compatible_brands: isomiso2avc1mp41
+    AIGC            : {"Label": "1", "ContentProducer": "001191340100MAEB4N8H7600000", "ProduceID": "57bb5f946e4ed5b2d068ef37c4dadc0a_20260823_c2cd6c", "ReservedCode1": "", "ContentPropagator": "001191340100MAEB4N8H7600000", "PropagateID": "RH_2091500833299722241_20260823_c2cd
+    encoder         : Lavf62.13.102
+  Duration: 00:00:06.58, start: 0.000000, bitrate: 2559 kb/s
+  Stream #10:0[0x1]: Video: h264 (High) (avc1 / 0x31637661), yuv420p(tv, bt709, progressive), 1664x928, 2423 kb/s, 24 fps, 24 tbr, 12288 tbn (default)
+    Metadata:
+      handler_name    : VideoHandler
+      vendor_id       : FFMP
+  Stream #10:1[0x2]: Audio: aac (LC) (mp4a / 0x6134706D), 32000 Hz, stereo, fltp, 127 kb/s (default)
+    Metadata:
+      handler_name    : SoundHandler
+      vendor_id       : [0][0][0][0]
+Input #11, mov,mp4,m4a,3gp,3g2,mj2, from '/Users/m4/project/rewords/music-mv-experiments/小鑫_多频道求救_MV/videos/runninghub_batch06_v0.6/P03/runninghub_h3_audio_2091487433375043585.mp4':
+  Metadata:
+    minor_version   : 512
+    major_brand     : isom
+    compatible_brands: isomiso2avc1mp41
+    AIGC            : {"Label": "1", "ContentProducer": "001191340100MAEB4N8H7600000", "ProduceID": "57bb5f946e4ed5b2d068ef37c4dadc0a_20260823_1c0dbd", "ReservedCode1": "", "ContentPropagator": "001191340100MAEB4N8H7600000", "PropagateID": "RH_2091487433375043585_20260823_1c0d
+    encoder         : Lavf62.13.102
+  Duration: 00:00:08.00, start: 0.000000, bitrate: 6025 kb/s
+  Stream #11:0[0x1]: Video: h264 (High) (avc1 / 0x31637661), yuv420p(tv, bt709, progressive), 1664x928, 5887 kb/s, 24 fps, 24 tbr, 12288 tbn (default)
+    Metadata:
+      handler_name    : VideoHandler
+      vendor_id       : FFMP
+  Stream #11:1[0x2]: Audio: aac (LC) (mp4a / 0x6134706D), 32000 Hz, stereo, fltp, 129 kb/s (default)
+    Metadata:
+      handler_name    : SoundHandler
+      vendor_id       : [0][0][0][0]
+Input #12, mov,mp4,m4a,3gp,3g2,mj2, from '/Users/m4/project/rewords/music-mv-experiments/小鑫_多频道求救_MV/videos/runninghub_batch04_v0.6/S12/runninghub_h3_audio_2091472358836764674.mp4':
+  Metadata:
+    minor_version   : 512
+    major_brand     : isom
+    compatible_brands: isomiso2avc1mp41
+    AIGC            : {"Label": "1", "ContentProducer": "001191340100MAEB4N8H7600000", "ProduceID": "57bb5f946e4ed5b2d068ef37c4dadc0a_20260823_c72b09", "ReservedCode1": "", "ContentPropagator": "001191340100MAEB4N8H7600000", "PropagateID": "RH_2091472358836764674_20260823_c72b
+    encoder         : Lavf62.13.102
+  Duration: 00:00:06.58, start: 0.000000, bitrate: 3396 kb/s
+  Stream #12:0[0x1]: Video: h264 (High) (avc1 / 0x31637661), yuv420p(tv, bt709, progressive), 1664x928, 3258 kb/s, 24 fps, 24 tbr, 12288 tbn (default)
+    Metadata:
+      handler_name    : VideoHandler
+      vendor_id       : FFMP
+  Stream #12:1[0x2]: Audio: aac (LC) (mp4a / 0x6134706D), 32000 Hz, stereo, fltp, 128 kb/s (default)
+    Metadata:
+      handler_name    : SoundHandler
+      vendor_id       : [0][0][0][0]
+Input #13, mov,mp4,m4a,3gp,3g2,mj2, from '/Users/m4/project/rewords/music-mv-experiments/小鑫_多频道求救_MV/videos/runninghub_batch04_v0.6/S13/runninghub_h3_audio_2091472357486186498.mp4':
+  Metadata:
+    minor_version   : 512
+    major_brand     : isom
+    compatible_brands: isomiso2avc1mp41
+    AIGC            : {"Label": "1", "ContentProducer": "001191340100MAEB4N8H7600000", "ProduceID": "57bb5f946e4ed5b2d068ef37c4dadc0a_20260823_f86683", "ReservedCode1": "", "ContentPropagator": "001191340100MAEB4N8H7600000", "PropagateID": "RH_2091472357486186498_20260823_f866
+    encoder         : Lavf62.13.102
+  Duration: 00:00:06.58, start: 0.000000, bitrate: 3076 kb/s
+  Stream #13:0[0x1]: Video: h264 (High) (avc1 / 0x31637661), yuv420p(tv, bt709, progressive), 1664x928, 2936 kb/s, 24 fps, 24 tbr, 12288 tbn (default)
+    Metadata:
+      handler_name    : VideoHandler
+      vendor_id       : FFMP
+  Stream #13:1[0x2]: Audio: aac (LC) (mp4a / 0x6134706D), 32000 Hz, stereo, fltp, 130 kb/s (default)
+    Metadata:
+      handler_name    : SoundHandler
+      vendor_id       : [0][0][0][0]
+Input #14, mp3, from '/Users/m4/project/rewords/music-mv-experiments/小鑫_多频道求救_MV/sources/小鑫_多频道求救_音频.mp3':
+  Metadata:
+    comment         : made with suno; created=2026-08-22T14:19:13Z; id=e26a4311-0b16-4bcc-a708-77286c0e84a3
+    sga             : 0.8
+    encoder         : Lavf62.3.100
+  Duration: 00:01:03.12, start: 0.023021, bitrate: 183 kb/s
+  Stream #14:0: Audio: mp3 (mp3float), 48000 Hz, stereo, fltp, 182 kb/s, start 0.023021
+    Metadata:
+      encoder         : Lavf
+Stream mapping:
+  Stream #0:0 (h264) -> trim:default
+  Stream #1:0 (h264) -> trim:default
+  Stream #2:0 (h264) -> trim:default
+  Stream #3:0 (h264) -> trim:default
+  Stream #4:0 (h264) -> trim:default
+  Stream #5:0 (h264) -> trim:default
+  Stream #6:0 (h264) -> trim:default
+  Stream #7:0 (h264) -> trim:default
+  Stream #8:0 (h264) -> trim:default
+  Stream #9:0 (h264) -> trim:default
+  Stream #10:0 (h264) -> trim:default
+  Stream #11:0 (h264) -> trim:default
+  Stream #12:0 (h264) -> trim:default
+  Stream #13:0 (h264) -> trim:default
+  concat:out:v0 -> Stream #0:0 (libx264)
+  Stream #14:0 -> #0:1 (mp3 (mp3float) -> aac (native))
+Press [q] to stop, [?] for help
+[libx264 @ 0x13c712130] using cpu capabilities: ARMv8 NEON DotProd I8MM
+[libx264 @ 0x13c712130] profile High, level 4.0, 4:2:0, 8-bit
+[libx264 @ 0x13c712130] 264 - core 165 r3222 b35605a - H.264/MPEG-4 AVC codec - Copyleft 2003-2025 - http://www.videolan.org/x264.html - options: cabac=1 ref=3 deblock=1:0:0 analyse=0x3:0x113 me=hex subme=7 psy=1 psy_rd=1.00:0.00 mixed_ref=1 me_range=16 chroma_me=1 trellis=1 8x8dct=1 cqm=0 deadzone=21,11 fast_pskip=1 chroma_qp_offset=-2 threads=15 lookahead_threads=2 sliced_threads=0 nr=0 decimate=1 interlaced=0 bluray_compat=0 constrained_intra=0 bframes=3 b_pyramid=2 b_adapt=1 b_bias=0 direct=1 weightb=1 open_gop=0 weightp=2 keyint=250 keyint_min=24 scenecut=40 intra_refresh=0 rc_lookahead=40 rc=crf mbtree=1 crf=17.0 qcomp=0.60 qpmin=0 qpmax=69 qpstep=4 ip_ratio=1.40 aq=1:1.00
+Output #0, mp4, to '/Users/m4/project/rewords/music-mv-experiments/小鑫_多频道求救_MV/final/roughcut_v0.1/小鑫_多频道求救_MV_roughcut_v0.1_S10_lipsync_retry.mp4':
+  Metadata:
+    minor_version   : 512
+    major_brand     : isom
+    compatible_brands: isomiso2avc1mp41
+    AIGC            : {"Label": "1", "ContentProducer": "001191340100MAEB4N8H7600000", "ProduceID": "57bb5f946e4ed5b2d068ef37c4dadc0a_20260823_b39933", "ReservedCode1": "", "ContentPropagator": "001191340100MAEB4N8H7600000", "PropagateID": "RH_2091480190634131458_20260823_b399
+    encoder         : Lavf62.12.102
+  Stream #0:0: Video: h264 (avc1 / 0x31637661), yuv420p(tv, bt709, progressive), 1920x1080, q=2-31, 24 fps, 12288 tbn
+    Metadata:
+      encoder         : Lavc62.28.102 libx264
+    Side data:
+      CPB properties: bitrate max/min/avg: 0/0/0 buffer size: 0 vbv_delay: N/A
+  Stream #0:1: Audio: aac (LC) (mp4a / 0x6134706D), 48000 Hz, stereo, fltp, 320 kb/s
+    Metadata:
+      encoder         : Lavc62.28.102 aac
+frame=    7 fps=0.0 q=22.0 size=     256KiB time=00:00:00.20 bitrate=10068.2kbits/s speed=0.409x elapsed=0:00:00.50    frame=   42 fps= 41 q=22.0 size=    1280KiB time=00:00:01.66 bitrate=6291.7kbits/s speed=1.63x elapsed=0:00:01.02    frame=   76 fps= 49 q=22.0 size=    2560KiB time=00:00:03.08 bitrate=6801.7kbits/s speed=2.01x elapsed=0:00:01.53    frame=  119 fps= 58 q=22.0 size=    4352KiB time=00:00:04.87 bitrate=7313.2kbits/s speed=2.39x elapsed=0:00:02.03    frame=  161 fps= 63 q=22.0 size=    5888KiB time=00:00:06.62 bitrate=7280.7kbits/s speed=2.61x elapsed=0:00:02.53    frame=  183 fps= 60 q=22.0 size=    6656KiB time=00:00:07.54 bitrate=7230.0kbits/s speed=2.48x elapsed=0:00:03.04    frame=  220 fps= 62 q=22.0 size=    7936KiB time=00:00:09.08 bitrate=7157.3kbits/s speed=2.56x elapsed=0:00:03.55    frame=  257 fps= 63 q=22.0 size=    9216KiB time=00:00:10.62 bitrate=7105.7kbits/s speed=2.61x elapsed=0:00:04.06    frame=  299 fps= 65 q=22.0 size=   10496KiB time=00:00:12.37 bitrate=6948.2kbits/s speed= 2.7x elapsed=0:00:04.57    frame=  336 fps= 66 q=22.0 size=   12032KiB time=00:00:13.91 bitrate=7082.6kbits/s speed=2.74x elapsed=0:00:05.07    frame=  372 fps= 67 q=22.0 size=   13312KiB time=00:00:15.41 bitrate=7073.7kbits/s speed=2.76x elapsed=0:00:05.58    frame=  426 fps= 70 q=22.0 size=   14848KiB time=00:00:17.66 bitrate=6885.0kbits/s speed= 2.9x elapsed=0:00:06.09    frame=  469 fps= 71 q=22.0 size=   15872KiB time=00:00:19.45 bitrate=6682.2kbits/s speed=2.95x elapsed=0:00:06.59    frame=  509 fps= 72 q=22.0 size=   17152KiB time=00:00:21.12 bitrate=6651.3kbits/s speed=2.97x elapsed=0:00:07.10    frame=  549 fps= 72 q=22.0 size=   18432KiB time=00:00:22.79 bitrate=6625.0kbits/s speed=   3x elapsed=0:00:07.60    frame=  587 fps= 72 q=22.0 size=   19712KiB time=00:00:24.37 bitrate=6624.9kbits/s speed=   3x elapsed=0:00:08.11    frame=  625 fps= 73 q=22.0 size=   21760KiB time=00:00:25.95 bitrate=6867.1kbits/s speed=3.01x elapsed=0:00:08.61    frame=  658 fps= 72 q=22.0 size=   23040KiB time=00:00:27.33 bitrate=6905.3kbits/s speed=2.99x elapsed=0:00:09.12    frame=  694 fps= 72 q=22.0 size=   24320KiB time=00:00:28.83 bitrate=6909.7kbits/s speed=2.99x elapsed=0:00:09.63    frame=  725 fps= 72 q=22.0 size=   25600KiB time=00:00:30.12 bitrate=6961.5kbits/s speed=2.97x elapsed=0:00:10.13    frame=  762 fps= 72 q=22.0 size=   27648KiB time=00:00:31.66 bitrate=7152.4kbits/s speed=2.97x elapsed=0:00:10.64    frame=  796 fps= 71 q=22.0 size=   28928KiB time=00:00:33.08 bitrate=7163.1kbits/s speed=2.97x elapsed=0:00:11.15    frame=  827 fps= 71 q=22.0 size=   30720KiB time=00:00:34.37 bitrate=7321.0kbits/s speed=2.95x elapsed=0:00:11.66    frame=  871 fps= 72 q=22.0 size=   32512KiB time=00:00:36.20 bitrate=7355.7kbits/s speed=2.98x elapsed=0:00:12.16    frame=  908 fps= 72 q=22.0 size=   33792KiB time=00:00:37.75 bitrate=7333.1kbits/s speed=2.98x elapsed=0:00:12.67    frame=  952 fps= 72 q=22.0 size=   35072KiB time=00:00:39.58 bitrate=7258.4kbits/s speed=   3x elapsed=0:00:13.18    frame=  985 fps= 72 q=22.0 size=   36864KiB time=00:00:40.95 bitrate=7373.1kbits/s speed=2.99x elapsed=0:00:13.68    frame= 1020 fps= 72 q=22.0 size=   38400KiB time=00:00:42.41 bitrate=7416.3kbits/s speed=2.99x elapsed=0:00:14.18    frame= 1062 fps= 72 q=22.0 size=   40448KiB time=00:00:44.16 bitrate=7502.3kbits/s speed=3.01x elapsed=0:00:14.68    frame= 1107 fps= 73 q=22.0 size=   41216KiB time=00:00:46.04 bitrate=7333.4kbits/s speed=3.03x elapsed=0:00:15.19    frame= 1153 fps= 73 q=22.0 size=   42496KiB time=00:00:47.95 bitrate=7259.0kbits/s speed=3.05x elapsed=0:00:15.69    frame= 1183 fps= 73 q=22.0 size=   44288KiB time=00:00:49.20 bitrate=7372.9kbits/s speed=3.04x elapsed=0:00:16.20    frame= 1216 fps= 73 q=22.0 size=   46080KiB time=00:00:50.58 bitrate=7462.7kbits/s speed=3.03x elapsed=0:00:16.71    frame= 1252 fps= 73 q=22.0 size=   47616KiB time=00:00:54.72 bitrate=7128.5kbits/s speed=3.18x elapsed=0:00:17.21    frame= 1300 fps= 73 q=22.0 size=   49664KiB time=00:00:56.72 bitrate=7172.2kbits/s speed= 3.2x elapsed=0:00:17.72    frame= 1353 fps= 74 q=22.0 size=   51200KiB time=00:00:58.92 bitrate=7118.3kbits/s speed=3.23x elapsed=0:00:18.23    frame= 1427 fps= 76 q=22.0 size=   52736KiB time=00:01:02.01 bitrate=6966.2kbits/s speed=3.31x elapsed=0:00:18.74    frame= 1484 fps= 77 q=22.0 size=   54272KiB time=N/A bitrate=N/A speed=N/A elapsed=0:00:19.25    [mp4 @ 0x13c718e50] Starting second pass: moving the moov atom to the beginning of the file
+[out#0/mp4 @ 0x13c719ac0] video:52875KiB audio:2424KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 0.079787%
+frame= 1514 fps= 77 q=-1.0 Lsize=   55342KiB time=00:01:03.00 bitrate=7196.3kbits/s speed=3.21x elapsed=0:00:19.61    
+[libx264 @ 0x13c712130] frame I:36    Avg QP:12.10  size:235985
+[libx264 @ 0x13c712130] frame P:398   Avg QP:15.81  size: 68569
+[libx264 @ 0x13c712130] frame B:1080  Avg QP:18.61  size: 16997
+[libx264 @ 0x13c712130] consecutive B-frames:  3.1%  4.2%  3.4% 89.3%
+[libx264 @ 0x13c712130] mb I  I16..4:  7.0% 66.9% 26.0%
+[libx264 @ 0x13c712130] mb P  I16..4:  2.1% 11.2%  2.1%  P16..4: 34.7% 24.5% 11.8%  0.0%  0.0%    skip:13.6%
+[libx264 @ 0x13c712130] mb B  I16..4:  0.2%  0.9%  0.2%  B16..8: 34.2%  7.0%  1.4%  direct: 4.8%  skip:51.3%  L0:39.6% L1:49.6% BI:10.8%
+[libx264 @ 0x13c712130] 8x8 transform intra:70.6% inter:69.0%
+[libx264 @ 0x13c712130] coded y,uvDC,uvAC intra: 70.0% 85.5% 63.1% inter: 19.6% 22.7% 1.7%
+[libx264 @ 0x13c712130] i16 v,h,dc,p: 34% 13%  6% 47%
+[libx264 @ 0x13c712130] i8 v,h,dc,ddl,ddr,vr,hd,vl,hu: 22% 17% 20%  5%  7%  7%  8%  7%  7%
+[libx264 @ 0x13c712130] i4 v,h,dc,ddl,ddr,vr,hd,vl,hu: 25% 18% 16%  5% 10%  8%  8%  5%  5%
+[libx264 @ 0x13c712130] i8c dc,h,v,p: 48% 20% 23%  9%
+[libx264 @ 0x13c712130] Weighted P-Frames: Y:6.8% UV:5.8%
+[libx264 @ 0x13c712130] ref P L0: 63.7% 12.1% 18.4%  5.7%  0.1%
+[libx264 @ 0x13c712130] ref B L0: 91.0%  7.4%  1.6%
+[libx264 @ 0x13c712130] ref B L1: 96.9%  3.1%
+[libx264 @ 0x13c712130] kb/s:6866.20
+[aac @ 0x13c71b240] Qavg: 14102.919

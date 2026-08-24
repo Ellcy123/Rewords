@@ -1,0 +1,22 @@
+Create a 15-second vertical 9:16 flat 2D dark-fairy-tale music-video segment.
+
+REFERENCE ROLES
+Picture 1 is the exact first-frame composition and spatial truth for this segment. Picture 2 is the only identity reference for the knight: preserve his helmet, armor shapes, sword, body proportions, and color placement exactly. Picture 3 is only the art-direction reference: preserve its flat illustrated line work, ornamental tarot-card framing, warm but unsettling palette, folk-horror decoration, and dense graphic composition, but do not copy or introduce any of its characters. Reference Audio 1 is the exact song section for rhythm, vocal phrasing, emotional timing, and edit beats. Do not invent dialogue. The final production will replace generated audio with the original song.
+
+NARRATIVE INTENT
+The knight is not a hero yet. He is an unused game piece becoming conscious inside an abandoned collection of unfinished assets. He is small, replaceable, and almost invisible. The scene must feel lonely before it feels frightening.
+
+0.0–3.5s: Begin on a pure charcoal-black field framed like a damaged tarot card. Flat bone-white folder tabs, unused character-slot rectangles, broken castle drawings, and disconnected event symbols float as paper cutouts. The knight from Picture 2 lies motionless near the lower center like a forgotten inventory icon. No readable text. Use only a very slow two-dimensional scale-in, not a 3D camera move.
+
+3.5–8.0s: On the first clear vocal phrase, the knight's helmet tilts upward by only a few degrees. A thin golden line appears inside his visor, suggesting awareness. His right hand closes once around the old sword. The surrounding paper assets remain frozen. Use stepped limited-animation timing: still pose, one hand movement, still pose.
+
+8.0–12.0s: A cold white selection rectangle passes over every surrounding asset but skips the knight. Each skipped selection creates a brief black-white color inversion. The knight remains in the same place while the rectangular inventory grid slides sideways behind him like a flat side-scrolling interface.
+
+12.0–15.0s: The inventory rectangles close inward like paper shutters, leaving the knight alone inside a narrow door-shaped black opening. A thin wine-red circular arc begins drawing itself behind him and stops before completing the circle. Hold the incomplete circle for the final half-second so it can continue in S02.
+
+STYLE AND MOTION RULES
+Pure flat 2D cel animation, printed storybook grain, solid shapes, bold clean outlines, halftone texture, paper-cut silhouettes, stepped key poses, editorial motion graphics, graphic match cuts. Main colors: charcoal black, bone white, dark forest green, burnt gold, muted orange, and one restrained wine-red accent.
+
+STRICT NEGATIVE CONSTRAINTS
+No live action, no photorealism, no 3D animation, no realistic lighting, no volumetric shading, no depth of field, no lens flare, no free camera orbit, no glossy metal, no readable text, no subtitles, no logos, no watermarks, no duplicated knight, no extra people, no face drift, no armor drift, no sword deformation, no random particles, no gore, and no continuous realistic acting.
+

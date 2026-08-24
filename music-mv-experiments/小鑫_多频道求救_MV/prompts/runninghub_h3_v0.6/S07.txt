@@ -1,0 +1,11 @@
+Picture 1 is the exact opening frame and controls the worn folded city map, four red warning beacons, one cyan route, wet metal tabletop, Xiaoxin's gloved and bandaged hand, and overhead composition. Picture 2 is Xiaoxin's wardrobe and hand reference: use the blurred standing views only to preserve glove design and the white bandage on his left forearm; no face appears. Picture 3 duplicates Picture 1 and is only a scene reference. Reference Audio 1 is the exact target song segment and controls the four warning pulses for “四栋楼同时呼叫”.
+
+Create a four-second cinematic map sequence with three concise macro shots and no readable labels.
+
+[Shot 1] From 00:00.000 to 00:01.100, begin from Picture 1 in a locked true top-down shot. The four red beacons pulse simultaneously once, then pulse in a quick clockwise sequence. Xiaoxin's bandaged fingertip enters from the lower edge and stops over the center intersection without touching the paper.
+
+[Shot 2] At 00:01.100, hard cut to a very low raking macro across the map surface. The camera slides smoothly past the four red reflections while the cyan route remains a single unbroken line. Paper folds, moisture, and ink texture stay stable; the fingertip hovers in soft background.
+
+[Shot 3] At 00:02.300, hard cut back to a slightly wider true overhead. The four red beacons remain active while the cyan route narrows visually toward one constrained corridor. Xiaoxin's fingertip moves once between two routes, then freezes exactly at the unresolved split. Hold the final frame.
+
+No map morphing, new roads, moving printed lines, readable place names, numeric UI, extra hands, finger deformation, random light blinking, camera shake, pulse zoom, logo, or watermark. Reference Audio 1 is temporary timing guidance and will be replaced with the original master song.

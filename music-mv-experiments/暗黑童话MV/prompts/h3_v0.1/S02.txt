@@ -1,0 +1,22 @@
+Create a 15-second vertical 9:16 flat 2D dark-fairy-tale music-video segment that continues directly from S01.
+
+REFERENCE ROLES
+Picture 1 is the exact first frame and must begin with the incomplete wine-red circle and narrow door-shaped opening established at the end of S01. Picture 2 is the only knight identity reference; keep his armor, helmet, sword, scale, and silhouette unchanged. Picture 3 is only the flat gothic tarot and folk-horror art-direction reference; do not copy its characters. Reference Audio 1 controls rhythm, vocal echoes, emotional pauses, and graphic edit beats. Do not invent dialogue. The final production will use the original song audio.
+
+NARRATIVE INTENT
+The knight waits to be selected, but every opening closes before reaching him. Time is conveyed through repetition and accumulating marks, not through realistic clocks or readable numbers.
+
+0.0–4.0s: Complete the wine-red circle from S01. It becomes a flat circular door behind the knight. The door opens onto warm golden light, then instantly shuts before he can move. Repeat once with the same exact framing, but the second opening is shorter. The knight stays still except for a slight lift of his head.
+
+4.0–8.0s: The circular door multiplies into a grid of empty black character slots surrounding him. White selection outlines jump from slot to slot in rhythm with Reference Audio 1. They never land on the knight. Each rejection leaves one short bone-white scratch mark on the tarot border. Do not generate readable numbers.
+
+8.0–12.0s: The knight performs a two-pose walk cycle toward the nearest door while the entire flat background scrolls backward, making the door remain impossibly distant. His shadow stays attached to the floor but stretches toward the door instead of following the moonlight. Keep the motion side-on and graphic like a side-scrolling game.
+
+12.0–15.0s: Hundreds of small scratch marks compress into one sharp bone-white vertical line. The knight raises his sword until its blade perfectly overlaps this line. On the last beat, invert the frame to bone white and black for one frame, then return to the normal palette. Hold the sword-line alignment as the transition anchor into S03.
+
+STYLE AND MOTION RULES
+Pure flat 2D cel animation, limited two-pose cycles, static frontal or side-view composition, tarot border, paper grain, solid silhouettes, halftone dots, hard color inversion, graphic repetition, no smooth physical simulation. The unease comes from impossible repetition and a door that never gets closer.
+
+STRICT NEGATIVE CONSTRAINTS
+No live action, no photorealism, no 3D corridor, no realistic perspective, no cinematic lens, no volumetric light, no glossy surfaces, no readable numbers, no text, no subtitles, no logos, no watermarks, no duplicated knight, no additional human characters, no face changes, no armor changes, no sword bending, no random camera shake, no gore, and no continuous realistic walking.
+

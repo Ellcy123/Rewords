@@ -1,0 +1,50 @@
+{
+  "webappId": "2087127180013817858",
+  "nodeInfoList": [
+    {
+      "nodeId": "34",
+      "fieldName": "image",
+      "fieldValue": "LOCAL_FILE:/Users/m4/project/rewords/music-mv-experiments/小鑫_多频道求救_MV/keyframes/selected/S10_start.png"
+    },
+    {
+      "nodeId": "35",
+      "fieldName": "image",
+      "fieldValue": "LOCAL_FILE:/Users/m4/project/rewords/music-mv-experiments/小鑫_多频道求救_MV/references/小鑫_MiniMax专用角色卡_站立面部模糊_V0.2.png"
+    },
+    {
+      "nodeId": "36",
+      "fieldName": "image",
+      "fieldValue": "LOCAL_FILE:/Users/m4/project/rewords/music-mv-experiments/小鑫_多频道求救_MV/keyframes/selected/S10_start.png"
+    },
+    {
+      "nodeId": "37",
+      "fieldName": "value",
+      "fieldValue": 6
+    },
+    {
+      "nodeId": "39",
+      "fieldName": "value",
+      "fieldValue": "Picture 1 is the exact opening frame and controls Xiaoxin's face, shoulder radio, black survival clothing, junction background, wet floor, and mixed blue-red light. Picture 2 is Xiaoxin's identity and wardrobe reference: only the sharp large portrait on its right side controls his face; the blurred standing views control his body, harness, gloves, boots, and left-forearm bandage. Picture 3 duplicates Picture 1 and is only a scene and composition reference. Reference Audio 1 is the exact master-song segment and is authoritative for the Chinese lyric timing, syllable rhythm, breath placement, and the hard cut at “脚却”. Reference Audio 2 is Xiaoxin's timbre reference only; it binds his natural restrained vocal color to Xiaoxin and must never change the timing supplied by Reference Audio 1.\n\nCreate a six-second cinematic two-shot sequence. Xiaoxin is the only visible singer, identified as (S1), and says exactly once: <d>[Chinese] 嘴上答应每个出口，脚却停在岔路口。</d> Lip synchronization is the primary test. When the mouth is visible, every word must begin on the exact corresponding vocal onset in Reference Audio 1, with clear Chinese syllable mouth shapes and no anticipatory lip motion, no delayed movement, no invented humming, no repeated words, and no mouth movement after the reference phrase ends. The final master song will replace generated audio, so visible mouth timing must match Reference Audio 1 exactly.\n\n[Shot 1] From 00:00.000 to 00:02.250, begin from Picture 1 in a locked-off 60mm three-quarter medium close-up. Xiaoxin's full mouth, lips, chin, eyes, and shoulder radio remain sharp and unobstructed; he is turned about 20 degrees camera-left toward the green radio light, never blankly facing the lens. He performs the first phrase, “嘴上答应每个出口,” only. Start the first visible mouth shape exactly with the first vocal sound in Reference Audio 1. He sings quietly but with precise jaw, lip, and tongue timing; his brow softens at “答应,” then his lower eyelids tighten at “每个出口.” Keep head and shoulders still except for one natural breath. At the end of “出口,” his lips close exactly with the final syllable and remain closed for the cut.\n\n[Shot 2] At the first syllable of “脚却,” make a clean hard cut to a locked 50mm low insert of both boots already stopped on the wet junction floor. The three route directions are readable only through existing rail geometry and blue-red reflections; do not add arrows or text. Both boots remain planted through “停在岔路口.” The rest of the lyric is off-camera, so no additional mouth is visible. Only rainwater ripples and distant reflected warning light may move.\n\nTripod-locked, stable cinematic images: no head bobbing, body vibration, micro-jitter, camera shake, focus breathing, continuous tilt, pulse zoom, rolling shutter, extra people, duplicated legs, deformed boots, new markings, text, logo, or watermark. No singing mouth outside Shot 1. The generated soundtrack is temporary; use the original master song in post-production.\n"
+    },
+    {
+      "nodeId": "84",
+      "fieldName": "audio",
+      "fieldValue": "LOCAL_FILE:/Users/m4/project/rewords/music-mv-experiments/小鑫_多频道求救_MV/references/audio/segments/S10_43.851-47.856.wav"
+    },
+    {
+      "nodeId": "85",
+      "fieldName": "audio",
+      "fieldValue": "LOCAL_FILE:/Users/m4/project/rewords/music-mv-experiments/小鑫_多频道求救_MV/references/audio/小鑫_音色参考_12.715s.wav"
+    },
+    {
+      "nodeId": "89",
+      "fieldName": "aspect_ratio",
+      "fieldValue": "16:9 (Widescreen)"
+    },
+    {
+      "nodeId": "138",
+      "fieldName": "aspect_ratio",
+      "fieldValue": "16:9 (Widescreen)"
+    }
+  ]
+}

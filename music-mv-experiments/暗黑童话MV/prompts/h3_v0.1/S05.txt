@@ -1,0 +1,22 @@
+Create a 15-second vertical 9:16 flat 2D dark-fairy-tale music-video segment for the emotional chorus and the arrival of the 348th player.
+
+REFERENCE ROLES
+Picture 1 is the exact starting composition with the lock's center line becoming a chessboard division. Picture 2 is the only knight identity reference and must preserve his armor, helmet, sword, scale, and silhouette. Picture 3 defines only the flat gothic-tarot illustration style, folk-horror palette, and ornamental graphic density; do not copy its characters. Reference Audio 1 guides the chorus phrasing, strong beat cuts, and emotional rise. Do not invent dialogue. Final audio will be the original song.
+
+NARRATIVE INTENT
+The heroic fairy tale collapses. The knight admits that he was never special; he is a plain chess piece trapped by unchangeable rules. Then one new presence appears outside the game's frame and notices him.
+
+0.0–4.0s: Begin with the knight posed as a grand heroic poster at the center of a symmetrical tarot frame. On the first chorus impact, the ornamental crown, cape-like shapes, and heroic rays peel away as flat paper strips. Reveal the same ordinary knight from Picture 2, smaller and alone on a black-and-white chessboard. He does not fall; the poster simply deconstructs around him.
+
+4.0–8.0s: A large bone-white moon grid sweeps across the board from top to bottom. Squares touched by moonlight invert to harsh white and display thin red damage cracks. The knight can move only inside a dark forest-green shadow strip. Show one clear side step into shadow, then freeze. Treat moonlight as a graphic program rule, not natural illumination.
+
+8.0–12.0s: The tarot border becomes a computer-window border without generating readable interface text. Many small black scratch marks line the edge, representing previous visitors. They extinguish together. One new burnt-gold mark appears outside the border and remains lit. A simple flat white cursor silhouette enters from beyond the frame and stops near the knight.
+
+12.0–15.0s: The knight slowly turns his helmet toward the cursor. His sword lowers from defensive to neutral. The gold mark expands into a thin rectangular doorway behind the cursor, showing only flat bone-white light. Do not let the knight exit yet. End on a close graphic composition of knight, cursor, and unopened doorway, with a single wine-red eye motif blinking in the moon above.
+
+STYLE AND MOTION RULES
+Flat 2D cel illustration, tarot poster deconstruction, chessboard geometry, graphic moonlight sweep, stepped key poses, one side step, hard inversions, paper strips, restrained glitch edges. Use only two-dimensional pans and scale-ins synchronized to Reference Audio 1.
+
+STRICT NEGATIVE CONSTRAINTS
+No live action, no realistic human hand, no photorealism, no 3D chessboard, no volumetric moonlight, no depth of field, no lens flare, no free camera orbit, no readable UI or numbers, no subtitles, no logos, no watermark, no duplicated knight, no princess in this segment, no extra people, no armor changes, no face drift, no sword deformation, no gore, and no heroic battle action.
+

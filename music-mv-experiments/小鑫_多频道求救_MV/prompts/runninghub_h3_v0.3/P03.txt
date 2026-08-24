@@ -1,0 +1,13 @@
+Picture 1 is the exact starting frame and controls the five-person medium-wide formation, four inward-reaching gestures, wet underground junction, spacing, and cyan-amber-red lighting. Picture 2 is Xiaoxin's identity and wardrobe reference; only the sharp large portrait on its right side controls the center lead's face, while the blurred standing views control his body, black survival clothing, harness, gloves, boots, and left-forearm bandage. Picture 3 shows the same five performers in the earlier wide choreography formation and is used to preserve the four distinct backup dancers, their individual faces and outfits, and the exact five-person cast across motion. Reference Audio 1 is the exact target song segment and controls Xiaoxin's singing mouth timing, the four directional gestures, and the three final count hits.
+
+Create one continuous 8-second performance scene with three clearly edited shots and exactly five men throughout. Preserve all five identities, outfits, positions, and the same wet junction lighting across every cut. Xiaoxin sings in Chinese: “不是不想把你们救，是我还没学会说不，当所有频道一起求救，三、二、一。” Reference Audio 1 controls his mouth timing, choreography accents, and the final three count hits.
+
+[Shot 1 — 00:00.000–00:02.400] Wide full-body formation shot. Xiaoxin stands centered while the four backup dancers occupy four distinct directions. The first two dancers reach inward one after another, each open hand stopping clearly outside Xiaoxin's body, then shifting weight back toward his own exit. Keep all five bodies and floor spacing readable.
+
+[Hard cut at 00:02.400]
+[Shot 2 — 00:02.400–00:05.300] Tight chest-and-face close-up on Xiaoxin from a clear 30-degree angle change. His bandaged forearm stays close to his chest. The other dancers' hands enter only at the far frame edges, remain separated from his face and neck, and never touch him. Hold Xiaoxin's conflicted expression and precise Chinese lip sync through “当所有频道一起求救”.
+
+[Beat-matched hard cut at 00:05.300]
+[Shot 3 — 00:05.300–00:08.000] High wide, slightly overhead group shot revealing all five full bodies again. On “三、二、一” all five perform three clean grounded hit points. At the final hit, the four dancers open sharply toward four exits while Xiaoxin freezes alone at center. No body merging, extra arms, touching, cloned dancers, sixth person, jumping, weapons, microphone, text, or logo.
+
+Reference Audio 1 guides choreography and lip sync but may not be copied exactly. Remove the generated soundtrack and restore the original master song in post-production.

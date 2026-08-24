@@ -1,0 +1,13 @@
+Create a 15-second horizontal 16:9 final sequence for a dark-fairy-tale 2D game PV. Use pure flat 2D cel animation and severe Editorial Motion Graphics: black ink contours, printed paper grain, charcoal black, bone white, moss green, tarnished old gold and alarming wine red. No photorealism, no 3D depth, no readable text or numbers, no dialogue or lip-sync, no happy resolution.
+
+Picture 1 is the only knight reference. Preserve exactly the same blond young adult male knight, red cape, brown armor and sword. Picture 2 is the unfinished terminal chamber / black-door environment; use only its paper-theater architecture and empty checker space, no original UI or characters. Picture 3 is the five-sanctuary UI reference: use its rings, targets, borders and routing lines as abstract nonverbal graphic language.
+
+Reference Audio 1 is the song. It is only 8.68 seconds of active music followed by technical silence. The visual story ends at 8.68 seconds; hold a pure black tail with one extinguished red point from 8.68 to 15 seconds. Nobody speaks.
+
+0–3 seconds: begin from a thin horizontal eye strip. The knight’s eyes look offscreen, then turn directly toward the viewer. For one frame, a wine-red mask-shaped symbol appears inside the pupils. Black paper fragments fall from above like a much larger eyelid is closing. Keep his face flat and exactly on-model.
+
+3–6 seconds: fragments assemble into a giant broken moon ring. Its center becomes a black pupil that does not belong to the knight. A selection frame crosses past the knight and locks onto the exact center of the viewer. Five sanctuary nodes around the outer ring all go dark simultaneously; use a cold-white inversion on the beat.
+
+6–8.68 seconds: the knight reaches forward from a black shadow lane using only two key poses. An incomplete wine-red circle closes around the viewer position. One frame becomes pure wine red, then cut to black. On the final musical pulse, leave a single tiny red point at center and let it extinguish.
+
+8.68–15 seconds: technical tail only. Hold an empty pure black frame with no new objects, motion, text, creatures, or light. The tiny red point remains fully off.

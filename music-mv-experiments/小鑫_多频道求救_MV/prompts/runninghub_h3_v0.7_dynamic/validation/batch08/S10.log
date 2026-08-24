@@ -1,0 +1,50 @@
+{
+  "webappId": "2087127180013817858",
+  "nodeInfoList": [
+    {
+      "nodeId": "34",
+      "fieldName": "image",
+      "fieldValue": "LOCAL_FILE:/Users/m4/project/rewords/music-mv-experiments/小鑫_多频道求救_MV/keyframes/selected/S10_start.png"
+    },
+    {
+      "nodeId": "35",
+      "fieldName": "image",
+      "fieldValue": "LOCAL_FILE:/Users/m4/project/rewords/music-mv-experiments/小鑫_多频道求救_MV/references/小鑫_MiniMax专用角色卡_站立面部模糊_V0.2.png"
+    },
+    {
+      "nodeId": "36",
+      "fieldName": "image",
+      "fieldValue": "LOCAL_FILE:/Users/m4/project/rewords/music-mv-experiments/小鑫_多频道求救_MV/keyframes/selected/S10_start.png"
+    },
+    {
+      "nodeId": "37",
+      "fieldName": "value",
+      "fieldValue": 6
+    },
+    {
+      "nodeId": "39",
+      "fieldName": "value",
+      "fieldValue": "Picture 1 is the exact opening frame and controls Xiaoxin's identity, shoulder radio, black survival clothing, junction background, wet floor, and mixed blue-red light. Picture 2 is Xiaoxin's identity and wardrobe reference: only the sharp large portrait on its right side controls his face; the blurred standing views control his body, harness, gloves, boots, and left-forearm bandage. Picture 3 duplicates Picture 1 and is only a scene and composition reference. Reference Audio 1 is the exact target segment and controls the timing of the visual cuts only; the original master song will be laid over in post-production. Reference Audio 2 is an automatic duplicate of Reference Audio 1 and adds no independent instruction.\n\nCreate a six-second cinematic three-shot sequence about a promise his body cannot keep. Xiaoxin is the only character. Preserve identity, clothing, lighting, and the three-way junction across all cuts. Crucial rule: do not show a readable singing mouth or attempt visible lip-sync. The lyric plays as his radio-adjacent inner voice over precise non-lip images, so the final master audio never visibly disagrees with the picture.\n\n[Shot 1] From 00:00.000 to 00:00.700, start with a locked extreme macro of Xiaoxin's gloved hand raising the old shoulder radio just below frame. His thumb presses the push-to-talk switch once and the green channel light turns on. His face and mouth are fully outside frame. The camera remains fixed; one small radio movement only.\n\n[Shot 2] At 00:00.700, hard cut to a locked 70mm over-shoulder three-quarter close-up of Xiaoxin's eyes, nose bridge, brow, and radio. The radio and gloved hand cover his mouth and lower face completely at every frame. On “嘴上答应每个出口,” his eyes soften toward the green light; on the following phrase they move once toward the red exit and then set with restrained alarm. No mouth, chin, or jaw movement may be visible. No direct lens stare, only the radio and escape routes as eyelines.\n\n[Shot 3] At 00:01.800, hard cut to a locked 50mm low insert of both boots already stopped on the wet junction floor. The three route directions remain readable only through existing rail geometry and blue-red reflections. Both boots remain completely planted until the end; only rainwater ripples and distant reflected warning light may move. Hold without any tilt, push, or wobble.\n\nAbsolute stability: tripod-locked images, no body vibration, no head bobbing, no micro-jitter, no camera shake, no focus breathing, no continuous tilt down, no lip-sync attempt, no duplicated legs, deformed boots, extra people, new markings, text, logo, or watermark. The generated audio is temporary and will be replaced with the original master song.\n"
+    },
+    {
+      "nodeId": "84",
+      "fieldName": "audio",
+      "fieldValue": "LOCAL_FILE:/Users/m4/project/rewords/music-mv-experiments/小鑫_多频道求救_MV/references/audio/segments/S10_43.851-47.856.wav"
+    },
+    {
+      "nodeId": "85",
+      "fieldName": "audio",
+      "fieldValue": "LOCAL_FILE:/Users/m4/project/rewords/music-mv-experiments/小鑫_多频道求救_MV/references/audio/segments/S10_43.851-47.856.wav"
+    },
+    {
+      "nodeId": "89",
+      "fieldName": "aspect_ratio",
+      "fieldValue": "16:9 (Widescreen)"
+    },
+    {
+      "nodeId": "138",
+      "fieldName": "aspect_ratio",
+      "fieldValue": "16:9 (Widescreen)"
+    }
+  ]
+}

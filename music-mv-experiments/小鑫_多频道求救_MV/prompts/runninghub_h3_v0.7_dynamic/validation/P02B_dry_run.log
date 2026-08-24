@@ -1,0 +1,50 @@
+{
+  "webappId": "2087127180013817858",
+  "nodeInfoList": [
+    {
+      "nodeId": "34",
+      "fieldName": "image",
+      "fieldValue": "LOCAL_FILE:/Users/m4/project/rewords/music-mv-experiments/小鑫_多频道求救_MV/keyframes/selected/P02_group_cluster_start_v03.png"
+    },
+    {
+      "nodeId": "35",
+      "fieldName": "image",
+      "fieldValue": "LOCAL_FILE:/Users/m4/project/rewords/music-mv-experiments/小鑫_多频道求救_MV/references/小鑫_MiniMax专用角色卡_站立面部模糊_V0.2.png"
+    },
+    {
+      "nodeId": "36",
+      "fieldName": "image",
+      "fieldValue": "LOCAL_FILE:/Users/m4/project/rewords/music-mv-experiments/小鑫_多频道求救_MV/keyframes/selected/P03_group_wall_start_v03.png"
+    },
+    {
+      "nodeId": "37",
+      "fieldName": "value",
+      "fieldValue": 6
+    },
+    {
+      "nodeId": "39",
+      "fieldName": "value",
+      "fieldValue": "Picture 1 is the exact opening frame and controls the clean five-person compact asymmetric formation, 35mm left-front viewpoint, wet junction, layered spacing, reflections, and cyan-amber-red lighting. Picture 2 is Xiaoxin's identity and wardrobe reference: only the sharp large portrait controls the lead's face; the blurred standing views control his body, black survival clothing, harness, gloves, boots, and left-forearm bandage. Picture 3 preserves the same four distinct rescued men and their individual outfits; use it only to lock cast identity, not to replace Picture 1's opening formation. Reference Audio 1 is the exact chorus segment and controls the 136 BPM beat timing, Xiaoxin's Chinese singing mouth timing when his mouth is visible, and all cut accents.\n\nCreate a six-second cinematic, hard-hitting K-pop boy-group performance with exactly five young East Asian men and three clearly edited camera angles. Xiaoxin remains center lead and only singer, identified as (S1), singing <d>[Chinese] 我没有把你们忙丢，Hold on，马上就走。</d> The group has real momentum: no waiting in the opening pose, no long held formation before the first move, and every shot contains a readable four-to-eight-count choreography phrase. Use controlled travel and clean landing positions, not shaky camera tricks or acrobatics.\n\n[Shot 1] From 00:00.000 to 00:01.500, begin exactly from Picture 1 in a 32mm full-body medium-wide shot about 25 degrees left-front. The camera makes one smooth 25-degree dolly arc at a constant speed, with foreground shoulders creating parallax. Within the first quarter-second, all five hit a compact three-count phrase: Xiaoxin steps diagonally forward-right, pulls his bandaged left forearm down across his chest, then drives his right elbow out toward the central route; the four dancers answer in staggered cannon timing with separate half-steps, an inward arm pull, and a sharp shoulder hit. On the fourth count the whole group rebounds one clear half-step back into unequal depths. Xiaoxin may glance at the lens only on “没有,” for less than half a second, then breaks his gaze toward the route.\n\n[Shot 2] At 00:01.500, hard cut on the beat to a locked true vertical overhead wide shot. On “Hold on,” Xiaoxin raises one firm right stop palm while the four dancers make two quick, readable traveling steps along four different directions: first a short cross-step outward, then a planted open step. Their outer arms slice away from their own bodies and immediately recoil to their ribs; no hand reaches toward Xiaoxin. The group must visibly expand from a dense knot into a broken four-ray formation by 00:02.700, with unequal distances and open negative space. Keep the feet fully readable on the wet floor.\n\n[Shot 3] At 00:03.300, hard cut to a 40mm opposite-front diagonal medium-wide shot. A dancer's shoulder crosses the extreme foreground once as a natural wipe and clears Xiaoxin immediately. On “马上就走,” Xiaoxin performs one strong forward rock, a controlled chest hit, and an arm sweep across his sternum that ends pointed between two exits. The four dancers deliver a clear left-to-right shoulder-and-elbow ripple while taking one small diagonal travel step, then land in five different levels and directions. Finish on a tense moving hold with residual breath, never a flat final lineup.\n\nSharp 136 BPM timing, continuous kinetic flow, grounded knees, strong arm paths, visible foot placement, distinct faces, and clean anatomical separation. No initial stillness longer than 0.25 seconds, frozen idol smile, blank lens stare, pose counting, flat row, shallow W/V, perfect diamond, equal spacing, full spins, jumping, running in place, freestyle, flailing, grabbing, touching, weapons, microphone, stage lights, sixth person, cloned face, merged limbs, camera shake, speed ramp, new dirt patterns, texture boiling, skin speckle, text, logo, or watermark. The generated soundtrack is temporary and will be replaced with the original master song.\n"
+    },
+    {
+      "nodeId": "84",
+      "fieldName": "audio",
+      "fieldValue": "LOCAL_FILE:/Users/m4/project/rewords/music-mv-experiments/小鑫_多频道求救_MV/references/audio/segments/P02B_39.404-43.851.wav"
+    },
+    {
+      "nodeId": "85",
+      "fieldName": "audio",
+      "fieldValue": "LOCAL_FILE:/Users/m4/project/rewords/music-mv-experiments/小鑫_多频道求救_MV/references/audio/segments/P02B_39.404-43.851.wav"
+    },
+    {
+      "nodeId": "89",
+      "fieldName": "aspect_ratio",
+      "fieldValue": "16:9 (Widescreen)"
+    },
+    {
+      "nodeId": "138",
+      "fieldName": "aspect_ratio",
+      "fieldValue": "16:9 (Widescreen)"
+    }
+  ]
+}
