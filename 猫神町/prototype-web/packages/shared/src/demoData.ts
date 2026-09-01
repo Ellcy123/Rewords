@@ -3,9 +3,22 @@ import { DemoBootstrapSchema, type DemoBootstrap } from "./contracts.ts";
 const demoBootstrapCandidate: DemoBootstrap = {
   meta: {
     title: "猫神町",
-    version: "0.1.0-day1",
-    phase: "Day 1 · 工程空壳",
-    notice: "当前使用固定测试数据与 Mock 对话，不调用真实 AI。"
+    version: "0.3.0-day3",
+    phase: "Day 3 · 首个 AI NPC",
+    notice: "水野纱夜使用 DeepSeek；其他角色暂用 Mock 保底。"
+  },
+  player: {
+    id: "player_haruka",
+    name: "朝雾遥",
+    reading: "あさぎり はるか",
+    age: 21,
+    publicRole: "猫神社七日代理管理人",
+    occupation: "旧物整理员",
+    publicBackground: "在町外替人整理来历不明或无人认领的旧物。三天前收到一份盖有猫神町公印的七日委任书，于今天带着神社旧钥匙来到镇上。",
+    fixedTraits: ["先听完再判断", "认真对待物品的来历", "紧张时会用很淡的玩笑岔开话题"],
+    coreDesire: "找出是谁寄来委任书，以及自己为什么被神社选中。",
+    vulnerability: "无法放着归属不明的东西不管，因此很容易被一件物品或一次托付卷入别人的故事。",
+    startingMystery: "包裹里还有七张空白归属卡，以及一张朝雾遥从未见过的童年照片；照片中的孩子站在猫神社前，脸与遥十分相似。"
   },
   locations: [
     {
@@ -17,7 +30,7 @@ const demoBootstrapCandidate: DemoBootstrap = {
       atmosphere: "木色、青苔与稍显反常的安静",
       accent: "#b34f4f",
       openPeriods: ["morning", "afternoon", "evening"],
-      travelCost: 1
+      travelMinutes: 60
     },
     {
       id: "loc_station",
@@ -28,7 +41,7 @@ const demoBootstrapCandidate: DemoBootstrap = {
       atmosphere: "旧荧光灯、广播杂音与准点的钟",
       accent: "#477b73",
       openPeriods: ["morning", "afternoon", "evening"],
-      travelCost: 1
+      travelMinutes: 60
     },
     {
       id: "loc_arcade",
@@ -39,7 +52,7 @@ const demoBootstrapCandidate: DemoBootstrap = {
       atmosphere: "午后暖光、褪色招牌与过分洁净的画廊",
       accent: "#8b6a9e",
       openPeriods: ["morning", "afternoon", "evening"],
-      travelCost: 1
+      travelMinutes: 60
     }
   ],
   npcs: [
@@ -203,12 +216,13 @@ const demoBootstrapCandidate: DemoBootstrap = {
   initialState: {
     day: 1,
     period: "morning",
-    actionsRemaining: 3,
-    actionsPerDay: 3,
+    dayStartMinute: 9 * 60,
+    nightStartMinute: 18 * 60,
+    currentMinute: 9 * 60,
+    conversationDurationMinutes: 2 * 60,
     inventoryItemIds: ["item_potato", "item_thread"],
     activeRules: { faith: null, beauty: null }
   }
 };
 
 export const demoBootstrap = DemoBootstrapSchema.parse(demoBootstrapCandidate);
-

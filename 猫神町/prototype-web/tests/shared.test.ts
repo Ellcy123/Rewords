@@ -6,12 +6,14 @@ import {
 } from "../packages/shared/src/index.ts";
 import { createMockDialogue } from "../server/src/mockDialogueProvider.ts";
 
-describe("Day 1 demo data", () => {
+describe("locked demo data", () => {
   it("matches the locked 3/3/6/2 scope", () => {
     const parsed = DemoBootstrapSchema.parse(demoBootstrap);
 
     expect(parsed.locations).toHaveLength(3);
     expect(parsed.npcs).toHaveLength(3);
+    expect(parsed.player.name).toBe("朝雾遥");
+    expect(parsed.player.publicRole).toContain("七日代理");
     expect(parsed.items).toHaveLength(6);
     expect(parsed.ruleSlots).toHaveLength(2);
   });
@@ -33,6 +35,22 @@ describe("Day 1 demo data", () => {
 });
 
 describe("MockDialogueProvider", () => {
+  it("introduces the authored protagonist during Saya's first meeting", () => {
+    const result = createMockDialogue({
+      npcId: "npc_saya",
+      locationId: "loc_station",
+      day: 1,
+      period: "morning",
+      activeRules: { faith: null, beauty: null },
+      isFirstMeeting: true
+    });
+
+    expect(result.line).toContain("水野纱夜");
+    expect([result.line, ...result.continuations.map((beat) => beat.line)].join("")).toContain("朝雾遥");
+    expect(result.continuations.length).toBeGreaterThanOrEqual(1);
+    expect(result.options.every((option) => Boolean(option.playerLine))).toBe(true);
+  });
+
   it("returns structured options for each NPC", () => {
     for (const npc of demoBootstrap.npcs) {
       const request = DialogueRequestSchema.parse({
@@ -46,6 +64,7 @@ describe("MockDialogueProvider", () => {
 
       expect(result.speakerId).toBe(npc.id);
       expect(result.options.length).toBeGreaterThanOrEqual(2);
+      expect(result.options.every((option) => Boolean(option.playerLine))).toBe(true);
       expect(result.debug.provider).toBe("mock");
     }
   });
@@ -71,5 +90,6 @@ describe("MockDialogueProvider", () => {
 
     expect(followup.line).not.toBe(opening.line);
     expect(followup.options.map((option) => option.id)).not.toContain(selected.id);
+    expect(followup.continuations.some((beat) => beat.speakerId === demoBootstrap.player.id)).toBe(true);
   });
 });
