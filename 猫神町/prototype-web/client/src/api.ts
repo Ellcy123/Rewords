@@ -48,6 +48,8 @@ export const gameApi = {
     request("/api/game/start-encounter", GameActionResponseSchema, {}),
   leaveLocation: (): Promise<GameActionResponse> =>
     request("/api/game/leave-location", GameActionResponseSchema, {}),
+  waitUntilNight: (): Promise<GameActionResponse> =>
+    request("/api/game/wait-until-night", GameActionResponseSchema, {}),
   selectMode: (mode: InteractionMode): Promise<GameActionResponse> =>
     request("/api/game/interaction-mode", GameActionResponseSchema, { mode }),
   cancelMode: (): Promise<GameActionResponse> =>

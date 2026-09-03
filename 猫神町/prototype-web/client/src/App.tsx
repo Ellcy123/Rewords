@@ -13,7 +13,7 @@ import {
 } from "../../packages/shared/src/index.ts";
 import { gameApi } from "./api.ts";
 
-type ViewId = "map" | "location" | "inventory" | "shrine" | "debug";
+type ViewId = "map" | "location" | "inventory" | "shrine" | "ending" | "debug";
 
 const periodLabel = {
   morning: "上午",
@@ -22,7 +22,7 @@ const periodLabel = {
   night: "夜间"
 } as const;
 
-const navItems: Array<{ id: Exclude<ViewId, "location">; label: string; icon: string }> = [
+const navItems: Array<{ id: Exclude<ViewId, "location" | "ending">; label: string; icon: string }> = [
   { id: "map", label: "地图", icon: "⌖" },
   { id: "inventory", label: "背包", icon: "▣" },
   { id: "shrine", label: "规则", icon: "◇" },
@@ -30,6 +30,7 @@ const navItems: Array<{ id: Exclude<ViewId, "location">; label: string; icon: st
 ];
 
 function routeForState(state: GameState): ViewId {
+  if (state.phase === "ending") return "ending";
   if (state.phase === "location" || state.phase === "encounter") return "location";
   if (state.phase === "night") return "shrine";
   return "map";
@@ -133,14 +134,16 @@ export function App() {
   );
   const activeNpc = bootstrap.npcs.find((npc) => npc.id === gameState.activeNpcId);
   const sceneNpc = bootstrap.npcs.find(
-    (npc) => npc.initialLocationId === gameState.currentLocationId
+    (npc) => (gameState.npcStates[npc.id]?.currentLocationId ?? npc.initialLocationId) === gameState.currentLocationId
   );
   const candidateItem = bootstrap.items.find((item) => item.id === candidateItemId);
   const candidateConcept = bootstrap.concepts.find(
     (concept) => concept.id === candidateItem?.carriedConceptId
   );
   const candidateGift = bootstrap.items.find((item) => item.id === candidateGiftId);
+  const dailyEvent = bootstrap.dailyEvents.find((event) => event.day === gameState.day)!;
   const isNight = gameState.phase === "night";
+  const isEnding = gameState.phase === "ending";
   const canStartConversation = gameState.currentMinute + gameState.conversationDurationMinutes <= gameState.nightStartMinute;
 
   function changeView(nextView: ViewId) {
@@ -195,7 +198,11 @@ export function App() {
   function renderDialogue(modeLabel: string) {
     const dialogue = state.currentDialogue;
     if (!activeNpc || !dialogue) return null;
+    const selectedChoiceBeat = state.lastPlayerChoice
+      ? { speakerId: player.id, line: state.lastPlayerChoice, stageDirection: undefined, emotion: "回应" }
+      : null;
     const dialogueBeats = [
+      ...(selectedChoiceBeat ? [selectedChoiceBeat] : []),
       { speakerId: dialogue.speakerId, line: dialogue.line, stageDirection: dialogue.stageDirection, emotion: dialogue.emotion },
       ...dialogue.continuations.map((beat) => ({
         ...beat,
@@ -203,7 +210,10 @@ export function App() {
       }))
     ];
     const visibleBeatIndex = Math.min(dialogueBeatIndex, dialogueBeats.length - 1);
-    const visibleBeat = dialogueBeats[visibleBeatIndex]!;
+    const isWaitingForNpc = Boolean(pendingPlayerLine);
+    const visibleBeat = pendingPlayerLine
+      ? { speakerId: player.id, line: pendingPlayerLine, stageDirection: undefined, emotion: "回应" }
+      : dialogueBeats[visibleBeatIndex]!;
     const isLastBeat = visibleBeatIndex === dialogueBeats.length - 1;
     const isPlayerBeat = visibleBeat.speakerId === player.id || visibleBeat.speakerId === "player";
     const visibleSpeakerName = isPlayerBeat ? player.name : activeNpc.name;
@@ -219,26 +229,18 @@ export function App() {
             <strong>{visibleSpeakerName}</strong>
             <span>{isPlayerBeat ? `主角 · ${modeLabel}` : `${dialogue.debug.provider === "deepseek" ? "DeepSeek" : dialogue.debug.provider === "mock_fallback" ? "Mock 保底" : "Mock"} · ${modeLabel}`}</span>
           </div>
-          {!pendingPlayerLine && state.lastPlayerChoice && visibleBeatIndex === 0 && (
-            <p className="player-choice" aria-label={`${player.name}说`}><span>{player.name}</span>{state.lastPlayerChoice}</p>
-          )}
           {visibleBeat.stageDirection && <p className="stage-direction">{visibleBeat.stageDirection}</p>}
           {isPlayerBeat
-            ? <p className="player-dialogue-line" aria-label={`${player.name}说`} key={`${dialogue.line}-${visibleBeatIndex}`}><span>{player.name}</span>{visibleBeat.line}</p>
-            : <p className="dialogue-line" key={`${dialogue.line}-${visibleBeatIndex}`}>{visibleBeat.line}</p>}
-          {!isLastBeat && (
+            ? <p className="player-dialogue-line" aria-label={`${player.name}说`} key={`${visibleBeat.line}-${visibleBeatIndex}`}><span>{player.name}</span>{visibleBeat.line}</p>
+            : <p className="dialogue-line" key={`${visibleBeat.line}-${visibleBeatIndex}`}>{visibleBeat.line}</p>}
+          {isWaitingForNpc && <p className="pending-response-note">{activeNpc.name}正在回应……</p>}
+          {!isWaitingForNpc && !isLastBeat && (
             <div className="dialogue-continue-row">
               <span>{visibleBeatIndex + 1} / {dialogueBeats.length}</span>
               <button disabled={busy} type="button" onClick={() => setDialogueBeatIndex((index) => index + 1)}>下一句 →</button>
             </div>
           )}
-          {pendingPlayerLine && (
-            <div className="pending-player-turn">
-              <p className="player-choice" aria-label={`${player.name}说`}><span>{player.name}</span>{pendingPlayerLine}</p>
-              <small>{activeNpc.name}正在回应……</small>
-            </div>
-          )}
-          {isLastBeat && !pendingPlayerLine && dialogue.options.length > 0 && (
+          {isLastBeat && !isWaitingForNpc && dialogue.options.length > 0 && (
             <div className="dialogue-options">
               {dialogue.options.map((option) => (
                 <button
@@ -257,7 +259,7 @@ export function App() {
               ))}
             </div>
           )}
-          {isLastBeat && dialogue.options.length === 0 && !pendingPlayerLine && (
+          {isLastBeat && dialogue.options.length === 0 && !isWaitingForNpc && (
             <p className="conversation-done">这段话已经说完。你可以结束本次会面。</p>
           )}
           <button className="end-meeting" disabled={busy} type="button" onClick={() => void perform(gameApi.completeEncounter)}>
@@ -271,7 +273,7 @@ export function App() {
   return (
     <div className="app-shell">
       <header className="topbar">
-        <button className="brand" type="button" onClick={() => changeView("map")}>
+        <button className="brand" type="button" onClick={() => changeView(isEnding ? "ending" : "map")}>
           <span className="brand-mark">猫</span>
           <span><strong>{bootstrap.meta.title}</strong><small>{bootstrap.meta.phase}</small></span>
         </button>
@@ -284,7 +286,7 @@ export function App() {
             <span className="day-chip">第 {gameState.day} 天</span>
             <span>{periodLabel[gameState.period]}</span>
             <span className="clock-chip" aria-label={`当前时间 ${formatClock(gameState.currentMinute)}`}>{formatClock(gameState.currentMinute)}</span>
-            <small>{isNight ? "夜间" : `距入夜 ${formatDuration(gameState.nightStartMinute - gameState.currentMinute)}`}</small>
+            <small>{isEnding ? "状态已冻结" : isNight ? "夜间" : `距入夜 ${formatDuration(gameState.nightStartMinute - gameState.currentMinute)}`}</small>
           </div>
           <button className="restart-button" type="button" onClick={() => setResetConfirmOpen(true)}>↻ 重新开始</button>
         </div>
@@ -319,6 +321,19 @@ export function App() {
               <p>地图不显示人物位置。移动到地点花费 1 小时；抵达后是否继续交谈，由你现场决定。</p>
             </div>
 
+            <div className="day-progress" aria-label="七日进度">
+              {bootstrap.dailyEvents.map((event) => (
+                <span className={event.day < gameState.day ? "past" : event.day === gameState.day ? "current" : "future"} key={event.id}>
+                  <i>{event.day}</i><small>{event.day === gameState.day ? "今天" : `D${event.day}`}</small>
+                </span>
+              ))}
+            </div>
+            <article className="daily-event-card">
+              <div><span className="eyebrow">今日事件 · Day {dailyEvent.day}</span><h2>{dailyEvent.title}</h2></div>
+              <p>{dailyEvent.summary}</p>
+              <strong>今日线索：{dailyEvent.objective}</strong>
+            </article>
+
             {(gameState.phase === "location" || gameState.phase === "encounter") && selectedLocation && (
               <div className="phase-callout">
                 <div>
@@ -332,6 +347,12 @@ export function App() {
               <div className="phase-callout night-callout">
                 <div><strong>夜间猫神社已经开放</strong><small>你可以修改一次规则，也可以直接结束今天。</small></div>
                 <button type="button" onClick={() => changeView("shrine")}>前往供奉位 →</button>
+              </div>
+            )}
+            {gameState.phase === "action" && (
+              <div className="phase-callout wait-callout">
+                <div><strong>已经完成今天想做的事？</strong><small>可以直接整理见闻到十八点，不必用无意义的移动消耗时间。</small></div>
+                <button disabled={busy} type="button" onClick={() => void perform(gameApi.waitUntilNight)}>等待入夜 →</button>
               </div>
             )}
 
@@ -485,8 +506,44 @@ export function App() {
                 </div>
                 <div className="carrier-tray"><div><span className="eyebrow">背包中的载体</span><small>选择后才显示抽象概念</small></div><div className="carrier-list">{inventoryItems.map((item) => <button className={candidateItemId === item.id ? "selected" : ""} key={item.id} type="button" onClick={() => setCandidateItemId(item.id)}><span>{item.icon}</span><strong>{item.baseName}</strong></button>)}</div></div>
                 {inventoryItems.length === 0 && <p className="prototype-notice">背包为空，目前没有可以供奉的载体。</p>}
-                {isNight && <div className="end-day-panel"><p>{gameState.ruleChangedThisNight ? "规则已经写入全镇状态。" : "不必每晚修改规则，你可以选择跳过。"}</p><button disabled={busy} type="button" onClick={() => void perform(gameApi.endDay)}>{gameState.ruleChangedThisNight ? "结束今天" : "今晚不修改，结束今天"}</button></div>}
+                {isNight && <div className="end-day-panel"><p>{gameState.day === 7 ? "这是最后一个夜晚。结束后状态将冻结，并根据七日事实生成结局。" : gameState.ruleChangedThisNight ? "规则已经写入全镇状态。" : "不必每晚修改规则，你可以选择跳过。"}</p><button disabled={busy} type="button" onClick={() => void perform(gameApi.endDay)}>{gameState.day === 7 ? (busy ? "正在生成结局……" : "结束第七天，生成结局") : gameState.ruleChangedThisNight ? "结束今天" : "今晚不修改，结束今天"}</button></div>}
               </div>
+            </div>
+          </section>
+        )}
+
+        {view === "ending" && gameState.ending && (
+          <section className="view ending-view">
+            <div className="ending-hero">
+              <span className="eyebrow">Day 7 · 世界状态已冻结</span>
+              <h1>{gameState.ending.title}</h1>
+              <p>{gameState.ending.subtitle}</p>
+              <div className="ending-seal">终</div>
+            </div>
+            <article className="ending-narration">
+              <span className="eyebrow">七日结局</span>
+              <p>{gameState.ending.narration}</p>
+            </article>
+            <div className="ending-outcomes">
+              {gameState.ending.npcOutcomes.map((outcome) => {
+                const npc = bootstrap.npcs.find((candidate) => candidate.id === outcome.npcId)!;
+                return (
+                  <article key={outcome.npcId} style={{ "--npc-accent": npc.accent } as CSSProperties}>
+                    <span>{npc.name} · 关系 {gameState.npcStates[npc.id]?.relationship ?? 0}</span>
+                    <h2>{outcome.headline}</h2>
+                    <p>{outcome.text}</p>
+                  </article>
+                );
+              })}
+            </div>
+            <blockquote>{gameState.ending.closingLine}</blockquote>
+            <div className="ending-facts">
+              <div><span>赠礼回收</span>{gameState.ending.factSummary.gifts.map((fact) => <p key={fact}>{fact}</p>)}</div>
+              <div><span>规则回收</span>{gameState.ending.factSummary.rules.map((fact) => <p key={fact}>{fact}</p>)}</div>
+            </div>
+            <div className="ending-actions">
+              <small>{gameState.ending.provider === "deepseek" ? "本结局由 DeepSeek 根据七日事实生成" : "AI 不可用，本结局使用事实保底结构生成"}</small>
+              <button type="button" onClick={() => setResetConfirmOpen(true)}>重新开始七天</button>
             </div>
           </section>
         )}
@@ -496,8 +553,9 @@ export function App() {
             <div className="view-heading"><div><span className="eyebrow">开发调试</span><h1>存档状态与事件链</h1></div><p>所有时间推进、物品转移与规则改写均由服务端校验并写入单一存档。</p></div>
             <div className="debug-toolbar"><span>存档修订 #{gameState.revision} · 事件 {gameState.eventLog.length} 条</span><button type="button" onClick={() => setResetConfirmOpen(true)}>重新开始游戏</button></div>
             <div className="debug-grid">
-              <article><h2>当前状态</h2><pre>{JSON.stringify({ day: gameState.day, time: formatClock(gameState.currentMinute), period: gameState.period, phase: gameState.phase, conversationDurationMinutes: gameState.conversationDurationMinutes, currentLocationId: gameState.currentLocationId, activeNpcId: gameState.activeNpcId, interactionMode: gameState.interactionMode, giftItemId: gameState.giftItemId, activeRules: gameState.activeRules }, null, 2)}</pre></article>
+              <article><h2>当前状态</h2><pre>{JSON.stringify({ day: gameState.day, time: formatClock(gameState.currentMinute), period: gameState.period, phase: gameState.phase, conversationDurationMinutes: gameState.conversationDurationMinutes, currentLocationId: gameState.currentLocationId, activeNpcId: gameState.activeNpcId, interactionMode: gameState.interactionMode, giftItemId: gameState.giftItemId, activeRules: gameState.activeRules, storyFlags: gameState.storyFlags, ending: gameState.ending }, null, 2)}</pre></article>
               <article><h2>物品所有权</h2><pre>{JSON.stringify(bootstrap.items.map((item) => ({ item: item.baseName, owner: gameState.itemOwners[item.id], concept: bootstrap.concepts.find((concept) => concept.id === item.carriedConceptId)?.label })), null, 2)}</pre></article>
+              <article className="debug-wide"><h2>NPC 独立状态、位置与结构化记忆</h2><pre>{JSON.stringify(bootstrap.npcs.map((npc) => ({ name: npc.name, godView: npc.godView, locationId: gameState.npcStates[npc.id]?.currentLocationId ?? npc.initialLocationId, relationship: gameState.npcStates[npc.id]?.relationship ?? 0, memories: gameState.npcStates[npc.id]?.memories ?? [] })), null, 2)}</pre></article>
               <article><h2>AI Provider</h2><pre>{JSON.stringify(aiStatus ?? { configured: false }, null, 2)}</pre></article>
               <article><h2>纱夜 Prompt 层级</h2><pre>{JSON.stringify(aiPromptStructure ?? { status: "loading" }, null, 2)}</pre></article>
               <article className="debug-wide"><h2>AI 调试日志（不保存隐藏推理）</h2><pre>{JSON.stringify(aiLogs, null, 2)}</pre></article>
@@ -509,6 +567,7 @@ export function App() {
 
       <nav className="bottom-nav" aria-label="主要页面">
         {navItems.map((item) => <button className={view === item.id || (item.id === "map" && view === "location") ? "active" : ""} key={item.id} type="button" onClick={() => changeView(item.id)}><span>{item.icon}</span><small>{item.label}</small></button>)}
+        {gameState.ending && <button className={view === "ending" ? "active" : ""} type="button" onClick={() => changeView("ending")}><span>终</span><small>结局</small></button>}
       </nav>
       <div className="build-notice">{bootstrap.meta.notice}</div>
     </div>

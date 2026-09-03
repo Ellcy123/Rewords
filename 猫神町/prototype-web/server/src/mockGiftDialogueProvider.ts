@@ -8,41 +8,41 @@ import {
 
 const openingByNpc: Record<string, (item: Item) => string> = {
   npc_koharu: (item) =>
-    `把${item.baseName}给我？好，我先收下。礼物不会自己说明来意，所以我更想知道你为什么选了它。`,
+    `把${item.baseName}给我？行。我先藏进书包，不让纱夜和九条看见——除非你本来就是想让我拿它查真昼。`,
   npc_saya: (item) =>
-    `确认，${item.baseName}现在由我保管。这不是失物登记，而是你主动交给我的——两者后续处理不同。`,
+    `${item.baseName}现在归我。我会贴上今天的日期，单独封袋；五年前我已经丢过一次原件，不会有第二次。`,
   npc_genichi: (item) =>
-    `${item.baseName}已经属于我了。很有意思：你交出的究竟是一件东西，还是希望我替你完成的一种解释？`
+    `${item.baseName}归我了。我会把它放到真昼被裁掉的照片前——你送来的东西，当然要出现在你不愿看见的位置。`
 };
 
 const followupByNpc: Record<string, Record<string, (item: Item) => string>> = {
   npc_koharu: {
-    gift_ask_use: (item) => `我会先把${item.baseName}留在身边。等我弄清它为什么来到这里，再决定要不要让别人也看见。`,
-    gift_explain: (item) => `“适合”是个很重的说法。那我会认真对待${item.baseName}，也认真记住是你这样判断我的。`,
-    gift_silence: (item) => `不解释也可以。${item.baseName}发出的声音、气味或者样子，总会替你漏出一点答案。`
+    gift_ask_use: (item) => `我把${item.baseName}带去后殿。真昼的箱子如果能打开，它就是工具；打不开，我明天拿去问纱夜。`,
+    gift_explain: (item) => `那就写清楚：${item.baseName}用于调查雨宫真昼。九条以后想拿走，也得连这张标签一起拿。`,
+    gift_silence: (item) => `好，我不问。我会把${item.baseName}藏进书包夹层；另外两个人问起，我就说没见过。`
   },
   npc_saya: {
-    gift_ask_use: (item) => `先记录，再判断用途。${item.baseName}不会因为成为礼物就失去原来的性质。`,
-    gift_explain: (item) => `适不适合需要时间验证。我会保留${item.baseName}，也会保留你今天说过的理由。`,
-    gift_silence: (item) => `可以不说明。记录只写“主动赠与”，不会替你补上动机。`
+    gift_ask_use: (item) => `我先拍照封袋，再拿${item.baseName}和真昼的票根一起检查。查不到联系，就按普通赠物保管。`,
+    gift_explain: (item) => `明白。封条写“用于调查雨宫真昼”，你的姓名和今天时间也写上，免得五年后又没人承认。`,
+    gift_silence: (item) => `可以。我只写“朝雾遥要求秘密保管”。如果你反悔，先来找我，别去翻抽屉。`
   },
   npc_genichi: {
-    gift_ask_use: (item) => `我会把${item.baseName}放在一个能被人误解的位置。真正有价值的用途，往往从误解开始。`,
-    gift_explain: (item) => `你觉得它适合我，已经比${item.baseName}本身更像一件礼物了。我会好好使用这份判断。`,
-    gift_silence: (item) => `沉默会把解释权送给收礼的人。放心，我一向不浪费别人交出来的权力。`
+    gift_ask_use: (item) => `第七天，我会让${item.baseName}和黑色车票一起入镜。你想拿回去时，照片已经发遍全镇。`,
+    gift_explain: (item) => `用于调查真昼？很好。我会在展签上原样写出这句话，再把捐赠人写成朝雾遥。`,
+    gift_silence: (item) => `不说更好。我会把${item.baseName}锁进保险柜，和未剪辑原片放在同一层。`
   }
 };
 
 const openingOptions: DialogueResult["options"] = [
-  { id: "gift_ask_use", text: "你会怎么处理？", playerLine: "东西已经给你了。我只是想知道，你准备怎么处理它？", intent: "询问处理" },
-  { id: "gift_explain", text: "我只是想给你。", playerLine: "没有别的理由。我只是看见它的时候，觉得应该把它给你。", intent: "说明用意" },
-  { id: "gift_silence", text: "……", playerLine: "……你收下就好，我现在不想解释。", intent: "拒绝解释" }
+  { id: "gift_ask_use", text: "你拿它做什么？", playerLine: "东西已经给你了。现在告诉我，你准备拿它做什么？", intent: "追问具体用途" },
+  { id: "gift_explain", text: "用它查真昼。", playerLine: "我把它给你，是因为它可能帮我们查到雨宫真昼。", intent: "说明调查目的" },
+  { id: "gift_silence", text: "别问，先收好。", playerLine: "别问理由，先把它藏好。别让另外两个人看见。", intent: "要求秘密保管" }
 ];
 
 const playerGiftBridges: Record<string, string> = {
-  gift_ask_use: "我问的不是登记流程。我想知道，它会不会改变你接下来要做的事。",
-  gift_explain: "你不用现在相信这个理由。东西留在你身边以后，自然会有答案。",
-  gift_silence: "……至少现在，它比我的解释更适合留在这里。"
+  gift_ask_use: "用途说清楚。之后它换地方，也要留下记录。",
+  gift_explain: "先查真昼。查不到，再当普通礼物处理。",
+  gift_silence: "现在知道的人越少越好。你也别主动提起。"
 };
 
 function dialogueBeats(line: string, emotion: string) {

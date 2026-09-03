@@ -1,6 +1,6 @@
 {
   "name": "cat-god-town-demo",
-  "version": "0.3.0-day3",
+  "version": "0.6.0-agent-rewrite",
   "private": true,
   "type": "module",
   "engines": {
@@ -11,6 +11,7 @@
     "dev:client": "vite --config client/vite.config.ts",
     "dev:server": "tsx watch server/src/index.ts",
     "start:server": "tsx server/src/index.ts",
+    "record:dialogues": "tsx scripts/recordDialogueJourneys.ts",
     "typecheck": "tsc -p packages/shared/tsconfig.json --noEmit && tsc -p server/tsconfig.json --noEmit && tsc -p client/tsconfig.json --noEmit",
     "test": "vitest run",
     "build": "npm run typecheck && vite build --config client/vite.config.ts"

@@ -1,316 +1,154 @@
 import {
   DialogueResultSchema,
   demoBootstrap,
+  resolvePlayerLine,
+  type DialogueOption,
   type DialogueRequest,
   type DialogueResult
 } from "../../packages/shared/src/index.ts";
 
-type Script = {
-  opening: string;
-  firstMeetingOpening?: string;
-  followups: Record<string, string>;
-  emotion: string;
-  decision: string;
-  options: DialogueResult["options"];
-};
-
-const scripts: Record<string, Script> = {
-  npc_koharu: {
-    opening: "今天的猫神社安静得不像在等香客，倒像在等一个答案。你带了什么奇怪的东西吗？",
-    firstMeetingOpening: "你就是朝雾遥？我是雨宫小春，放学后替家里看着神社。七日代理听起来很厉害——不过，你知道自己要代理什么吗？",
-    followups: {
-      ask_work: "有用不一定是灵验。只要有人愿意为了同一件事来这里，也算神社还活着吧？",
-      ask_memory: "我小时候总觉得家里少了一双筷子。问大人，他们只说我记错了。这只猫铃也是从那只空抽屉里找到的——你先替我收着吧。",
-      leave: "好。等你真的想让某样东西代表什么，再来找我。"
-    },
-    emotion: "期待",
-    decision: "把玩家视作可能带来新意义的人，但暂不透露神社规则的全部异常。",
-    options: [
-      { id: "ask_work", text: "还有人来吗？", playerLine: "这里现在还会有人来参拜吗？还是只剩你在替它等人？", intent: "了解神社现状" },
-      { id: "ask_memory", text: "你在等谁？", playerLine: "你刚才不像是在等香客。你其实在等谁？", intent: "触碰私人缺失" },
-      { id: "leave", text: "我先看看。", playerLine: "我先不问了，自己在附近看看。", intent: "结束会面" }
+const optionBeats: Record<string, DialogueResult["options"][]> = {
+  npc_koharu: [
+    [
+      { id: "ask_memory", text: "她叫什么？", intent: "核对姐姐身份" },
+      { id: "koharu_ask_god", text: "带我去后殿。", intent: "立即查后殿" },
+      { id: "koharu_doubt_memory", text: "谁见过她？", intent: "寻找目击者" }
+    ],
+    [
+      { id: "koharu_guard_memory", text: "我帮你找她。", intent: "答应共同调查" },
+      { id: "koharu_test_god", text: "先找纱夜。", intent: "追问纱夜" },
+      { id: "koharu_leave_empty", text: "先找九条。", intent: "质问弦一" }
     ]
-  },
-  npc_genichi: {
-    opening: "一座小镇最有趣的地方，是它还以为自己的样子由自己决定。你觉得呢？",
-    firstMeetingOpening: "朝雾遥，新来的七日代理。九条弦一——叫我九条就好。我很好奇，一个替旧物整理归属的人，会把整座小镇归到谁名下。",
-    followups: {
-      ask_gallery: "画廊只负责摆出东西。真正决定作品是什么的，是愿意围在它旁边说话的人。这张照片借你，也许你会替它找到另一种解释。",
-      disagree: "很好。不同意是一种很昂贵的自由，我一直愿意赞助它——在合适的展柜里。",
-      ask_player: "我只是好奇，你拿到决定权以后，会先改变世界，还是先改变自己？"
-    },
-    emotion: "从容",
-    decision: "通过漂亮问题测试玩家对规则权力的欲望，不直接暴露自己的旧实验。",
-    options: [
-      { id: "ask_gallery", text: "谁决定艺术？", playerLine: "一件东西是不是艺术，究竟由画廊决定，还是由看它的人决定？", intent: "询问解释权" },
-      { id: "disagree", text: "我不同意。", playerLine: "我不同意。小镇是什么样，不该由站在外面看的人替它决定。", intent: "公开反驳" },
-      { id: "ask_player", text: "先说你的。", playerLine: "你一直在问我，却没有回答自己的问题。先说说你的答案。", intent: "反向试探" }
+  ],
+  npc_saya: [
+    [
+      { id: "saya_open_gentle", text: "谁上了车？", intent: "温和追问乘客" },
+      { id: "saya_open_press", text: "是你开的门？", intent: "逼问开门责任" },
+      { id: "saya_open_absurd", text: "车票还魂了？", intent: "黑色玩笑试探" }
+    ],
+    [
+      { id: "saya_ticket_inspect", text: "证据都给我。", intent: "索要全部证据" },
+      { id: "saya_ticket_doubt", text: "谁命令你的？", intent: "追问命令来源" },
+      { id: "saya_ticket_ally", text: "她回头了吗？", intent: "追问最后目击" }
+    ],
+    [
+      { id: "saya_truth_plain", text: "拿出原记录。", intent: "要求交出原记录" },
+      { id: "saya_bluff_bell", text: "你在保护站长？", intent: "错误指控站长" },
+      { id: "saya_personal_probe", text: "你藏了什么？", intent: "拆穿私藏留言" }
+    ],
+    [
+      { id: "saya_take_ticket", text: "票给我。", intent: "带走车票" },
+      { id: "saya_leave_ticket", text: "复制两份。", intent: "要求备份证据" },
+      { id: "saya_report_ticket", text: "现在找九条。", intent: "当面对质" }
     ]
-  }
-};
-
-const sayaOptionBeats: DialogueResult["options"][] = [
-  [
-    { id: "saya_open_gentle", text: "你没睡好？", playerLine: "你看起来没睡好。先不用解释自己，告诉我这张票是怎么回事。", intent: "温和靠近" },
-    { id: "saya_open_press", text: "到底漏了什么？", playerLine: "不存在的班次却留下了真的车票。你还漏了什么，直接说。", intent: "直接逼问" },
-    { id: "saya_open_absurd", text: "车票迷路了？", playerLine: "也许不是车票来错了，是那班车还不知道自己不存在。", intent: "荒诞玩笑" }
   ],
-  [
-    { id: "saya_ticket_inspect", text: "让我看看。", playerLine: "先别替它下结论。把车票和收取记录都给我看看。", intent: "亲手检查" },
-    { id: "saya_ticket_doubt", text: "你在试探我？", playerLine: "你不是在问我怎么看。你是在试探我会不会相信你，对吧？", intent: "拆穿试探" },
-    { id: "saya_ticket_ally", text: "我替你保密。", playerLine: "在弄清楚以前，我不会把这件事告诉别人。你可以继续说。", intent: "替她保密" }
-  ],
-  [
-    { id: "saya_truth_plain", text: "我什么都没听见。", playerLine: "我昨晚什么都没听见，也没有能帮你证明的东西。", intent: "坦白无知" },
-    { id: "saya_bluff_bell", text: "我听见铃了。", playerLine: "昨晚二十三点四十七分，我也听见站台方向响铃了。", intent: "撒谎试探" },
-    { id: "saya_personal_probe", text: "你其实在害怕？", playerLine: "你怕的不是这张票。你怕的是说出来以后，所有人都觉得你记错了。", intent: "追问恐惧" }
-  ],
-  [
-    { id: "saya_take_ticket", text: "票给我。", playerLine: "把票给我。今晚二十三点四十七分，我会亲自确认。", intent: "接下车票" },
-    { id: "saya_leave_ticket", text: "票留给你。", playerLine: "票先留在你这里。我会记住时间，但现在不碰它。", intent: "拒绝持有" },
-    { id: "saya_report_ticket", text: "现在去上报。", playerLine: "这已经不是我们两个人能私下处理的事了。现在就去找站长。", intent: "要求上报" }
+  npc_genichi: [
+    [
+      { id: "ask_gallery", text: "票是你给的？", intent: "追问给票事实" },
+      { id: "genichi_ask_power", text: "把原片交出来。", intent: "索要未剪辑原片" },
+      { id: "disagree", text: "你知道她会消失。", intent: "指控故意伤害" }
+    ],
+    [
+      { id: "genichi_play_along", text: "带我去站台。", intent: "危险合作" },
+      { id: "genichi_refuse_power", text: "我会公开原片。", intent: "公开对抗" },
+      { id: "ask_player", text: "你想让我上车？", intent: "拆穿替身计划" }
+    ]
   ]
-];
-
-const sayaResponses: Record<string, { stageDirection: string; line: string; emotion: string }> = {
-  saya_open_gentle: {
-    stageDirection: "她下意识摸了摸眼下，又把手收回去。",
-    line: "没睡好而已，别替我写病历。你真要关心什么，就关心这张比我们早活了一天的纸——收取单写的是明天，字还是我的。",
-    emotion: "意外"
-  },
-  saya_open_press: {
-    stageDirection: "她把收取单推近半寸，手指仍压着纸角。",
-    line: "你倒替我省了客套。好，漏掉的是日期：这张票今天在这里，收取单却是明天，而且签名像我。现在轮到你解释，为什么一点都不惊讶。",
-    emotion: "审视"
-  },
-  saya_open_absurd: {
-    stageDirection: "她嘴角动了一下，低头假装在看表格。",
-    line: "那它至少比时刻表聪明。可惜车票不会自己填收取单——日期是明天，签名是我的。你还想替哪样东西辩护，车票，还是我？",
-    emotion: "意外"
-  },
-  saya_ticket_inspect: {
-    stageDirection: "她让开收取单，却把车票翻面扣在桌上。",
-    line: "单子可以看，票先不行。因为背面有人写了句话：‘别让站务员看见。’我已经看见了，现在想知道它为什么更怕你看见。",
-    emotion: "警惕"
-  },
-  saya_ticket_doubt: {
-    stageDirection: "她松开压着车票的手，第一次正眼看你。",
-    line: "两样都查。你至少比那张收取单诚实，知道自己正在被试探。票背面写着‘别让站务员看见’——所以，你打算让我假装没看见吗？",
-    emotion: "审视"
-  },
-  saya_ticket_ally: {
-    stageDirection: "她把声音压低，指腹慢慢抹过票背的铅笔字。",
-    line: "别急着替我保密，我还没决定你值不值得一起倒霉。先看这个：‘别让站务员看见。’写这句话的人知道票会到我手里。",
-    emotion: "平静"
-  },
-  saya_truth_plain: {
-    stageDirection: "她盯了你两秒，终于松开被咬出齿痕的笔帽。",
-    line: "这答案很没用。也正因为没用，我信一点。昨晚 23:47，我听见旧货运站台响了一次发车铃——那地方封了十二年。我没有看见车，只听见了。",
-    emotion: "平静"
-  },
-  saya_bluff_bell: {
-    stageDirection: "她猛地按住车票，椅脚在地面刮出一声。",
-    line: "撒得太快了。铃声确实响过，但从候车室听不见——我昨晚站在锁着的旧货运站台门外。你想看我反应，现在看到了。还要继续赌吗？",
-    emotion: "警惕"
-  },
-  saya_personal_probe: {
-    stageDirection: "她看向墙上的钟，秒针走了三格才开口。",
-    line: "我怕自己会开始习惯被说成记错了。昨晚旧货运站台真的响过铃，那地方封了十二年。好了，软肋给你看了一秒——别看第二秒。",
-    emotion: "不耐"
-  },
-  saya_take_ticket: {
-    stageDirection: "她终于松手，车票沿桌面滑到你面前。",
-    line: "拿好。别折那枚猫爪形剪口，也别在 23:47 以前丢回来。要是今晚什么都没发生，我们就各自承认自己很蠢；要是发生了——先别上车。",
-    emotion: "平静"
-  },
-  saya_leave_ticket: {
-    stageDirection: "她把车票收回抽屉，却没有立刻上锁。",
-    line: "合理。聪明人一般活得久，也比较难查。今晚 23:47 记得看钟；如果你听见铃，明天别问我，直接来这里坐下。",
-    emotion: "平静"
-  },
-  saya_report_ticket: {
-    stageDirection: "她把收取单转过来，指尖点在最下面的签字处。",
-    line: "去吧。顺便问问站长，为什么他已经在这张写着明天日期的单子上签了字。问完如果他还记得你是谁，回来告诉我。",
-    emotion: "警惕"
-  }
 };
 
-const sayaPlayerBridges: Record<string, string> = {
-  saya_open_gentle: "好，我不问你昨晚睡了多久。先看票和收取单。",
-  saya_open_press: "那就把能证明日期的东西给我看，别再用问题拖时间。",
-  saya_open_absurd: "好吧，暂时不替车票辩护。它还留下了什么？",
-  saya_ticket_inspect: "你越不让我看票，我越想知道背面有什么。",
-  saya_ticket_doubt: "那就别再试探了。你真正不敢让别人知道的是什么？",
-  saya_ticket_ally: "保密不等于相信你。我至少会先把话听完。",
-  saya_truth_plain: "我没法替你证明铃声，但我可以决定要不要接这张票。",
-  saya_bluff_bell: "那你的反应已经告诉我了——铃声是真的。",
-  saya_personal_probe: "我只看这一秒。接下来谈车票。",
-  saya_take_ticket: "我会收好。今晚以前，我不会把它交给别人。",
-  saya_leave_ticket: "我会看钟，但不会为了证明什么擅自开那扇门。",
-  saya_report_ticket: "我不会替任何人改口。单子和签名都一起带上。"
+const openings: Record<string, (first: boolean, faith: string | null) => string> = {
+  npc_koharu: (first, faith) => `${first ? "你就是朝雾遥？我是雨宫小春。先别拜神，帮我找个人。" : "你来了。真昼的寻人启事昨晚又被人撕了。"}我姐姐雨宫真昼五年前拿着九条弦一给的黑票，在23:47登上零号站台的列车。第二天，全镇都说我没有姐姐。${faith ? `现在他们又说“${faith}”。很好，我已经把这句话印到寻人启事上，让这个神负责把真昼交回来。` : ""}`,
+  npc_saya: (first, faith) => `${first ? "水野纱夜，夜班站务。你是朝雾遥吧？" : "又见面了。今天我不让你猜。"}五年前23:47，是我打开零号站台，让雨宫真昼上了车。今天，同一编号的黑票又出现在失物抽屉。${faith ? `票背新印着“${faith}”，所以抽屉和站台门都已经被我锁了。` : ""}`,
+  npc_genichi: (first, faith) => `${first ? "九条弦一。欢迎来看看我五年前没展完的作品。" : "朝雾遥，主演终于来了。"}雨宫真昼手里的黑色车票是我给的。我没有推她，她自己走上零号站台——这个区别对你很重要吗？${faith ? `我已经把“${faith}”印到重演车票上，17:47准时开场。` : ""}`
 };
 
-const sayaNextChoiceLeads = [
-  "收取单就在这里。你是要自己看，还是先决定信不信我？",
-  "票背面那句话就在这儿。现在告诉我：昨晚二十三点四十七分，你听见了什么？",
-  "旧货运站台封了十二年，铃却响了。票在这里——你打算怎么办？"
-];
-
-const mockPlayerBridges: Record<string, string> = {
-  ask_work: "所以神社等的不是香客，是愿意替某件事赋予意义的人。",
-  ask_memory: "我会收好猫铃，也会记住那双没人承认存在过的筷子。",
-  ask_gallery: "那画廊只是把争论摆到灯下面，并没有替争论作结论。",
-  disagree: "自由被装进展柜以后，就只剩下供人观看的样子了。",
-  ask_player: "你还是把答案绕回了我身上。看来这就是你的答案。"
+const responses: Record<string, { line: string; player: string; lead?: string; emotion: string; action: string }> = {
+  ask_memory: { line: "雨宫真昼。失踪时十八岁，五年前猫神祭，晚上23:47。你要日期、姓名、地点，我一个都不会说错。", player: "好，我记下了。接下来我要知道谁能证明。", lead: "纱夜开的门，九条给的票，后殿钥匙在我这里。你跟我一起查，还是先找他们？", emotion: "急切", action: "她把刻着“真昼”的猫铃按进你掌心。" },
+  koharu_ask_god: { line: "行。后殿钥匙是我从母亲那里偷的。她发现以后一定会拦我，所以这次由你开门。", player: "你走前面。进去以后，没确认是什么就别碰。", lead: "不过先说清楚：你跟我查后殿，还是先拿猫铃去问纱夜或九条？", emotion: "兴奋", action: "她从袜口抽出一把旧钥匙。" },
+  koharu_doubt_memory: { line: "纱夜亲眼看她上车，九条亲手给她票。两个人都认识真昼，只是一个不敢说，一个说了也不认错。", player: "那就从还活着的证人开始。", lead: "好。你跟我一起查，先找纱夜，还是先堵九条的画廊？", emotion: "冷下来", action: "她用红笔在地图上圈住车站和画廊。" },
+  koharu_guard_memory: { line: "成交。你看原件，我留复印件；谁想抢，我们就把名字贴满商店街。", player: "别擅自公开会害到别人的东西。先把真昼找回来。", emotion: "亢奋", action: "她在寻人启事背面写下“与朝雾遥共同调查”。" },
+  koharu_test_god: { line: "好。我们带猫铃去猫神町站。纱夜要是不认，我就让她对着“真昼”两个字再说一次。", player: "别先刺激她。让我问第一句。", emotion: "咬牙微笑", action: "她在地图上圈住猫神町站和水野纱夜的名字。" },
+  koharu_leave_empty: { line: "好。我们带寻人启事去镜庭商店街。九条看到真昼的脸，就别想再把她叫成作品。", player: "我问车票，你看住原片。", emotion: "痛快", action: "她在地图上圈住镜庭画廊和九条弦一的名字。" },
+  saya_open_gentle: { line: "雨宫真昼。十八岁，小春的姐姐。她上车前把一张纸塞进我制服口袋，我没有叫住她。", player: "我不是来替你判刑。先把证据拿出来。", lead: "我有车票、票根和通行令。你先看哪一件？", emotion: "僵硬", action: "她反锁失物抽屉，把钥匙套上手腕。" },
+  saya_open_press: { line: "是。门锁是我开的，放行章是我盖的，第二天的假记录也是我写的。够直接了吗？", player: "够了。现在告诉我是谁命令你的。", lead: "命令、目击、物证，你只能先追一条。选。", emotion: "恼火", action: "她把自己的胸牌翻到背面。" },
+  saya_open_absurd: { line: "她没死。至少我没有死亡记录。黑票也不打折，只会把乘客从名册里划掉。", player: "好，笑话到此为止。把五年前的东西给我看。", lead: "想看全部证据、签命令的人，还是她上车前最后做了什么？", emotion: "冷淡", action: "她把黑色车票压进玻璃夹板。" },
+  saya_ticket_inspect: { line: "票根在这里。通行令也在——看红印，九条家。五年前的值班簿在下面，因为那页是我改的。", player: "三样分开放，别再让一个人拿着全部原件。", lead: "你要原记录，还是先问我为什么一直没把真昼的留言交出去？", emotion: "认命", action: "她把三件证物排成一线。" },
+  saya_ticket_doubt: { line: "我不知道签字人。复写纸只留下九条家的红印。站长在第二天逼我擦掉真昼，但开门命令来自谁，我没有能指向个人的原件。", player: "那就别把怀疑当证词。先把你做过的事说完。", lead: "你要原记录、继续查站长，还是问我还藏了什么？", emotion: "阴沉", action: "她把盖有九条家红印的复写纸推过来。" },
+  saya_ticket_ally: { line: "她没有回头。上车前只把一张纸塞进我制服口袋。我装作没感觉到——这五年，我每天都知道那张纸在哪里。", player: "把纸拿出来。小春有权看。", lead: "先决定：看假记录、继续追站长，还是现在拆穿我藏着的那句话？", emotion: "自厌", action: "她的手停在胸牌夹层。" },
+  saya_truth_plain: { line: "这里。“设备误响，无旅客进入。”每个字都是我补的。原来的碳痕还在纸背。", player: "把原页封起来。你的认罪不能代替证据。", lead: "最后决定吧：票由你带走、我们复制两份，还是现在拿去堵九条？", emotion: "平静", action: "她翻开值班簿，用笔尖划出假记录。" },
+  saya_bluff_bell: { line: "你猜错了。我现在怕的不是站长。真正还能毁掉我工作、封掉这个站的人叫九条弦一。", player: "那就别拿站长挡问题。真昼留给你的是什么？", lead: "看完留言以后，票由谁保管？你带走、我备份，还是一起找九条？", emotion: "发火", action: "她把记录复印件翻到盖着九条家印章的一面。" },
+  saya_personal_probe: { line: "是。“告诉小春，别来找我。”只有这一句。我怕交出去以后，小春真的会去，所以藏了五年。", player: "你没有权替小春决定要不要找。", lead: "骂得对。现在决定证据去哪：你带票、我复制，还是马上找九条？", emotion: "崩紧", action: "她把复写纸翻到背面。" },
+  saya_take_ticket: { line: "可以。黑票归你，票根、复写纸和记录页留我这里分别封袋。别让九条把证据换成他的演出票。", player: "我只拿证据，不接他的演出票。", emotion: "决断", action: "她把黑票装袋后交到你手边。" },
+  saya_leave_ticket: { line: "原件留我这里，复制两份。一份交给小春，一份另行封存。三份不放在同一个人手里。", player: "复制件分开放，也别在这里说出保管位置。", emotion: "冷静", action: "她启动复印机并准备三个证物袋。" },
+  saya_report_ticket: { line: "我跟你去。五年前我在他面前低过一次头，这次我要看着他说“票是我给的”。", player: "到画廊以后我先问，你别替他回答。", emotion: "决绝", action: "她锁上窗口，把通行令塞进外套。" },
+  ask_gallery: { line: "是我给的。真昼说零号站台不可能让人消失，我只是给了她亲自证明的机会。", player: "你明知道后果，还把陷阱叫作机会。", lead: "原片、重演、还是我的罪名——你今天是来拿哪一个？", emotion: "愉快", action: "他掀开被裁去真昼面孔的巨幅照片。" },
+  genichi_ask_power: { line: "原片在保险柜。你没有搜查令，我也没有慈善到把代表作送给主演。", player: "那就说价格。别再拿艺术两个字挡着。", lead: "你可以参加重演、公开与我对抗，或者先承认你也想知道上车会怎样。", emotion: "欣赏", action: "他摘下一只手套，按住保险柜钥匙。" },
+  disagree: { line: "当然知道。真昼也知道。她还是接了票，自己走完石阶，自己踏进车门。你准备把十八岁的她说成没有选择吗？", player: "有选择，不代表设计陷阱的人无罪。", lead: "那么亲自看一次吧：参加重演、公开原片，或者问我为什么选中你。", emotion: "冷下来", action: "他把写有朝雾遥姓名的新票推上展柜。" },
+  genichi_play_along: { line: "很好。第七天17:47，零号站台。你拿新黑票，我给你一次接近保险柜钥匙和站台门的机会；到门前再看谁骗过谁。", player: "我会到门前，不代表我会上车。", emotion: "兴奋", action: "他在主演邀请函上补写朝雾遥的姓名。" },
+  genichi_refuse_power: { line: "公开吧。然后九条家给猫神社、车站和商店街的三百万元资助全部撤回。我要看谁先请你把照片收起来。", player: "把三百万元写下来。威胁也应该留下原件。", emotion: "冰冷", action: "他在三百万元赞助撤回通知上签名。" },
+  ask_player: { line: "不是“想”。你已经拿到七日代理、神社钥匙和全镇的注意。真昼当年只有一张票，你比她更适合测试。", player: "所以只要我拒绝上车，你的作品就永远少一个结尾。", emotion: "恼怒", action: "他收起笑容，把保险柜钥匙攥进掌心。" }
 };
 
-const mockNpcChoiceLeads: Record<string, string> = {
-  npc_koharu: "你已经听见一种答案了。还要问那只空抽屉，还是先去别处看看？",
-  npc_genichi: "很好，至少我们没有浪费这场分歧。现在你还想追问画廊，还是继续反驳我？"
-};
-
-function dialogueBeats(line: string, emotion: string) {
-  const sentences = line.match(/[^。！？]+[。！？]?/g)?.map((part) => part.trim()).filter(Boolean) ?? [line];
-  const segments = sentences.length <= 3
-    ? sentences
-    : [sentences[0]!, sentences[1]!, sentences.slice(2).join("")];
-  return {
-    line: segments[0] ?? line,
-    emotion,
-    continuations: segments.slice(1).map((segment) => ({ line: segment, emotion }))
-  };
+function withPlayerLines(options: DialogueOption[]) {
+  return options.map((option) => ({ ...option, playerLine: resolvePlayerLine(option) }));
 }
 
-function createMockSayaDialogue(selectedOptionId?: string, isFirstMeeting = true): DialogueResult {
-  const response = selectedOptionId ? sayaResponses[selectedOptionId] : null;
-  const selectedBeat = selectedOptionId
-    ? sayaOptionBeats.findIndex((options) => options.some((option) => option.id === selectedOptionId))
-    : -1;
-  const nextOptions = sayaOptionBeats[selectedBeat + 1] ?? [];
-
-  const line = response?.line ?? (isFirstMeeting
-    ? "水野纱夜，夜班站务。你就是朝雾遥，那个只待七天的代理？正好——昨晚 23:47，这张票出现在失物抽屉里，可本站没有那班车。所以，你现在想先问哪一件？"
-    : "又见面了，朝雾遥。昨晚 23:47，这张票出现在失物抽屉里，可本站没有那班车。所以，你现在想先问哪一件？");
-  const emotion = response?.emotion ?? "审视";
-
-  if (selectedOptionId && response) {
-    const continuations = [{
-      speakerId: demoBootstrap.player.id,
-      line: sayaPlayerBridges[selectedOptionId] ?? "我听见了。你继续说。",
-      emotion: "回应"
-    }];
-    if (nextOptions.length > 0) {
-      continuations.push({
-        speakerId: "npc_saya",
-        line: sayaNextChoiceLeads[selectedBeat] ?? "话说到这里。接下来，你准备怎么做？",
-        emotion
-      });
-    }
-    return DialogueResultSchema.parse({
-      speakerId: "npc_saya",
-      stageDirection: response.stageDirection,
-      line: response.line,
-      emotion,
-      continuations,
-      options: nextOptions,
-      debug: {
-        provider: "mock",
-        decision: "根据玩家选择的语义边界，让纱夜与朝雾遥交替说话，再抵达下一决策点。",
-        usedFacts: ["saya_scene:ticket_2347", `selected_option:${selectedOptionId}`]
-      }
-    });
-  }
-
-  return DialogueResultSchema.parse({
-    speakerId: "npc_saya",
-    stageDirection: response?.stageDirection ?? "她用指节轻敲了一下桌上的车票，没有立刻抬头。",
-    ...dialogueBeats(line, emotion),
-    options: nextOptions,
-    debug: {
-      provider: "mock",
-      decision: "按四轮异常车票事件推进，并根据玩家态度使用对应保底回应。",
-      usedFacts: ["saya_scene:ticket_2347", ...(selectedOptionId ? [`selected_option:${selectedOptionId}`] : [])]
-    }
-  });
+function splitOpening(text: string, emotion: string) {
+  const parts = text.match(/[^。！？]+[。！？]?/g)?.filter(Boolean) ?? [text];
+  return {
+    line: parts[0]!,
+    continuations: parts.slice(1, 4).map((line) => ({ speakerId: undefined, line, emotion }))
+  };
 }
 
 export function createMockDialogue(request: DialogueRequest): DialogueResult {
   const npc = demoBootstrap.npcs.find((candidate) => candidate.id === request.npcId);
-  if (npc?.id === "npc_saya") return createMockSayaDialogue(request.selectedOptionId, request.isFirstMeeting ?? true);
-  const script = scripts[request.npcId];
-
-  if (!npc || !script) {
+  const beats = optionBeats[request.npcId];
+  if (!npc || !beats) {
     return DialogueResultSchema.parse({
       speakerId: request.npcId,
       line: "这里暂时没有可以继续的对话。",
       emotion: "平静",
-      options: [
-        { id: "wait", text: "等一会儿。", intent: "等待" },
-        { id: "leave", text: "离开这里。", intent: "结束会面" }
-      ],
-      debug: {
-        provider: "mock",
-        decision: "未知 NPC，使用安全保底对白。",
-        usedFacts: []
-      }
+      continuations: [],
+      options: [{ id: "leave", text: "离开。", intent: "结束会面" }],
+      debug: { provider: "mock", decision: "未知NPC安全保底。", usedFacts: [] }
     });
   }
 
-  const line = request.selectedOptionId
-    ? script.followups[request.selectedOptionId] ?? script.opening
-    : request.isFirstMeeting !== false && script.firstMeetingOpening
-      ? script.firstMeetingOpening
-      : script.opening;
-  const options = request.selectedOptionId
-    ? script.options.filter((option) => option.id !== request.selectedOptionId)
-    : script.options;
-
-  if (request.selectedOptionId) {
+  if (!request.selectedOptionId) {
+    const opening = openings[npc.id]!(request.isFirstMeeting ?? true, request.activeRules.faith);
     return DialogueResultSchema.parse({
       speakerId: npc.id,
-      line,
-      emotion: script.emotion,
-      continuations: [
-        {
-          speakerId: demoBootstrap.player.id,
-          line: mockPlayerBridges[request.selectedOptionId] ?? "我明白了。你继续。",
-          emotion: "回应"
-        },
-        {
-          speakerId: npc.id,
-          line: mockNpcChoiceLeads[npc.id] ?? "话说到这里，接下来由你决定。",
-          emotion: script.emotion
-        }
-      ],
-      options,
-      debug: {
-        provider: "mock",
-        decision: `${script.decision} 玩家在已选态度内继续接话，再由 NPC 引向下一决策点。`,
-        usedFacts: [
-          `day:${request.day}`,
-          `period:${request.period}`,
-          `location:${request.locationId}`,
-          `npc:${npc.id}`,
-          `selected_option:${request.selectedOptionId}`
-        ]
-      }
+      stageDirection: npc.id === "npc_koharu" ? "她扣上侧门门闩，把一枚猫铃按进你手里。" : npc.id === "npc_saya" ? "她反锁失物抽屉，亮出黑色车票。" : "他掀开遮住巨幅照片的黑布。",
+      ...splitOpening(opening, npc.emotion),
+      emotion: npc.emotion,
+      options: withPlayerLines(beats[0]!),
+      debug: { provider: "mock", decision: "用具体当事人、证物和责任开启真昼失踪案。", usedFacts: [`npc:${npc.id}`, "incident:mahiru"] }
     });
   }
 
+  const response = responses[request.selectedOptionId];
+  const selectedBeat = beats.findIndex((options) => options.some((option) => option.id === request.selectedOptionId));
+  const nextOptions = beats[selectedBeat + 1] ?? [];
+  const continuations = [{
+    speakerId: demoBootstrap.player.id,
+    line: response?.player ?? "把具体的人、时间和证物说清楚。",
+    emotion: "回应"
+  }];
+  if (nextOptions.length > 0) {
+    continuations.push({
+      speakerId: npc.id,
+      line: response?.lead ?? "下一步做什么，现在选。",
+      emotion: response?.emotion ?? npc.emotion
+    });
+  }
   return DialogueResultSchema.parse({
     speakerId: npc.id,
-    ...dialogueBeats(line, script.emotion),
-    options,
-    debug: {
-      provider: "mock",
-      decision: script.decision,
-      usedFacts: [
-        `day:${request.day}`,
-        `period:${request.period}`,
-        `location:${request.locationId}`,
-        `npc:${npc.id}`,
-        ...(request.selectedOptionId ? [`selected_option:${request.selectedOptionId}`] : [])
-      ]
-    }
+    stageDirection: response?.action,
+    line: response?.line ?? openings[npc.id]!(false, request.activeRules.faith),
+    emotion: response?.emotion ?? npc.emotion,
+    continuations,
+    options: withPlayerLines(nextOptions),
+    debug: { provider: "mock", decision: "按玩家选择推进证物、责任人与下一步行动。", usedFacts: [`npc:${npc.id}`, `selected_option:${request.selectedOptionId}`, "incident:mahiru"] }
   });
 }

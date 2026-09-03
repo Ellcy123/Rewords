@@ -28,6 +28,25 @@ export const NpcSchema = z.object({
   classPosition: z.string().min(1),
   cityAspect: z.string().min(1),
   oneLine: z.string().min(1),
+  privateStory: z.string().min(1),
+  godView: z.string().min(1),
+  godRelationship: z.string().min(1),
+  ruleResponseStyle: z.string().min(1),
+  persona: z.object({
+    publicMask: z.string().min(1),
+    coreContradiction: z.string().min(1),
+    immediateGoal: z.string().min(1),
+    longTermGoal: z.string().min(1),
+    fear: z.string().min(1),
+    defenseMechanism: z.string().min(1),
+    moralLine: z.string().min(1),
+    breakingPoint: z.string().min(1),
+    actionBias: z.string().min(1),
+    falseBelief: z.string().min(1),
+    secret: z.string().min(1),
+    signatureBehaviors: z.array(z.string().min(1)).min(3),
+    speechRules: z.array(z.string().min(1)).min(3)
+  }),
   initialLocationId: z.string().min(1),
   emotion: z.string().min(1),
   dialogueTone: z.array(z.string().min(1)).min(1),
@@ -49,6 +68,15 @@ export const PlayerProfileSchema = z.object({
   startingMystery: z.string().min(1)
 });
 export type PlayerProfile = z.infer<typeof PlayerProfileSchema>;
+
+export const DailyEventSchema = z.object({
+  id: z.string().min(1),
+  day: z.number().int().min(1).max(7),
+  title: z.string().min(1),
+  summary: z.string().min(1),
+  objective: z.string().min(1)
+});
+export type DailyEvent = z.infer<typeof DailyEventSchema>;
 
 export const ConceptSchema = z.object({
   id: z.string().min(1),
@@ -106,6 +134,7 @@ export const DemoBootstrapSchema = z.object({
   locations: z.array(LocationSchema).length(3),
   player: PlayerProfileSchema,
   npcs: z.array(NpcSchema).length(3),
+  dailyEvents: z.array(DailyEventSchema).length(7),
   concepts: z.array(ConceptSchema).length(6),
   items: z.array(ItemSchema).length(6),
   ruleSlots: z.array(RuleSlotSchema).length(2),
@@ -160,7 +189,12 @@ export const DialogueResultSchema = z.object({
     model: z.string().min(1).optional(),
     latencyMs: z.number().int().nonnegative().optional(),
     attemptCount: z.number().int().positive().optional(),
-    fallbackReason: z.string().min(1).optional()
+    fallbackReason: z.string().min(1).optional(),
+    sceneGoal: z.string().min(1).optional(),
+    npcActionId: z.string().min(1).optional(),
+    npcAction: z.string().min(1).optional(),
+    memoryCandidate: z.string().min(1).optional(),
+    reflectionCandidate: z.string().min(1).optional()
   })
 });
 export type DialogueResult = z.infer<typeof DialogueResultSchema>;
@@ -185,7 +219,7 @@ export const AiLogEntrySchema = z.object({
   id: z.string().min(1),
   timestamp: z.string().min(1),
   npcId: z.string().min(1),
-  mode: z.enum(["talk", "gift"]),
+  mode: z.enum(["talk", "gift", "ending"]),
   provider: z.enum(["deepseek", "mock_fallback"]),
   model: z.string().min(1),
   promptVersion: z.string().min(1),
@@ -197,7 +231,7 @@ export const AiLogEntrySchema = z.object({
 });
 export type AiLogEntry = z.infer<typeof AiLogEntrySchema>;
 
-export const GamePhaseSchema = z.enum(["action", "location", "encounter", "night"]);
+export const GamePhaseSchema = z.enum(["action", "location", "encounter", "night", "ending"]);
 export type GamePhase = z.infer<typeof GamePhaseSchema>;
 
 export const InteractionModeSchema = z.enum(["talk", "gift"]);
@@ -212,6 +246,55 @@ export const ActiveRuleSchema = z.object({
 });
 export type ActiveRule = z.infer<typeof ActiveRuleSchema>;
 
+export const NpcMemorySchema = z.object({
+  id: z.string().min(1),
+  npcId: z.string().min(1),
+  kind: z.enum(["player_choice", "dialogue", "gift", "rule_callback", "item_change", "observation", "reflection"]),
+  summary: z.string().min(1),
+  interpretation: z.string().min(1),
+  sourceEventId: z.string().min(1),
+  createdDay: z.number().int().min(1).max(7),
+  confidence: z.enum(["certain", "interpreted", "uncertain"]),
+  importance: z.number().int().min(1).max(10).default(5),
+  tags: z.array(z.string().min(1)).default([])
+});
+export type NpcMemory = z.infer<typeof NpcMemorySchema>;
+
+export const NpcRuntimeStateSchema = z.object({
+  npcId: z.string().min(1),
+  currentLocationId: z.string().min(1),
+  relationship: z.number().int().min(-5).max(5),
+  memories: z.array(NpcMemorySchema).max(80),
+  reflection: z.string().default("尚未与朝雾遥形成明确判断。"),
+  openLoops: z.array(z.string().min(1)).max(12).default([])
+});
+export type NpcRuntimeState = z.infer<typeof NpcRuntimeStateSchema>;
+
+export const EndingNpcOutcomeSchema = z.object({
+  npcId: z.string().min(1),
+  headline: z.string().min(1).max(40),
+  text: z.string().min(1).max(360)
+});
+export type EndingNpcOutcome = z.infer<typeof EndingNpcOutcomeSchema>;
+
+export const EndingResultSchema = z.object({
+  title: z.string().min(1).max(60),
+  subtitle: z.string().min(1).max(100),
+  narration: z.string().min(1).max(1200),
+  npcOutcomes: z.array(EndingNpcOutcomeSchema).length(3),
+  closingLine: z.string().min(1).max(180),
+  provider: z.enum(["deepseek", "mock_fallback"]),
+  promptVersion: z.string().min(1),
+  factSummary: z.object({
+    gifts: z.array(z.string()),
+    rules: z.array(z.string()),
+    relationships: z.array(z.string()),
+    storyBeats: z.array(z.string())
+  }),
+  usedEventIds: z.array(z.string())
+});
+export type EndingResult = z.infer<typeof EndingResultSchema>;
+
 export const GameEventSchema = z.object({
   id: z.string().min(1),
   sequence: z.number().int().nonnegative(),
@@ -224,10 +307,19 @@ export const GameEventSchema = z.object({
     "location_left",
     "interaction_mode_selected",
     "dialogue_choice",
+    "dialogue_generated",
+    "npc_action",
+    "reflection_updated",
     "item_transfer",
     "encounter_completed",
     "rule_changed",
-    "day_advanced"
+    "rule_callback",
+    "npc_moved",
+    "day_advanced",
+    "daily_event",
+    "story_beat",
+    "wait_until_night",
+    "ending_generated"
   ]),
   actorId: z.string().nullable(),
   targetId: z.string().nullable(),
@@ -258,9 +350,12 @@ export const GameStateSchema = z.object({
     faith: ActiveRuleSchema.nullable(),
     beauty: ActiveRuleSchema.nullable()
   }),
+  npcStates: z.record(z.string(), NpcRuntimeStateSchema).default({}),
+  storyFlags: z.array(z.string()).default([]),
   ruleChangedThisNight: z.boolean(),
   claimedRewardIds: z.array(z.string()),
-  eventLog: z.array(GameEventSchema)
+  eventLog: z.array(GameEventSchema),
+  ending: EndingResultSchema.nullable().default(null)
 });
 export type GameState = z.infer<typeof GameStateSchema>;
 

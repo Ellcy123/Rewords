@@ -17,6 +17,8 @@ import { DialogueProviderRouter } from "./dialogueProvider.ts";
 import { createMockDialogue } from "./mockDialogueProvider.ts";
 import { SqliteGameStore } from "./persistence.ts";
 import { SAYA_PROMPT_STRUCTURE, SAYA_PROMPT_VERSION } from "./prompts/sayaPrompt.ts";
+import { DAY4_PROMPT_STRUCTURE, THEOLOGY_PROMPT_VERSION } from "./prompts/theologyPrompt.ts";
+import { ENDING_PROMPT_VERSION } from "./prompts/endingPrompt.ts";
 
 dotenv.config({ path: fileURLToPath(new URL("../.env.local", import.meta.url)), quiet: true });
 const app = Fastify({ logger: true });
@@ -39,9 +41,9 @@ app.get("/api/ai/status", async () => dialogueProvider.getStatus());
 app.get("/api/ai/logs", async () => dialogueProvider.getLogs());
 
 app.get("/api/ai/prompt-structure", async () => ({
-  npcId: "npc_saya",
-  promptVersion: SAYA_PROMPT_VERSION,
-  layers: SAYA_PROMPT_STRUCTURE
+  npcId: "all_demo_npcs",
+  promptVersion: `multi:${SAYA_PROMPT_VERSION}+${THEOLOGY_PROMPT_VERSION}+${ENDING_PROMPT_VERSION}`,
+  layers: [...new Set([...SAYA_PROMPT_STRUCTURE, ...DAY4_PROMPT_STRUCTURE, "第七天事实摘要与动态结局"])]
 }));
 
 app.get("/api/bootstrap", async () => DemoBootstrapSchema.parse(demoBootstrap));
@@ -90,6 +92,10 @@ app.post("/api/game/start-encounter", async (_request, reply) =>
 
 app.post("/api/game/leave-location", async (_request, reply) =>
   runGameAction(() => gameService.leaveLocation(), reply)
+);
+
+app.post("/api/game/wait-until-night", async (_request, reply) =>
+  runGameAction(() => gameService.waitUntilNight(), reply)
 );
 
 app.post("/api/game/interaction-mode", async (request, reply) =>

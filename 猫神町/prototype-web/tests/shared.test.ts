@@ -12,6 +12,7 @@ describe("locked demo data", () => {
 
     expect(parsed.locations).toHaveLength(3);
     expect(parsed.npcs).toHaveLength(3);
+    expect(parsed.dailyEvents).toHaveLength(7);
     expect(parsed.player.name).toBe("朝雾遥");
     expect(parsed.player.publicRole).toContain("七日代理");
     expect(parsed.items).toHaveLength(6);
