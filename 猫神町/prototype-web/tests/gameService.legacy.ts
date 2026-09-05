@@ -1,3 +1,4 @@
+// Archived old disappearance-chapter scenarios; retained as historical reference.
 import { describe, expect, it } from "vitest";
 import { GameRuleError, GameService } from "../server/src/gameService.ts";
 import { MemoryGameStore } from "../server/src/persistence.ts";
@@ -23,7 +24,7 @@ describe("Authoritative game loop", () => {
     expect(talking.currentDialogue?.continuations.length).toBeGreaterThanOrEqual(1);
 
     const secondBeat = await service.chooseTalkOption("saya_open_press");
-    expect(secondBeat.state.lastPlayerChoice).toBe("别再拿流程挡着。零号站台是你亲手打开的吗？");
+    expect(secondBeat.state.lastPlayerChoice).toBe("你为什么开门？");
     expect(secondBeat.state.eventLog.filter((event) => event.type === "dialogue_choice").at(-1)?.details.player_line).toBe(secondBeat.state.lastPlayerChoice);
     expect(secondBeat.state.currentDialogue?.continuations.some((beat) => beat.speakerId === "player_haruka")).toBe(true);
     expect(secondBeat.state.currentDialogue?.options.map((option) => option.id)).toContain("saya_ticket_doubt");

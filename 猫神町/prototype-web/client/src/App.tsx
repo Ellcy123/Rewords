@@ -13,7 +13,7 @@ import {
 } from "../../packages/shared/src/index.ts";
 import { gameApi } from "./api.ts";
 
-type ViewId = "map" | "location" | "inventory" | "shrine" | "ending" | "debug";
+type ViewId = "map" | "location" | "inventory" | "journal" | "shrine" | "ending" | "debug";
 
 const periodLabel = {
   morning: "上午",
@@ -25,13 +25,14 @@ const periodLabel = {
 const navItems: Array<{ id: Exclude<ViewId, "location" | "ending">; label: string; icon: string }> = [
   { id: "map", label: "地图", icon: "⌖" },
   { id: "inventory", label: "背包", icon: "▣" },
+  { id: "journal", label: "手记", icon: "▤" },
   { id: "shrine", label: "规则", icon: "◇" },
   { id: "debug", label: "调试", icon: "⌘" }
 ];
 
 function routeForState(state: GameState): ViewId {
   if (state.phase === "ending") return "ending";
-  if (state.phase === "location" || state.phase === "encounter") return "location";
+  if (state.phase === "location" || state.phase === "encounter" || state.phase === "incident") return "location";
   if (state.phase === "night") return "shrine";
   return "map";
 }
@@ -60,7 +61,6 @@ export function App() {
   const [candidateItemId, setCandidateItemId] = useState<string | null>(null);
   const [candidateGiftId, setCandidateGiftId] = useState<string | null>(null);
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
-  const [dialogueBeatIndex, setDialogueBeatIndex] = useState(0);
   const [pendingPlayerLine, setPendingPlayerLine] = useState<string | null>(null);
 
   useEffect(() => {
@@ -87,9 +87,6 @@ export function App() {
     return () => { alive = false; };
   }, []);
 
-  useEffect(() => {
-    setDialogueBeatIndex(0);
-  }, [gameState?.currentDialogue]);
 
   const inventoryItems = useMemo(() => {
     if (!bootstrap || !gameState) return [];
@@ -104,6 +101,7 @@ export function App() {
           <h1>前后端没有成功连接</h1>
           <p>{loadError}</p>
           <p className="muted">请在 prototype-web 目录运行 npm run dev。</p>
+          <button type="button" onClick={() => window.location.reload()}>重新连接</button>
         </div>
       </main>
     );
@@ -133,9 +131,10 @@ export function App() {
     (location) => location.id === gameState.currentLocationId
   );
   const activeNpc = bootstrap.npcs.find((npc) => npc.id === gameState.activeNpcId);
-  const sceneNpc = bootstrap.npcs.find(
-    (npc) => (gameState.npcStates[npc.id]?.currentLocationId ?? npc.initialLocationId) === gameState.currentLocationId
+  const sceneNpcs = bootstrap.npcs.filter(
+    (npc) => gameState.npcStates[npc.id]?.currentLocationId === gameState.currentLocationId && gameState.npcStates[npc.id]?.lifeState !== "dead"
   );
+  const sceneNpc = activeNpc ?? sceneNpcs[0];
   const candidateItem = bootstrap.items.find((item) => item.id === candidateItemId);
   const candidateConcept = bootstrap.concepts.find(
     (concept) => concept.id === candidateItem?.carriedConceptId
@@ -209,7 +208,7 @@ export function App() {
         speakerId: beat.speakerId ?? dialogue.speakerId
       }))
     ];
-    const visibleBeatIndex = Math.min(dialogueBeatIndex, dialogueBeats.length - 1);
+    const visibleBeatIndex = Math.min(state.dialogueBeatIndex, dialogueBeats.length - 1);
     const isWaitingForNpc = Boolean(pendingPlayerLine);
     const visibleBeat = pendingPlayerLine
       ? { speakerId: player.id, line: pendingPlayerLine, stageDirection: undefined, emotion: "回应" }
@@ -237,7 +236,7 @@ export function App() {
           {!isWaitingForNpc && !isLastBeat && (
             <div className="dialogue-continue-row">
               <span>{visibleBeatIndex + 1} / {dialogueBeats.length}</span>
-              <button disabled={busy} type="button" onClick={() => setDialogueBeatIndex((index) => index + 1)}>下一句 →</button>
+              <button disabled={busy} type="button" onClick={() => void perform(gameApi.nextBeat)}>下一句 →</button>
             </div>
           )}
           {isLastBeat && !isWaitingForNpc && dialogue.options.length > 0 && (
@@ -260,10 +259,23 @@ export function App() {
             </div>
           )}
           {isLastBeat && dialogue.options.length === 0 && !isWaitingForNpc && (
-            <p className="conversation-done">这段话已经说完。你可以结束本次会面。</p>
+            <p className="conversation-done">本次交谈已结束。返回场景，继续你的行程吧。</p>
+          )}
+          {isLastBeat && dialogue.options.length > 0 && !isWaitingForNpc && state.interactionMode === "talk" && (
+            <details className="evidence-tools">
+              <summary>出示材料／转告消息</summary>
+              <p>出示不转移所有权。已送出的实物不能再次出示。</p>
+              <div className="dialogue-options">
+                {inventoryItems.filter(i => /^E\d+$/.test(i.id)).map(i => (
+                  <button disabled={busy} key={i.id} onClick={() => void perform(() => gameApi.present(i.id))}>出示{i.baseName}</button>
+                ))}
+                {state.storyFlags.includes("chiyo_retracted") && activeNpc.id !== "npc_chiyo" &&
+                  <button disabled={busy} onClick={() => void perform(gameApi.tellRetraction)}>转告千代改口</button>}
+              </div>
+            </details>
           )}
           <button className="end-meeting" disabled={busy} type="button" onClick={() => void perform(gameApi.completeEncounter)}>
-            结束本次会面
+            {isLastBeat && dialogue.options.length === 0 ? "返回场景" : "结束本次会面"}
           </button>
         </div>
       </div>
@@ -357,9 +369,10 @@ export function App() {
             )}
 
             <div className="map-paper">
+              {state.phase === "incident" && <div className="phase-callout"><strong>白石旅馆的现场还等你处理</strong><button onClick={() => changeView("location")}>返回现场 →</button></div>}
               <div className="river-line" aria-hidden="true" /><div className="rail-line" aria-hidden="true" />
               <div className="map-grid">
-                {bootstrap.locations.map((location, index) => (
+                {bootstrap.locations.filter(l => state.discoveredLocationIds.includes(l.id)).map((location, index) => (
                   <button
                     className={`location-card location-${index + 1}`}
                     disabled={busy || gameState.phase !== "action"}
@@ -375,12 +388,12 @@ export function App() {
                   </button>
                 ))}
               </div>
-              <div className="map-note">人物会按作息移动 · 当前地图不提供头像提示</div>
+              <div className="map-note">听到具体地点后地图才会新增 · 已发现地点没有门禁 · 地图不显示人物位置</div>
             </div>
           </section>
         )}
 
-        {view === "location" && selectedLocation && sceneNpc && (
+        {view === "location" && selectedLocation && (
           <section className="view location-view">
             {gameState.phase === "location" ? (
               <button className="back-button" disabled={busy} type="button" onClick={() => void perform(gameApi.leaveLocation)}>← 离开地点，返回地图</button>
@@ -399,16 +412,20 @@ export function App() {
               </div>
               <div className="stage-horizon" aria-hidden="true"><span className="roof-shape" /><span className="window-shape" /><span className="ground-shape" /></div>
               <div className="chibi-row">
+                {sceneNpcs.map(sceneNpc => (
                 <button
-                  className={`chibi-card ${gameState.phase === "encounter" ? "selected" : ""}`}
-                  disabled={busy || gameState.phase !== "location" || !canStartConversation}
+                  key={sceneNpc.id}
+                  className={`chibi-card ${gameState.activeNpcId === sceneNpc.id ? "selected" : ""}`}
+                  disabled={busy || gameState.phase !== "location" || !canStartConversation || state.npcStates[sceneNpc.id].lifeState !== "alive"}
                   type="button"
-                  onClick={() => void perform(gameApi.startEncounter)}
+                  onClick={() => void perform(() => gameApi.startEncounter(sceneNpc.id))}
                 >
                   <span className="chibi" style={{ "--npc-accent": sceneNpc.accent } as CSSProperties}><i className="chibi-hair" /><i className="chibi-face">• ᴗ •</i><i className="chibi-body" /></span>
-                  <strong>{sceneNpc.name}</strong><small>{sceneNpc.occupation}</small>
-                  <span>{gameState.phase === "location" ? (canStartConversation ? "点击开始会面" : "今天已没有会面时间") : "会面中"}</span>
+                  <strong>{sceneNpc.name}</strong><small>{state.npcStates[sceneNpc.id].lifeState === "injured" ? "受伤休养中，暂不能交谈" : sceneNpc.occupation}</small>
+                  <span>{gameState.phase === "location" ? (canStartConversation ? "点击开始会面" : "今天已没有会面时间") : gameState.activeNpcId === sceneNpc.id ? "会面中" : "在场"}</span>
                 </button>
+                ))}
+                {sceneNpcs.length === 0 && <p>这里暂时没有能交谈的人，你仍然可以查看现场。</p>}
               </div>
             </div>
 
@@ -417,23 +434,50 @@ export function App() {
                 <span className="eyebrow">场景探索 · {formatClock(gameState.currentMinute)}</span>
                 <h2>你还没有与任何人会面</h2>
                 <p>看看地点和在场人物。想交流时点击人物；直接离开只计算已经发生的移动时间。</p>
+                <div className="scene-materials">
+                  {bootstrap.items.filter(i => state.itemOwners[i.id] === selectedLocation.id).map(i => (
+                    <article key={i.id}><strong>{i.icon} {i.baseName}</strong>
+                      <button disabled={busy} onClick={() => void perform(() => gameApi.inspect(i.id))}>查看</button>
+                      <button disabled={busy} onClick={() => void perform(() => gameApi.inspect(i.id, true))}>拿走</button>
+                    </article>
+                  ))}
+                </div>
+                {selectedLocation.id === "loc_inn" && state.incident?.stage === "resolved" && <p className="prototype-notice">{state.incident.resolvedText}</p>}
+                <button disabled={busy || state.currentMinute + 30 > state.nightStartMinute} onClick={() => void perform(() => gameApi.wait(30))}>在这里等半小时</button>
+                <button disabled={busy} onClick={() => void perform(gameApi.waitUntilNight)}>在这里等到入夜</button>
+              </div>
+            )}
+
+            {state.phase === "incident" && state.incident && (
+              <div className="dialogue-panel incident-panel">
+                <div className="dialogue-content">
+                  <span className="eyebrow">你撞见的现场 · {formatClock(state.currentMinute)}</span>
+                  <h2>{state.incident.stage === "contact" ? "律想单独谈谈" : state.incident.stage === "threat" ? "千代被挡住了去路" : "律正在袭击千代"}</h2>
+                  <p>{state.incident.stage === "attack" ? "律抓住千代，将她推向柜台。她抓着桌沿，站不稳。" : "律站在柜台前压低声音。千代攥着手里的纸，看了你一眼。"}</p>
+                  <div className="dialogue-options">
+                    <button disabled={busy} onClick={() => void perform(() => gameApi.incidentChoice("intervene"))}>{state.incident.stage === "attack" ? "拦住他！" : "我也留下。"}</button>
+                    <button disabled={busy} onClick={() => void perform(() => gameApi.incidentChoice("help"))}>出去找人</button>
+                    <button disabled={busy} onClick={() => void perform(() => gameApi.incidentChoice("leave"))}>退开离开</button>
+                  </div>
+                  <small>离开后事件会继续。求助需要你实际赶路，不会立刻有人出现。</small>
+                </div>
               </div>
             )}
 
             {gameState.phase === "encounter" && !gameState.interactionMode && (
               <div className="meeting-entry">
-                <div><span className="eyebrow">会面方式 · {formatClock(gameState.currentMinute)}</span><h2>你打算怎样开始？</h2><p>直接离开不再花时间。交谈会在开始时计时；选择赠礼可在确认交出前返回且不计时。</p></div>
+                <div><span className="eyebrow">会面方式 · {formatClock(gameState.currentMinute)}</span><h2>与{activeNpc?.name}怎样开始？</h2><p>直接离开不再花时间。交谈会在开始时计时；选择赠礼可在确认交出前返回且不计时。</p></div>
                 <div className="meeting-actions">
                   <button disabled={busy || !canStartConversation} type="button" onClick={() => void perform(() => gameApi.selectMode("talk"))}><strong>交谈 · {formatDuration(gameState.conversationDurationMinutes)}</strong><small>{canStartConversation ? "根据人设、当前情况与世界规则闲聊" : "今天剩余时间不足"}</small></button>
                   <button disabled={busy || inventoryItems.length === 0 || !canStartConversation} type="button" onClick={() => void perform(() => gameApi.selectMode("gift"))}><strong>赠送礼物 · {formatDuration(gameState.conversationDurationMinutes)}</strong><small>{!canStartConversation ? "今天剩余时间不足" : inventoryItems.length ? "确认礼物后计时，再围绕礼物交谈" : "背包里没有可赠送的东西"}</small></button>
                 </div>
-                <button className="skip-meeting" disabled={busy} type="button" onClick={() => void perform(gameApi.completeEncounter)}>结束会面，返回地图</button>
+                <button className="skip-meeting" disabled={busy} type="button" onClick={() => void perform(gameApi.completeEncounter)}>结束会面，返回场景</button>
               </div>
             )}
 
             {gameState.interactionMode === "talk" && renderDialogue("交谈")}
 
-            {gameState.interactionMode === "gift" && !gameState.giftItemId && (
+            {gameState.interactionMode === "gift" && !gameState.giftItemId && sceneNpc && (
               <div className="gift-panel">
                 <div className="gift-heading"><div><span className="eyebrow">赠送礼物</span><h2>要把什么交给 {sceneNpc.name}？</h2></div><button disabled={busy} type="button" onClick={() => void perform(gameApi.cancelMode)}>← 返回会面选择</button></div>
                 <div className="gift-grid">
@@ -462,7 +506,7 @@ export function App() {
             <div className="view-heading"><div><span className="eyebrow">随身物品</span><h1>背包</h1></div><p>只显示仍属于你的物品。赠送或供奉后，它会立刻从这里消失。</p></div>
             <div className="inventory-layout">
               <div className="inventory-grid">
-                {inventoryItems.map((item) => <ItemCard key={item.id} item={item} />)}
+                {inventoryItems.map((item) => <div key={item.id}><ItemCard item={item} />{/^E\d+$/.test(item.id) && <button disabled={busy || isEnding} onClick={() => void perform(() => gameApi.inspect(item.id))}>阅读材料</button>}</div>)}
                 {inventoryItems.length === 0 && <div className="empty-inventory"><span>空</span><p>你已经没有随身物品了。</p></div>}
                 {Array.from({ length: Math.max(0, 6 - inventoryItems.length) }, (_, index) => <div className="item-card empty-item" key={`empty-${index}`}><span>＋</span><small>空位</small></div>)}
               </div>
@@ -480,6 +524,19 @@ export function App() {
                 <button type="button" onClick={() => changeView("shrine")}>查看世界规则 →</button>
               </aside>
             </div>
+          </section>
+        )}
+
+        {view === "journal" && (
+          <section className="view">
+            <div className="view-heading"><div><span className="eyebrow">实际看过的材料</span><h1>调查手记</h1></div><p>记录不会随实物送出而消失；同源副本不是两份独立证明。</p></div>
+            {state.evidenceJournal.length === 0 && <p>还没有读过材料。去找小春，或看看商店街的公开旧报。</p>}
+            {state.evidenceJournal.map(entry => <article className="info-card" key={entry.id}>
+              <span className="eyebrow">{entry.id} · 第{entry.day}天 · {entry.source}</span><h2>{entry.name}</h2>
+              <p>{entry.text}</p><small>{state.itemOwners[entry.id] === "player" ? "实物在背包" : "你没有持有这份实物"}</small>
+            </article>)}
+            <h2>亲历与证词</h2>
+            {state.eventLog.filter(e => ["story_beat","incident","information_delivered"].includes(e.type)).map(e => <p key={e.id}>第{e.day}天 {formatClock(e.minute)} · {e.details.text}</p>)}
           </section>
         )}
 

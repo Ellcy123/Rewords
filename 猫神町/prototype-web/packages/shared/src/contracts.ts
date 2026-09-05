@@ -131,12 +131,12 @@ export const DemoBootstrapSchema = z.object({
     phase: z.string().min(1),
     notice: z.string().min(1)
   }),
-  locations: z.array(LocationSchema).length(3),
+  locations: z.array(LocationSchema).length(8),
   player: PlayerProfileSchema,
-  npcs: z.array(NpcSchema).length(3),
+  npcs: z.array(NpcSchema).length(7),
   dailyEvents: z.array(DailyEventSchema).length(7),
-  concepts: z.array(ConceptSchema).length(6),
-  items: z.array(ItemSchema).length(6),
+  concepts: z.array(ConceptSchema).min(1),
+  items: z.array(ItemSchema).min(1).max(30),
   ruleSlots: z.array(RuleSlotSchema).length(2),
   initialState: DemoInitialStateSchema
 });
@@ -146,6 +146,9 @@ export const DialogueOptionSchema = z.object({
   id: z.string().min(1),
   text: z.string().min(1),
   playerLine: z.string().min(1).max(120).optional(),
+  actionId: z.string().nullable().optional(),
+  anchor: z.string().optional(),
+  angle: z.string().optional(),
   intent: z.string().min(1)
 });
 export type DialogueOption = z.infer<typeof DialogueOptionSchema>;
@@ -219,7 +222,7 @@ export const AiLogEntrySchema = z.object({
   id: z.string().min(1),
   timestamp: z.string().min(1),
   npcId: z.string().min(1),
-  mode: z.enum(["talk", "gift", "ending"]),
+  mode: z.enum(["talk", "gift", "ending", "plan", "review"]),
   provider: z.enum(["deepseek", "mock_fallback"]),
   model: z.string().min(1),
   promptVersion: z.string().min(1),
@@ -231,7 +234,7 @@ export const AiLogEntrySchema = z.object({
 });
 export type AiLogEntry = z.infer<typeof AiLogEntrySchema>;
 
-export const GamePhaseSchema = z.enum(["action", "location", "encounter", "night", "ending"]);
+export const GamePhaseSchema = z.enum(["action", "location", "encounter", "incident", "night", "ending"]);
 export type GamePhase = z.infer<typeof GamePhaseSchema>;
 
 export const InteractionModeSchema = z.enum(["talk", "gift"]);
@@ -261,6 +264,8 @@ export const NpcMemorySchema = z.object({
 export type NpcMemory = z.infer<typeof NpcMemorySchema>;
 
 export const NpcRuntimeStateSchema = z.object({
+  lifeState: z.enum(["alive", "injured", "dead"]).default("alive"),
+  knownFactIds: z.array(z.string()).default([]),
   npcId: z.string().min(1),
   currentLocationId: z.string().min(1),
   relationship: z.number().int().min(-5).max(5),
@@ -281,7 +286,7 @@ export const EndingResultSchema = z.object({
   title: z.string().min(1).max(60),
   subtitle: z.string().min(1).max(100),
   narration: z.string().min(1).max(1200),
-  npcOutcomes: z.array(EndingNpcOutcomeSchema).length(3),
+  npcOutcomes: z.array(EndingNpcOutcomeSchema).length(7),
   closingLine: z.string().min(1).max(180),
   provider: z.enum(["deepseek", "mock_fallback"]),
   promptVersion: z.string().min(1),
@@ -296,12 +301,18 @@ export const EndingResultSchema = z.object({
 export type EndingResult = z.infer<typeof EndingResultSchema>;
 
 export const GameEventSchema = z.object({
+  minute: z.number().int().default(0),
+  audience: z.array(z.string()).default(["player"]),
   id: z.string().min(1),
   sequence: z.number().int().nonnegative(),
   day: z.number().int().min(1).max(7),
   period: TimePeriodSchema,
   type: z.enum([
     "game_started",
+    "location_discovered",
+    "evidence_read",
+    "information_delivered",
+    "incident",
     "travel",
     "encounter_started",
     "location_left",
@@ -329,8 +340,25 @@ export const GameEventSchema = z.object({
 });
 export type GameEvent = z.infer<typeof GameEventSchema>;
 
+export const IncidentSchema = z.object({
+  id: z.literal("evt_chiyo_retracts_statement"),
+  stage: z.enum(["scheduled", "contact", "threat", "attack", "resolved"]),
+  intent: z.enum(["approach", "threaten", "attack", "withdraw"]),
+  nextAt: z.number().int(),
+  resolvedText: z.string().default(""),
+  interruptedUntil: z.number().int().nullable().default(null)
+});
+export const EvidenceEntrySchema = z.object({
+  id: z.string(), name: z.string(), text: z.string(), source: z.string(), day: z.number().int()
+});
 export const GameStateSchema = z.object({
-  saveVersion: z.literal(2),
+  saveVersion: z.literal(3),
+  chapterId: z.literal("sunset-case-v1"),
+  discoveredLocationIds: z.array(z.string()),
+  evidenceJournal: z.array(EvidenceEntrySchema).default([]),
+  dialogueBeatIndex: z.number().int().min(0).default(0),
+  incident: IncidentSchema.nullable().default(null),
+  pendingNpcMove: z.object({ npcId: z.string(), locationId: z.string(), arriveAt: z.number().int() }).nullable().default(null),
   revision: z.number().int().nonnegative(),
   day: z.number().int().min(1).max(7),
   period: TimePeriodSchema,

@@ -1,17 +1,18 @@
 {
   "name": "cat-god-town-demo",
-  "version": "0.6.0-agent-rewrite",
+  "version": "0.7.0-sunset-case",
   "private": true,
   "type": "module",
   "engines": {
-    "node": ">=20"
+    "node": ">=24"
   },
   "scripts": {
     "dev": "concurrently --kill-others-on-fail --names SERVER,CLIENT --prefix-colors yellow,cyan \"npm:dev:server\" \"npm:dev:client\"",
     "dev:client": "vite --config client/vite.config.ts",
     "dev:server": "tsx watch server/src/index.ts",
     "start:server": "tsx server/src/index.ts",
-    "record:dialogues": "tsx scripts/recordDialogueJourneys.ts",
+    "record:dialogues": "tsx scripts/recordCaseDialogue.ts",
+    "record:natural": "tsx scripts/recordCaseDialogue.ts",
     "typecheck": "tsc -p packages/shared/tsconfig.json --noEmit && tsc -p server/tsconfig.json --noEmit && tsc -p client/tsconfig.json --noEmit",
     "test": "vitest run",
     "build": "npm run typecheck && vite build --config client/vite.config.ts"

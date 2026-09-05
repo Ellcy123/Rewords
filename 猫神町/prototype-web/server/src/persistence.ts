@@ -27,7 +27,7 @@ export class SqliteGameStore implements GameStore {
     mkdirSync(dataDirectory, { recursive: true });
 
     this.database = new DatabaseSync(
-      databasePath ?? fileURLToPath(new URL("../../.data/demo-save.sqlite", import.meta.url))
+      databasePath ?? fileURLToPath(new URL("../../.data/sunset-case-v1.sqlite", import.meta.url))
     );
     this.database.exec(`
       CREATE TABLE IF NOT EXISTS game_save (
@@ -45,11 +45,8 @@ export class SqliteGameStore implements GameStore {
 
     if (!row?.payload) return null;
 
-    try {
-      return GameStateSchema.parse(JSON.parse(row.payload));
-    } catch {
-      return null;
-    }
+    // Corrupt or incompatible saves must never be silently overwritten.
+    return GameStateSchema.parse(JSON.parse(row.payload));
   }
 
   save(state: GameState): void {
@@ -64,4 +61,6 @@ export class SqliteGameStore implements GameStore {
       `)
       .run("default", JSON.stringify(validated), new Date().toISOString());
   }
+
+  close(): void { this.database.close(); }
 }

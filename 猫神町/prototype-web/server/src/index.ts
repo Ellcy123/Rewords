@@ -5,7 +5,6 @@ import { fileURLToPath } from "node:url";
 import {
   DemoBootstrapSchema,
   DialogueChoiceRequestSchema,
-  DialogueRequestSchema,
   GiftRequestSchema,
   InteractionModeRequestSchema,
   RuleChangeRequestSchema,
@@ -13,16 +12,13 @@ import {
   demoBootstrap
 } from "../../packages/shared/src/index.ts";
 import { GameRuleError, GameService } from "./gameService.ts";
-import { DialogueProviderRouter } from "./dialogueProvider.ts";
-import { createMockDialogue } from "./mockDialogueProvider.ts";
+import { CaseDialogueProvider, CASE_PROMPT_STRUCTURE, CASE_PROMPT_VERSION } from "./caseProvider.ts";
+import { z } from "zod";
 import { SqliteGameStore } from "./persistence.ts";
-import { SAYA_PROMPT_STRUCTURE, SAYA_PROMPT_VERSION } from "./prompts/sayaPrompt.ts";
-import { DAY4_PROMPT_STRUCTURE, THEOLOGY_PROMPT_VERSION } from "./prompts/theologyPrompt.ts";
-import { ENDING_PROMPT_VERSION } from "./prompts/endingPrompt.ts";
 
 dotenv.config({ path: fileURLToPath(new URL("../.env.local", import.meta.url)), quiet: true });
 const app = Fastify({ logger: true });
-const dialogueProvider = new DialogueProviderRouter();
+const dialogueProvider = new CaseDialogueProvider();
 const gameService = new GameService(new SqliteGameStore(), dialogueProvider);
 let gameActionQueue: Promise<void> = Promise.resolve();
 
@@ -42,8 +38,8 @@ app.get("/api/ai/logs", async () => dialogueProvider.getLogs());
 
 app.get("/api/ai/prompt-structure", async () => ({
   npcId: "all_demo_npcs",
-  promptVersion: `multi:${SAYA_PROMPT_VERSION}+${THEOLOGY_PROMPT_VERSION}+${ENDING_PROMPT_VERSION}`,
-  layers: [...new Set([...SAYA_PROMPT_STRUCTURE, ...DAY4_PROMPT_STRUCTURE, "第七天事实摘要与动态结局"])]
+  promptVersion: CASE_PROMPT_VERSION,
+  layers: CASE_PROMPT_STRUCTURE
 }));
 
 app.get("/api/bootstrap", async () => DemoBootstrapSchema.parse(demoBootstrap));
@@ -86,9 +82,22 @@ app.post("/api/game/travel", async (request, reply) =>
   }, reply)
 );
 
-app.post("/api/game/start-encounter", async (_request, reply) =>
-  runGameAction(() => gameService.startEncounter(), reply)
+app.post("/api/game/start-encounter", async (request, reply) =>
+  runGameAction(() => gameService.startEncounter(parseBody(z.object({ npcId: z.string().min(1) }), request.body).npcId), reply)
 );
+
+app.post("/api/game/next-beat", async (_request, reply) => runGameAction(() => gameService.nextDialogueBeat(), reply));
+app.post("/api/game/inspect", async (request, reply) => runGameAction(() => {
+  const b = parseBody(z.object({ itemId: z.string(), take: z.boolean().default(false) }), request.body);
+  return gameService.inspectItem(b.itemId, b.take);
+}, reply));
+app.post("/api/game/present", async (request, reply) => runGameAction(() =>
+  gameService.presentEvidence(parseBody(GiftRequestSchema, request.body).itemId), reply));
+app.post("/api/game/tell-retraction", async (_request, reply) => runGameAction(() => gameService.tellRetraction(), reply));
+app.post("/api/game/incident-choice", async (request, reply) => runGameAction(() =>
+  gameService.resolvePlayerIncident(parseBody(DialogueChoiceRequestSchema, request.body).optionId), reply));
+app.post("/api/game/wait", async (request, reply) => runGameAction(() =>
+  gameService.wait(parseBody(z.object({ minutes: z.number().int().min(1).max(120) }), request.body).minutes), reply));
 
 app.post("/api/game/leave-location", async (_request, reply) =>
   runGameAction(() => gameService.leaveLocation(), reply)
@@ -144,19 +153,6 @@ app.post("/api/game/rule", async (request, reply) =>
 app.post("/api/game/end-day", async (_request, reply) =>
   runGameAction(() => gameService.endDay(), reply)
 );
-
-app.post("/api/dialogue/mock", async (request, reply) => {
-  const parsed = DialogueRequestSchema.safeParse(request.body);
-
-  if (!parsed.success) {
-    return reply.status(400).send({
-      error: "invalid_dialogue_request",
-      issues: parsed.error.issues
-    });
-  }
-
-  return createMockDialogue(parsed.data);
-});
 
 const port = Number(process.env.PORT ?? 8787);
 

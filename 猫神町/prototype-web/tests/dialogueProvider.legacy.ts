@@ -1,3 +1,4 @@
+// Archived old prompt contract. Active coverage: caseProvider.test.ts.
 import { describe, expect, it, vi } from "vitest";
 import { demoBootstrap } from "../packages/shared/src/index.ts";
 import { DialogueProviderRouter } from "../server/src/dialogueProvider.ts";
@@ -23,6 +24,12 @@ function sayaTalkContext() {
 }
 
 function deepSeekResponse(content: unknown) {
+  if (content && typeof content === "object" && "options" in content && Array.isArray(content.options)) {
+    const draft = content as Record<string, unknown>;
+    content = { ...draft, options: content.options.map((option) => ({
+      ...option, anchor: option.anchor ?? String(draft.line).slice(0, 6)
+    })) };
+  }
   return new Response(JSON.stringify({
     choices: [{
       finish_reason: "stop",
@@ -40,6 +47,20 @@ function theologyTalkContext(npcId: "npc_koharu" | "npc_genichi") {
   return { state, npc, locationId: npc.initialLocationId, mode: "talk" as const, giftItem: null, selectedOption: null };
 }
 
+function naturalSayaDraft() {
+  return {
+    line: "嗯。", stage_direction: "纱夜回头看了你一眼。", emotion: "犹豫",
+    continuations: [{ speaker: "npc", line: "这张黑票又回来了。五年前，是我开门让雨宫真昼上的车。", stage_direction: "她锁上失物抽屉。", emotion: "紧张" }],
+    npc_action_id: "saya_locks_ticket_drawer", npc_action: "纱夜反锁失物抽屉。",
+    options: [
+      { id: "saya_open_gentle", text: "票怎么回来的？", intent: "温和追问乘客", anchor: "黑票又回来了" },
+      { id: "saya_open_press", text: "为什么放她进去？", intent: "逼问开门责任", anchor: "开门" },
+      { id: "saya_open_absurd", text: "它自己长腿了？", intent: "黑色玩笑试探", anchor: "黑票" }
+    ],
+    used_fact_ids: ["FACT_SAYA_OPENED_GATE", "FACT_BLACK_TICKET_RETURNED"]
+  };
+}
+
 describe("Saya prompt structure", () => {
   it("separates fact boundaries from persona and does not load the backpack during talk", () => {
     const prompt = buildSayaPrompt(sayaTalkContext());
@@ -48,7 +69,12 @@ describe("Saya prompt structure", () => {
     expect(prompt.system).toContain("[戏剧规则]");
     expect(prompt.system).toContain("[动作与记忆]");
     expect(prompt.system).toContain("recent_transcript");
-    expect(prompt.system).toContain("先推进事件");
+    expect(prompt.system).toContain("先接住玩家这句话");
+    expect(prompt.system).not.toContain("每段台词15至100");
+    expect(prompt.system).not.toContain("整轮最多一个问号");
+    expect(prompt.user).toContain('"voice_examples"');
+    expect(prompt.user).toContain('"player_attention"');
+    expect(prompt.user).not.toContain('"exact_text"');
     expect(prompt.system).toContain("selected_option.player_said");
     expect(prompt.user).toContain("FACT_SAYA_OPENED_GATE");
     expect(prompt.user).not.toContain("FACT_MAHIRU_MESSAGE");
@@ -118,7 +144,93 @@ describe("Saya prompt structure", () => {
 });
 
 describe("DialogueProviderRouter", () => {
-  it("uses DeepSeek JSON mode and accepts only the complete option whitelist", async () => {
+  it("accepts short natural replies and present-day gestures without leaking past secrets", async () => {
+    const provider = new DialogueProviderRouter({ apiKey: "test-key", maxAttempts: 1,
+      fetchImpl: vi.fn(async () => deepSeekResponse(naturalSayaDraft())) });
+    const result = await provider.generate(sayaTalkContext());
+    expect(result.debug.provider).toBe("deepseek");
+    expect(result.line).toBe("嗯。");
+    expect(result.stageDirection).toContain("回头");
+    expect(result.options.every((option) => option.text === option.playerLine)).toBe(true);
+    expect(result.debug.memoryCandidate).toContain("水野纱夜说");
+    expect(result.debug.memoryCandidate).not.toContain("只执行场景计划");
+  });
+
+  it("repairs unselected player speech instead of deleting a middle turn", async () => {
+    const invalid = naturalSayaDraft();
+    invalid.continuations.unshift({ speaker: "player", line: "我答应帮你。", stage_direction: "", emotion: "回应" });
+    const calls: string[] = [];
+    const fetchImpl = vi.fn(async (_url: string | URL | Request, init?: RequestInit) => {
+      calls.push(String(init?.body));
+      return deepSeekResponse(calls.length === 1 ? invalid : naturalSayaDraft());
+    });
+    const provider = new DialogueProviderRouter({ apiKey: "test-key", maxAttempts: 2, fetchImpl });
+    const result = await provider.generate(sayaTalkContext());
+    expect(result.debug.provider).toBe("deepseek");
+    expect(result.debug.attemptCount).toBe(2);
+    expect(calls[1]).toContain("unselected_player_speech");
+    expect(result.debug.memoryCandidate).not.toContain("我答应帮你");
+  });
+
+  it("rejects internal strategy labels even with a valid scene anchor", async () => {
+    const draft = naturalSayaDraft();
+    draft.options[0]!.text = "假装配合，套取消息";
+    const provider = new DialogueProviderRouter({ apiKey: "test-key", maxAttempts: 1,
+      fetchImpl: vi.fn(async () => deepSeekResponse(draft)) });
+    expect((await provider.generate(sayaTalkContext())).debug.fallbackReason).toBe("option_is_strategy_label");
+  });
+
+  it("keeps plot action targets explicit without fixing the whole label", () => {
+    const context = theologyTalkContext("npc_koharu");
+    const prompt = buildTheologyPrompt(context);
+    expect(prompt.optionRequiredWordsById.koharu_ask_god).toEqual(["后殿"]);
+    expect(prompt.optionRequiredActionsById.koharu_leave_empty).toContain("找");
+    expect(prompt.user).toContain('"final_output_check"');
+    expect(prompt.system).toContain('"speaker":"npc"');
+    expect(prompt.system).not.toContain('"speaker":"npc|player"');
+  });
+
+  it.each([
+    ["unknown ID", "option_whitelist_mismatch"],
+    ["duplicate ID", "duplicate_option_id"],
+    ["duplicate text", "duplicate_option_text"],
+    ["invented anchor", "option_anchor_not_displayed"],
+    ["long option", "invalid_dialogue_json"],
+    ["long beat", "invalid_dialogue_json"],
+    ["extra beat", "invalid_dialogue_json"]
+  ])("rejects %s without silently clipping or rewriting the reply", async (kind, reason) => {
+    const draft = naturalSayaDraft();
+    if (kind === "unknown ID") draft.options[0]!.id = "take_everything";
+    if (kind === "duplicate ID") draft.options[1]!.id = draft.options[0]!.id;
+    if (kind === "duplicate text") draft.options[1]!.text = draft.options[0]!.text;
+    if (kind === "invented anchor") draft.options[0]!.anchor = "不存在的现场原文";
+    if (kind === "long option") draft.options[0]!.text = "这".repeat(13);
+    if (kind === "long beat") draft.continuations[0]!.line = "长".repeat(121);
+    if (kind === "extra beat") draft.continuations = Array.from({ length: 5 }, () => ({ ...draft.continuations[0]! }));
+    const provider = new DialogueProviderRouter({ apiKey: "test-key", maxAttempts: 1,
+      fetchImpl: vi.fn(async () => deepSeekResponse(draft)) });
+    const result = await provider.generate(sayaTalkContext());
+    expect(result.debug.provider).toBe("mock_fallback");
+    expect(result.debug.fallbackReason).toBe(reason);
+    expect(result.options.every((option) => option.text === option.playerLine)).toBe(true);
+  });
+
+  it("keeps casual gift intent in both the prompt and the offline fallback", async () => {
+    const context = sayaTalkContext();
+    const giftItem = demoBootstrap.items.find((item) => item.id === "item_potato")!;
+    const provider = new DialogueProviderRouter({ apiKey: "" });
+    const opening = await provider.generate({ ...context, mode: "gift", giftItem });
+    const selectedOption = opening.options.find((option) => option.id === "gift_explain")!;
+    expect(selectedOption.text).toBe("就是想送给你。");
+    const prompt = buildSayaPrompt({ ...context, mode: "gift", giftItem, selectedOption });
+    expect(prompt.selectedOutcome).toContain("回应这份心意");
+    const reply = await provider.generate({ ...context, mode: "gift", giftItem, selectedOption });
+    expect(reply.line).toContain("不多问");
+    expect(reply.line).not.toContain("调查");
+    expect(reply.options).toHaveLength(0);
+  });
+
+  it("keeps grounded AI option wording and uses it verbatim as the player's line", async () => {
     let requestBody: Record<string, unknown> | null = null;
     const fetchImpl = vi.fn(async (_input: string | URL | Request, init?: RequestInit) => {
       requestBody = JSON.parse(String(init?.body)) as Record<string, unknown>;
@@ -134,8 +246,8 @@ describe("DialogueProviderRouter", () => {
         memory_candidate: "纱夜承认自己五年前为雨宫真昼打开零号站台。",
         reflection_candidate: "纱夜暂时把朝雾遥当成需要用黑票继续试探的七日代理。",
         options: [
-          { id: "saya_open_gentle", text: "谁上了车？", intent: "任意值" },
-          { id: "saya_open_press", text: "是你开的门？", intent: "任意值" },
+          { id: "saya_open_gentle", text: "这票哪来的？", intent: "任意值" },
+          { id: "saya_open_press", text: "为什么放她进去？", intent: "任意值" },
           { id: "saya_open_absurd", text: "车票还魂了？", intent: "任意值" }
         ],
         used_fact_ids: ["FACT_SAYA_OPENED_GATE", "FACT_BLACK_TICKET_RETURNED"]
@@ -151,7 +263,8 @@ describe("DialogueProviderRouter", () => {
     const result = await provider.generate(sayaTalkContext());
 
     expect(result.debug.provider).toBe("deepseek");
-    expect(result.debug.memoryCandidate).toContain("纱夜把黑色车票压在玻璃下");
+    expect(result.debug.memoryCandidate).toContain("她反锁失物抽屉");
+    expect(result.debug.memoryCandidate).not.toContain("依据：");
     expect(result.debug.memoryCandidate).not.toBe("纱夜承认自己五年前为雨宫真昼打开零号站台。");
     expect(result.debug.reflectionCandidate).toContain("当前目标");
     expect(result.stageDirection).toBe("她反锁失物抽屉。");
@@ -169,11 +282,11 @@ describe("DialogueProviderRouter", () => {
       "黑色玩笑试探"
     ]);
     expect(result.options.map((option) => option.text)).toEqual([
-      "谁上了车？",
-      "是你开的门？",
+      "这票哪来的？",
+      "为什么放她进去？",
       "车票还魂了？"
     ]);
-    expect(result.options[0]?.playerLine).toContain("究竟是谁上了车");
+    expect(result.options[0]?.playerLine).toBe("这票哪来的？");
     expect(result.debug.npcActionId).toBe("saya_locks_ticket_drawer");
     expect(requestBody).toMatchObject({
       response_format: { type: "json_object" },
@@ -216,7 +329,7 @@ describe("DialogueProviderRouter", () => {
   it("connects Koharu to DeepSeek with a concrete incident and action plan", async () => {
     const context = theologyTalkContext("npc_koharu");
     const built = buildTheologyPrompt(context);
-    expect(built.system).toContain("先推进事件");
+    expect(built.system).toContain("先接住玩家这句话");
     expect(built.system).toContain("不得新增人物、证物");
     expect(built.user).toContain("雨宫真昼");
     expect(built.user).toContain("koharu_hands_over_bell");
@@ -234,7 +347,7 @@ describe("DialogueProviderRouter", () => {
       memory_candidate: "小春向朝雾遥展示刻有“真昼”的猫铃。",
       reflection_candidate: "小春准备观察朝雾遥是否会立刻追查真昼。",
       options: [
-        { id: "ask_memory", text: "她叫什么？", intent: "核对姐姐身份" },
+        { id: "ask_memory", text: "铃铛给我看看。", intent: "核对姐姐身份" },
         { id: "koharu_ask_god", text: "带我去后殿。", intent: "立即查后殿" },
         { id: "koharu_doubt_memory", text: "谁见过她？", intent: "寻找目击者" }
       ],
@@ -244,7 +357,7 @@ describe("DialogueProviderRouter", () => {
     const result = await provider.generate(context);
 
     expect(result.debug.provider).toBe("deepseek");
-    expect(result.debug.promptVersion).toBe("agent-dialogue-v3");
+    expect(result.debug.promptVersion).toBe("agent-dialogue-v4.2-natural");
     expect(result.options.map((option) => option.text)).toContain("带我去后殿。");
   });
 
@@ -273,10 +386,11 @@ describe("DialogueProviderRouter", () => {
     };
 
     expect(payload.interaction.selected_option.response_priority).toBe("highest_live_player_turn_with_transcript_continuity");
-    expect(payload.interaction.selected_option.player_said).toContain("先去找纱夜");
+    expect(payload.interaction.selected_option.player_said).toBe(currentOption.text);
     expect(payload.interaction.settled_prior_choice_count).toBe(1);
-    expect(payload.recent_transcript.join("\n")).toContain("除了你，还有谁亲眼见过雨宫真昼");
-    expect(payload.recent_transcript.join("\n")).toContain("先去找纱夜");
+    expect(payload.recent_transcript.join("\n")).toContain("谁见过她？");
+    expect(payload.recent_transcript.join("\n")).toContain("先找纱夜");
+    expect(payload.recent_transcript.join("\n")).toContain("现场动作");
     expect(built.system).toContain("承接 recent_transcript 最后一段");
   });
 

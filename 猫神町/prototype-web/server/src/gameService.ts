@@ -1,1006 +1,506 @@
 import {
-  GameActionResponseSchema,
-  GameStateSchema,
-  demoBootstrap,
-  resolvePlayerLine,
-  splitDialogueLine,
-  type GameActionResponse,
-  type GameEvent,
-  type GameState,
-  type InteractionMode,
-  type RuleSlotId,
-  type TimePeriod
+  GameActionResponseSchema, GameStateSchema, demoBootstrap,
+  type GameActionResponse, type GameState, type GameEvent, type DialogueOption, type InteractionMode, type RuleSlotId
 } from "../../packages/shared/src/index.ts";
-import { DialogueProviderRouter, type GameDialogueProvider } from "./dialogueProvider.ts";
+import { availableActions, characters, evidence, initialLocations, locationAliases } from "./caseData.ts";
+import { CaseDialogueProvider, DialogueGenerationError, fallbackDialogue, type CaseProvider, type PlanIntent } from "./caseProvider.ts";
+import { encounterPacing } from "./dialoguePacing.ts";
 import type { GameStore } from "./persistence.ts";
 
-const talkRewards: Record<string, { itemId: string; rewardId: string }> = {
-  "npc_koharu:ask_memory": { itemId: "item_cat_bell", rewardId: "reward_koharu_cat_bell" },
-  "npc_saya:saya_personal_probe": { itemId: "item_name_tag", rewardId: "reward_saya_name_tag" },
-  "npc_saya:saya_take_ticket": { itemId: "item_ticket", rewardId: "reward_saya_ticket" },
-  "npc_genichi:ask_gallery": { itemId: "item_photo", rewardId: "reward_genichi_photo" }
-};
-
-type MemoryKind = "player_choice" | "dialogue" | "gift" | "rule_callback" | "item_change" | "observation" | "reflection";
-
-function relationshipDelta(intent: string) {
-  if (/共同|温和|帮助|备份|交出|坦白|带走|立即调查/.test(intent)) return 1;
-  if (/错误指控|逼问|威胁|公开对抗|故意伤害/.test(intent)) return -1;
-  return 0;
-}
-
-function ruleCallbackFor(npcId: string, ruleText: string) {
-  if (npcId === "npc_koharu") {
-    return `“${ruleText}”生效后，小春连夜重印寻人启事，标题改成“${ruleText}——请把雨宫真昼还回来”，并把启事贴满神社石阶。`;
-  }
-  if (npcId === "npc_saya") {
-    return `“${ruleText}”生效后，纱夜在站务日志新增“神名”栏；只要黑色车票或通行令出现同样文字，她就封锁零号站台。`;
-  }
-  return `“${ruleText}”生效后，弦一把这个神名印上第二次“神明离町”的黑色车票，并把朝雾遥列为17:47场次主演。`;
-}
-
-const npcSchedules: Record<number, Record<string, string>> = {
-  1: { npc_koharu: "loc_shrine", npc_saya: "loc_station", npc_genichi: "loc_arcade" },
-  2: { npc_koharu: "loc_station", npc_saya: "loc_arcade", npc_genichi: "loc_shrine" },
-  3: { npc_koharu: "loc_arcade", npc_saya: "loc_shrine", npc_genichi: "loc_station" },
-  4: { npc_koharu: "loc_shrine", npc_saya: "loc_station", npc_genichi: "loc_arcade" },
-  5: { npc_koharu: "loc_station", npc_saya: "loc_shrine", npc_genichi: "loc_arcade" },
-  6: { npc_koharu: "loc_arcade", npc_saya: "loc_station", npc_genichi: "loc_shrine" },
-  7: { npc_koharu: "loc_shrine", npc_saya: "loc_arcade", npc_genichi: "loc_station" }
-};
-
-export class GameRuleError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "GameRuleError";
-  }
-}
-
-function createInitialState(): GameState {
-  const itemOwners = Object.fromEntries(
-    demoBootstrap.items.map((item) => [item.id, item.initialOwnerId])
-  );
-  const npcStates = Object.fromEntries(demoBootstrap.npcs.map((npc) => [
-    npc.id,
-    {
-      npcId: npc.id,
-      currentLocationId: npc.initialLocationId,
-      relationship: 0,
-      memories: [],
-      reflection: "尚未与朝雾遥形成明确判断。",
-      openLoops: [npc.persona.immediateGoal]
-    }
-  ]));
-
+export class GameRuleError extends Error { constructor(message: string) { super(message); this.name = "GameRuleError"; } }
+export function createInitialState(): GameState {
   return GameStateSchema.parse({
-    saveVersion: 2,
-    revision: 0,
-    day: 1,
-    period: "morning",
-    phase: "action",
-    dayStartMinute: demoBootstrap.initialState.dayStartMinute,
-    nightStartMinute: demoBootstrap.initialState.nightStartMinute,
-    currentMinute: demoBootstrap.initialState.currentMinute,
-    conversationDurationMinutes: demoBootstrap.initialState.conversationDurationMinutes,
-    currentLocationId: null,
-    activeNpcId: null,
-    interactionMode: null,
-    currentDialogue: null,
-    lastPlayerChoice: null,
-    giftItemId: null,
-    itemOwners,
-    npcStates,
-    activeRules: { faith: null, beauty: null },
-    storyFlags: [],
-    ruleChangedThisNight: false,
-    claimedRewardIds: [],
-    ending: null,
-    eventLog: [
-      {
-        id: "event_0000",
-        sequence: 0,
-        day: 1,
-        period: "morning",
-        type: "game_started",
-        actorId: "player",
-        targetId: null,
-        itemId: null,
-        locationId: null,
-        details: { version: "day5" }
-      },
-      {
-        id: "event_0001",
-        sequence: 1,
-        day: 1,
-        period: "morning",
-        type: "daily_event",
-        actorId: "system",
-        targetId: "day_1_arrival",
-        itemId: null,
-        locationId: null,
-        details: {
-          title: demoBootstrap.dailyEvents[0]!.title,
-          summary: demoBootstrap.dailyEvents[0]!.summary
-        }
-      }
-    ]
+    saveVersion: 3, chapterId: "sunset-case-v1", revision: 0, day: 1, period: "morning", phase: "action",
+    dayStartMinute: 540, nightStartMinute: 1080, currentMinute: 540, conversationDurationMinutes: 120,
+    currentLocationId: null, activeNpcId: null, interactionMode: null, currentDialogue: null,
+    lastPlayerChoice: null, giftItemId: null, activeRules: { faith: null, beauty: null },
+    itemOwners: Object.fromEntries(demoBootstrap.items.map(i => [i.id, i.initialOwnerId])),
+    discoveredLocationIds: initialLocations, evidenceJournal: [], dialogueBeatIndex: 0,
+    npcStates: Object.fromEntries(demoBootstrap.npcs.map(n => [n.id, {
+      npcId: n.id, currentLocationId: n.initialLocationId, relationship: 0, lifeState: "alive",
+      knownFactIds: characters[n.id].known, memories: [], reflection: "尚未与朝雾遥相处。",
+      openLoops: [characters[n.id].goal]
+    }])),
+    storyFlags: [], ruleChangedThisNight: false, claimedRewardIds: [], eventLog: [], ending: null
   });
 }
-
-function periodForMinute(minute: number, nightStartMinute: number): TimePeriod {
-  if (minute >= nightStartMinute) return "night";
-  if (minute < 12 * 60) return "morning";
-  if (minute < 17 * 60) return "afternoon";
-  return "evening";
-}
-
-function formatTime(minute: number) {
-  const hours = Math.floor(minute / 60);
-  const minutes = minute % 60;
-  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
-}
-
-function upgradeState(state: GameState): GameState {
-  for (const npc of demoBootstrap.npcs) {
-    state.npcStates[npc.id] ??= {
-      npcId: npc.id,
-      currentLocationId: npc.initialLocationId,
-      relationship: 0,
-      memories: [],
-      reflection: "尚未与朝雾遥形成明确判断。",
-      openLoops: [npc.persona.immediateGoal]
-    };
-    state.npcStates[npc.id]!.reflection ||= "尚未与朝雾遥形成明确判断。";
-    state.npcStates[npc.id]!.openLoops ??= [npc.persona.immediateGoal];
-  }
-  const dialogue = state.currentDialogue;
-  if (!dialogue) return state;
-
-  dialogue.options = dialogue.options.map((option) => ({
-    ...option,
-    playerLine: resolvePlayerLine(option)
-  }));
-  if (dialogue.continuations.length === 0) {
-    const legacyLine = [dialogue.line, ...dialogue.continuations.map((beat) => beat.line)].join("");
-    const beats = splitDialogueLine(legacyLine, dialogue.emotion);
-    dialogue.line = beats.line;
-    dialogue.continuations = beats.continuations;
-  }
-  return GameStateSchema.parse(state);
-}
-
 export class GameService {
   private state: GameState;
-
-  constructor(
-    private readonly store: GameStore,
-    private readonly dialogueProvider: GameDialogueProvider = new DialogueProviderRouter({ apiKey: "" })
-  ) {
-    this.state = upgradeState(store.load() ?? createInitialState());
-    this.store.save(this.state);
+  constructor(private store: GameStore, private provider: CaseProvider = new CaseDialogueProvider()) {
+    const saved = store.load();
+    this.state = saved ? GameStateSchema.parse(saved) : createInitialState();
+    if (!saved) {
+      this.event("game_started", "player", null, "受托代管神社七天，整理真昼的遗物。");
+      this.store.save(this.state);
+    }
   }
-
+  // HTTP only gets this projection. Plans and other people's private knowledge never leave the server.
   getState(): GameState {
-    return structuredClone(GameStateSchema.parse(this.state));
+    const s = structuredClone(this.state);
+    s.eventLog = s.eventLog.filter(e => e.audience.includes("player"));
+    s.storyFlags = s.storyFlags.filter(f => ["chiyo_retracted", "case_reopened", "witness_attack_seen"].includes(f));
+    for (const n of Object.values(s.npcStates)) {
+      n.knownFactIds = [];
+      n.memories = n.memories.filter(m => s.eventLog.some(e => e.id === m.sourceEventId));
+      n.openLoops = []; n.reflection = "只显示你实际参与的见闻。";
+      if (s.phase !== "ending" && n.currentLocationId !== s.currentLocationId &&
+          !s.eventLog.some(e => e.type === "incident" && /死亡|受伤/.test(e.details.text))) n.lifeState = "alive";
+      if (n.currentLocationId !== s.currentLocationId) n.currentLocationId = "unknown";
+    }
+    for (const [id, owner] of Object.entries(s.itemOwners)) {
+      if (owner !== "player" && !s.evidenceJournal.some(e => e.id === id) &&
+          owner !== s.currentLocationId && !owner.startsWith("rule:")) s.itemOwners[id] = "unknown";
+    }
+    if (s.currentDialogue) s.currentDialogue.debug = {
+      provider: s.currentDialogue.debug.provider, decision: "角色对白", usedFacts: [],
+      promptVersion: s.currentDialogue.debug.promptVersion
+    };
+    if (s.incident && s.phase !== "incident" && (s.incident.stage !== "resolved" || !s.eventLog.some(e => e.type === "incident" && e.details.text === s.incident?.resolvedText))) s.incident = null;
+    else if (s.incident) { s.incident.intent = "approach"; s.incident.nextAt = 0; s.incident.interruptedUntil = null; }
+    s.pendingNpcMove = null;
+    return GameStateSchema.parse(s);
   }
-
-  reset(): GameActionResponse {
-    this.state = createInitialState();
+  reset() { this.state = createInitialState(); this.event("game_started", "player", null, "开始新的七日调查。旧章节数据库保留。"); return this.finish("新案件已重新开始。"); }
+  private finish(notice: string | null = null, acquiredItemId: string | null = null): GameActionResponse {
+    this.state.revision++;
+    this.state = GameStateSchema.parse(this.state);
     this.store.save(this.state);
-    return this.response("新游戏已经建立。", null);
+    return GameActionResponseSchema.parse({ state: this.getState(), notice, acquiredItemId });
   }
-
-  travel(locationId: string): GameActionResponse {
-    this.assertPhase("action");
-
-    const location = demoBootstrap.locations.find((candidate) => candidate.id === locationId);
-    const npc = this.npcAtLocation(this.state, locationId);
-    if (!location || !npc) {
-      throw new GameRuleError("这个地点当前无法进入。");
+  private assert(ok: unknown, text: string): asserts ok { if (!ok) throw new GameRuleError(text); }
+  private flag(id: string) { if (!this.state.storyFlags.includes(id)) this.state.storyFlags.push(id); }
+  private event(type: GameEvent["type"], actorId: string | null, targetId: string | null, text: string, audience = ["player"], itemId: string | null = null, locationId = this.state.currentLocationId) {
+    const e: GameEvent = { id: "event_" + this.state.eventLog.length, sequence: this.state.eventLog.length, day: this.state.day,
+      minute: this.state.currentMinute, period: this.state.period, type, actorId, targetId, itemId, locationId, details: { text }, audience };
+    this.state.eventLog.push(e); return e;
+  }
+  private memory(npcId: string, text: string, event: GameEvent, kind: "observation" | "dialogue" | "gift" | "player_choice" = "observation") {
+    const n = this.state.npcStates[npcId];
+    n.memories.push({ id: "memory_" + event.id + "_" + npcId, npcId, kind, summary: text, interpretation: "实际参与的见闻，不等于事实已被证实。",
+      sourceEventId: event.id, createdDay: this.state.day, confidence: "certain", importance: kind === "dialogue" ? 5 : 8, tags: [] });
+    n.memories = n.memories.slice(-80);
+  }
+  private deliver(npcId: string, ids: string[], text: string, actor = "player") {
+    const n = this.state.npcStates[npcId];
+    for (const id of ids) if (!n.knownFactIds.includes(id)) n.knownFactIds.push(id);
+    const e = this.event("information_delivered", actor, npcId, text, actor === "player" ? ["player", npcId] : [actor, npcId]);
+    this.memory(npcId, text, e);
+  }
+  private discover(text: string) {
+    for (const [id, names] of Object.entries(locationAliases)) if (!this.state.discoveredLocationIds.includes(id) && names.some(n => text.includes(n))) {
+      this.state.discoveredLocationIds.push(id);
+      this.event("location_discovered", "player", null, "地图新增：" + demoBootstrap.locations.find(l => l.id === id)!.name, ["player"], null, id);
     }
-    if (this.state.currentMinute + location.travelMinutes > this.state.nightStartMinute) {
-      throw new GameRuleError("现在出发会错过入夜时间，今天不能再前往这个地点。");
-    }
-
-    const draft = this.draft();
-    const timeBefore = draft.currentMinute;
-    draft.currentMinute += location.travelMinutes;
-    draft.period = periodForMinute(draft.currentMinute, draft.nightStartMinute);
-    draft.phase = "location";
-    draft.currentLocationId = location.id;
-    draft.activeNpcId = null;
-    draft.interactionMode = null;
-    draft.currentDialogue = null;
-    draft.lastPlayerChoice = null;
-    draft.giftItemId = null;
-    this.appendEvent(draft, {
-      type: "travel",
-      actorId: "player",
-      targetId: npc.id,
-      itemId: null,
-      locationId: location.id,
-      details: {
-        duration_minutes: String(location.travelMinutes),
-        time_before: formatTime(timeBefore),
-        time_after: formatTime(draft.currentMinute)
+  }
+  private clearEncounter() { Object.assign(this.state, { activeNpcId: null, interactionMode: null, currentDialogue: null, lastPlayerChoice: null, giftItemId: null, dialogueBeatIndex: 0 }); }
+  private abs() { return (this.state.day - 1) * 1440 + this.state.currentMinute; }
+  private setAbs(t: number) {
+    this.state.day = Math.min(7, Math.floor(t / 1440) + 1);
+    this.state.currentMinute = t % 1440;
+    this.state.period = this.state.currentMinute < 720 ? "morning" : this.state.currentMinute < 1020 ? "afternoon" : this.state.currentMinute < 1080 ? "evening" : "night";
+  }
+  private canTalk(npcId: string) {
+    const n = this.state.npcStates[npcId];
+    return n && n.lifeState === "alive" && n.currentLocationId === this.state.currentLocationId;
+  }
+  private advance(target: number, observer: string | null): boolean {
+    // Chronological stepping prevents a two-hour action from skipping a visible attack.
+    while (true) {
+      const incident = this.state.incident;
+      const incidentTime = incident && incident.stage !== "resolved" ? incident.nextAt : Infinity;
+      const moveTime = this.state.pendingNpcMove?.arriveAt ?? Infinity;
+      const next = Math.min(incidentTime, moveTime);
+      if (next > target) break;
+      this.setAbs(next);
+      if (moveTime <= incidentTime) {
+        const move = this.state.pendingNpcMove!;
+        const n = this.state.npcStates[move.npcId];
+        if (n.lifeState === "alive") {
+          n.currentLocationId = move.locationId;
+          this.event("npc_moved", move.npcId, null, demoBootstrap.npcs.find(n => n.id === move.npcId)!.name + "抵达" + demoBootstrap.locations.find(l => l.id === move.locationId)!.name,
+            observer === move.locationId ? ["player", move.npcId] : [move.npcId], null, move.locationId);
+        }
+        this.state.pendingNpcMove = null;
+        continue;
       }
-    });
-
-    return this.commit(draft, `${formatTime(draft.currentMinute)} 抵达${location.name}，移动耗时 ${location.travelMinutes / 60} 小时。`, null);
-  }
-
-  startEncounter(): GameActionResponse {
-    this.assertPhase("location");
-    const location = demoBootstrap.locations.find(
-      (candidate) => candidate.id === this.state.currentLocationId
-    );
-    const npc = this.npcAtLocation(this.state, this.state.currentLocationId);
-    if (!location || !npc) {
-      throw new GameRuleError("当前地点没有可以开始会面的 NPC。");
-    }
-
-    const draft = this.draft();
-    draft.phase = "encounter";
-    draft.activeNpcId = npc.id;
-    draft.interactionMode = null;
-    draft.currentDialogue = null;
-    draft.lastPlayerChoice = null;
-    draft.giftItemId = null;
-    this.appendEvent(draft, {
-      type: "encounter_started",
-      actorId: "player",
-      targetId: npc.id,
-      itemId: null,
-      locationId: location.id,
-      details: { duration_minutes: "0" }
-    });
-
-    return this.commit(draft, `开始与${npc.name}会面。请选择交谈或赠送礼物。`, null);
-  }
-
-  leaveLocation(): GameActionResponse {
-    this.assertPhase("location");
-    const location = demoBootstrap.locations.find(
-      (candidate) => candidate.id === this.state.currentLocationId
-    );
-    if (!location) throw new GameRuleError("当前没有可以离开的地点。");
-
-    const draft = this.draft();
-    this.appendEvent(draft, {
-      type: "location_left",
-      actorId: "player",
-      targetId: null,
-      itemId: null,
-      locationId: location.id,
-      details: { duration_minutes: "0", met_npc: "false" }
-    });
-    draft.currentLocationId = null;
-    draft.activeNpcId = null;
-    draft.interactionMode = null;
-    draft.currentDialogue = null;
-    draft.lastPlayerChoice = null;
-    draft.giftItemId = null;
-    draft.phase = draft.currentMinute >= draft.nightStartMinute ? "night" : "action";
-
-    const notice = draft.phase === "night"
-      ? `离开${location.name}时已经入夜，猫神社的供奉位开放了。`
-      : `离开${location.name}，没有开始会面，也没有额外消耗时间。`;
-    return this.commit(draft, notice, null);
-  }
-
-  waitUntilNight(): GameActionResponse {
-    this.assertPhase("action");
-    const draft = this.draft();
-    const timeBefore = draft.currentMinute;
-    draft.currentMinute = draft.nightStartMinute;
-    draft.period = "night";
-    draft.phase = "night";
-    this.appendEvent(draft, {
-      type: "wait_until_night",
-      actorId: "player",
-      targetId: null,
-      itemId: null,
-      locationId: null,
-      details: {
-        duration_minutes: String(draft.nightStartMinute - timeBefore),
-        time_before: formatTime(timeBefore),
-        time_after: formatTime(draft.nightStartMinute)
+      if (!incident) break;
+      const ritsu = this.state.npcStates.npc_ritsu, chiyo = this.state.npcStates.npc_chiyo;
+      if (ritsu.lifeState !== "alive" || chiyo.lifeState !== "alive") { this.resolveIncident("会面没有继续。"); continue; }
+      if (incident.stage === "scheduled") {
+        ritsu.currentLocationId = "loc_inn";
+        incident.stage = "contact"; incident.nextAt = next + 30;
+        this.event("npc_moved", "npc_ritsu", "npc_chiyo", "律抵达白石旅馆，提出单独谈谈。", observer === "loc_inn" ? ["player","npc_ritsu","npc_chiyo"] : ["npc_ritsu","npc_chiyo"], null, "loc_inn");
+      } else if (incident.stage === "contact") {
+        if (incident.intent === "approach" || incident.intent === "withdraw" || this.otherWitnessPresent()) {
+          this.resolveIncident("律说了几句话便离开，千代留在旅馆。"); continue;
+        }
+        incident.stage = "threat"; incident.nextAt = next + 30;
+      } else if (incident.stage === "threat") {
+        if (incident.intent !== "attack" || this.otherWitnessPresent()) {
+          this.resolveIncident("律没能把千代单独留下，离开了旅馆。"); continue;
+        }
+        incident.stage = "attack"; incident.nextAt = next + 30;
+      } else if (incident.stage === "attack") {
+        if (this.otherWitnessPresent()) this.resolveIncident("犬饲诚赶到，制止了袭击。千代受伤但活着。", "injured");
+        else this.resolveIncident("千代在旅馆死亡。现场留下争执和打斗的痕迹，尚没有正式的死亡调查结论。", "dead");
+        continue;
       }
-    });
-    return this.commit(draft, "你整理完今天的见闻。十八点的钟声响起，供奉位开放了。", null);
-  }
-
-  async selectInteractionMode(mode: InteractionMode): Promise<GameActionResponse> {
-    this.assertPhase("encounter");
-    if (this.state.interactionMode) {
-      throw new GameRuleError("本次会面已经选择过交互方式。");
-    }
-
-    const npc = this.requireActiveNpc();
-    const draft = this.draft();
-    const timeBefore = draft.currentMinute;
-    if (mode === "talk") {
-      this.assertConversationTime();
-      draft.currentMinute += draft.conversationDurationMinutes;
-      draft.period = periodForMinute(draft.currentMinute, draft.nightStartMinute);
-    }
-    draft.interactionMode = mode;
-    draft.lastPlayerChoice = null;
-    draft.giftItemId = null;
-    this.appendEvent(draft, {
-      type: "interaction_mode_selected",
-      actorId: "player",
-      targetId: npc.id,
-      itemId: null,
-      locationId: draft.currentLocationId,
-      details: {
-        mode,
-        duration_minutes: String(mode === "talk" ? draft.conversationDurationMinutes : 0),
-        time_before: formatTime(timeBefore),
-        time_after: formatTime(draft.currentMinute)
+      if (observer === "loc_inn") {
+        this.interrupt(target); return false;
       }
-    });
-    if (mode === "talk") {
-      draft.currentDialogue = await this.dialogueProvider.generate({
-          state: draft,
-          npc,
-          locationId: draft.currentLocationId!,
-          mode: "talk",
-          giftItem: null,
-          selectedOption: null
-        });
-      this.recordGeneratedDialogue(draft, npc.id, draft.currentDialogue);
+    }
+    this.setAbs(target); return true;
+  }
+  private otherWitnessPresent() {
+    return Object.values(this.state.npcStates).some(n => !["npc_ritsu","npc_chiyo"].includes(n.npcId) && n.lifeState === "alive" && n.currentLocationId === "loc_inn");
+  }
+  private interrupt(target: number) {
+    this.clearEncounter(); this.state.currentLocationId = "loc_inn"; this.state.phase = "incident";
+    this.state.incident!.interruptedUntil = target;
+    if (this.state.incident!.stage === "attack") this.flag("witness_attack_seen");
+    this.event("incident", "player", null, this.incidentDescription(), ["player"], null, "loc_inn");
+  }
+  private incidentDescription() {
+    const stage = this.state.incident?.stage;
+    return stage === "contact" ? "律站在旅馆柜台前：千代，我们单独聊聊。千代没把手里的纸放下。" :
+      stage === "threat" ? "律压低声音让千代别交出说明，伸手挡住她离开柜台的路。" :
+      "你撞见律抓住千代，把她推向柜台。千代站不稳，抓住了桌沿。";
+  }
+  private resolveIncident(text: string, health: "alive" | "injured" | "dead" = "alive") {
+    const i = this.state.incident!;
+    i.stage = "resolved"; i.resolvedText = text; i.nextAt = 999999;
+    this.state.npcStates.npc_chiyo.lifeState = health;
+    this.state.npcStates.npc_ritsu.currentLocationId = "loc_arcade";
+    this.event("incident", "npc_ritsu", "npc_chiyo", text, this.state.currentLocationId === "loc_inn" ? ["player","npc_chiyo","npc_ritsu"] : ["npc_ritsu","npc_chiyo"], null, "loc_inn");
+    // Nothing is auto-dropped or fabricated after death.
+  }
+  travel(locationId: string) {
+    this.assert(this.state.phase === "action", "请先离开当前场景或结束会面。");
+    this.assert(this.state.discoveredLocationIds.includes(locationId), "你还不知道这个地点。");
+    const location = demoBootstrap.locations.find(l => l.id === locationId)!;
+    this.assert(this.state.currentMinute + location.travelMinutes <= 1080, "今天已经没有移动时间。");
+    const target = this.abs() + location.travelMinutes;
+    this.state.currentLocationId = null;
+    this.advance(target, null);
+    this.state.currentLocationId = locationId; this.state.phase = "location";
+    this.event("travel", "player", null, "抵达" + location.name);
+    const incident = this.state.incident;
+    if (locationId === "loc_inn" && incident) {
+      if (["contact","threat","attack"].includes(incident.stage)) this.interrupt(target);
+      if (incident.stage === "resolved") this.event("incident", "player", null, incident.resolvedText);
+    }
+    return this.finish(this.getState().phase === "incident" ? this.incidentDescription() : "已抵达。选择人物后才开始会面。");
+  }
+  startEncounter(npcId?: string) {
+    this.assert(this.state.phase === "location", "请先进入场景。");
+    const present = demoBootstrap.npcs.filter(n => this.canTalk(n.id));
+    const target = npcId ?? (present.length === 1 ? present[0].id : "");
+    this.assert(target && this.canTalk(target), "请选择在场且能交谈的人物。");
+    this.state.activeNpcId = target; this.state.phase = "encounter";
+    this.event("encounter_started", "player", target, "开始与" + demoBootstrap.npcs.find(n => n.id === target)!.name + "会面。", ["player", target]);
+    return this.finish("先选择交谈或赠礼。");
+  }
+  leaveLocation() {
+    this.assert(this.state.phase === "location", "当前不能直接离开。");
+    this.event("location_left", "player", null, "离开场景。");
+    this.state.currentLocationId = null; this.state.phase = this.state.currentMinute >= 1080 ? "night" : "action";
+    return this.finish();
+  }
+  waitUntilNight() {
+    this.assert(["action","location"].includes(this.state.phase), "请先结束会面或处理眼前事件。");
+    const target = (this.state.day - 1) * 1440 + 1080;
+    if (!this.advance(target, this.state.currentLocationId)) return this.finish(this.incidentDescription());
+    this.state.phase = "night"; this.state.currentLocationId = null;
+    this.event("wait_until_night", "player", null, "整理见闻，等待入夜。"); return this.finish();
+  }
+  wait(minutes = 30) {
+    this.assert(this.state.phase === "location" || this.state.phase === "action", "请先处理眼前会面。");
+    this.assert(Number.isInteger(minutes) && minutes > 0 && minutes <= 120 && this.state.currentMinute + minutes <= 1080, "等待时间无效。");
+    if (!this.advance(this.abs() + minutes, this.state.currentLocationId)) return this.finish(this.incidentDescription());
+    return this.finish("时间过去了" + minutes + "分钟。");
+  }
+  async selectInteractionMode(mode: InteractionMode) {
+    this.assert(this.state.phase === "encounter" && !this.state.interactionMode, "已经选择会面方式。");
+    this.assert(this.canTalk(this.state.activeNpcId!), "人物目前无法交谈。");
+    this.assert(this.state.currentMinute + 120 <= 1080, "今天剩余时间不足两小时。");
+    this.state.interactionMode = mode;
+    if (mode === "gift") return this.finish("选择礼物，确认前不计时。");
+    if (!this.advance(this.abs() + 120, this.state.currentLocationId)) return this.finish(this.incidentDescription());
+    await this.generate(null, ""); return this.finish();
+  }
+  cancelInteractionMode() {
+    this.assert(this.state.phase === "encounter" && this.state.interactionMode === "gift" && !this.state.giftItemId, "礼物已经送出，不能撤销。");
+    this.state.interactionMode = null; return this.finish();
+  }
+  async confirmGift(itemId: string) {
+    this.assert(this.state.phase === "encounter" && this.state.interactionMode === "gift" && !this.state.giftItemId, "请先选择赠礼。");
+    this.assert(this.state.itemOwners[itemId] === "player", "你没有这件物品。");
+    this.assert(this.canTalk(this.state.activeNpcId!), "对方目前无法收礼。");
+    this.assert(this.state.currentMinute + 120 <= 1080, "今天剩余时间不足。");
+    if (!this.advance(this.abs() + 120, this.state.currentLocationId)) return this.finish(this.incidentDescription());
+    const npcId = this.state.activeNpcId!;
+    this.transfer(itemId, npcId); this.state.giftItemId = itemId;
+    this.state.npcStates[npcId].relationship = Math.min(5, this.state.npcStates[npcId].relationship + 1);
+    if (evidence[itemId]) this.deliver(npcId, evidence[itemId].facts, "遥交给我" + this.itemName(itemId) + "：" + evidence[itemId].text);
+    await this.maybePlan(); await this.generate(null, "");
+    return this.finish("已赠送" + this.itemName(itemId) + "，物品离开背包。");
+  }
+  private itemName(id: string) { return demoBootstrap.items.find(i => i.id === id)?.baseName ?? id; }
+  private transfer(id: string, owner: string) {
+    const previous = this.state.itemOwners[id]; this.state.itemOwners[id] = owner;
+    const e = this.event("item_transfer", previous, owner, this.itemName(id) + "从" + previous + "转交给" + owner, ["player", previous, owner], id);
+    if (this.state.npcStates[owner]) this.memory(owner, e.details.text, e, "gift");
+  }
+  private async generate(selectedOption: DialogueOption | null, effect: string) {
+    const npcId = this.state.activeNpcId!;
+    const context = {
+      state: structuredClone(this.state), npcId, mode: this.state.interactionMode!,
+      selectedOption, giftItem: demoBootstrap.items.find(i => i.id === this.state.giftItemId) ?? null, effect
+    };
+    let result;
+    try {
+      result = await this.provider.generate(context);
+    } catch (error) {
+      // All action writes are local until finish(). Restore the committed snapshot, including
+      // choice trail, gifts, clock, delivered information and plans, before reporting a retry.
+      const committed = this.store.load();
+      if (committed) this.state = GameStateSchema.parse(committed);
+      if (error instanceof DialogueGenerationError) throw new GameRuleError(error.message);
+      throw error;
+    }
+    const pacing = encounterPacing(this.state, !!selectedOption);
+    if (1 + result.continuations.length > pacing.maxGeneratedLines || (pacing.mustClose && result.options.length)) {
+      if (!pacing.mustClose) {
+        const committed = this.store.load();
+        if (committed) this.state = GameStateSchema.parse(committed);
+        throw new GameRuleError(new DialogueGenerationError().message);
+      }
+      result = fallbackDialogue(context);
+      result.debug.decision = "会面预算保底收尾";
+    }
+    this.state.currentDialogue = result;
+    if (result.debug.npcActionId !== effect) result.debug.npcActionId = "none";
+    this.state.lastPlayerChoice = selectedOption?.playerLine ?? selectedOption?.text ?? null;
+    this.state.dialogueBeatIndex = 0;
+    // Index includes the player's selected line: exactly the same UI component as any other beat.
+    this.recordVisibleBeat();
+  }
+  private beats() {
+    const d = this.state.currentDialogue;
+    return d ? [...(this.state.lastPlayerChoice ? [{ speakerId: "player", line: this.state.lastPlayerChoice }] : []),
+      { speakerId: d.speakerId, line: d.line, stageDirection: d.stageDirection },
+      ...d.continuations.map(b => ({ ...b, speakerId: b.speakerId ?? d.speakerId }))] : [];
+  }
+  private recordVisibleBeat() {
+    const beat = this.beats()[this.state.dialogueBeatIndex];
+    if (!beat) return;
+    const npc = this.state.activeNpcId!;
+    const text = (beat.stageDirection ?? "") + " " + (beat.speakerId === "player" ? "朝雾遥" : demoBootstrap.npcs.find(n => n.id === npc)!.name) + "：" + beat.line;
+    const e = this.event("dialogue_generated", beat.speakerId, npc, text, ["player", npc]);
+    this.memory(npc, text, e, beat.speakerId === "player" ? "player_choice" : "dialogue");
+    this.discover(text);
+  }
+  async nextDialogueBeat() {
+    this.assert(this.state.phase === "encounter" && this.state.currentDialogue, "当前没有对白。");
+    this.assert(this.state.dialogueBeatIndex < this.beats().length - 1, "已经到最后一句。");
+    this.state.dialogueBeatIndex++; this.recordVisibleBeat();
+    if (this.state.dialogueBeatIndex === this.beats().length - 1) {
+      const notice = await this.applyDialogueAction();
+      return this.finish(notice?.text ?? null, notice?.item ?? null);
+    }
+    return this.finish();
+  }
+  private async applyDialogueAction(): Promise<{ text: string; item: string | null } | null> {
+    const d = this.state.currentDialogue!;
+    const action = d.debug.npcActionId ?? "none";
+    d.debug.npcActionId = "none"; // Consumed exactly once, before any asynchronous planning.
+    const npcId = this.state.activeNpcId!;
+    if (action.startsWith("show:") || action.startsWith("take:")) {
+      const [verb, id] = action.split(":");
+      if (this.state.itemOwners[id] !== npcId || !evidence[id]) return null;
+      this.readEvidence(id);
+      if (verb === "take") this.transfer(id, "player");
+      return { text: (verb === "take" ? "获得" : "已查看") + this.itemName(id) + "。内容已记入手记。", item: verb === "take" ? id : null };
+    }
+    if (npcId === "npc_chiyo" && action === "retract" && !this.state.storyFlags.includes("chiyo_retracted")) {
+      this.flag("chiyo_retracted");
+      this.deliver("npc_chiyo", ["R01"], "我已向遥承认旧证词不实，决定纠正。", "npc_chiyo");
+      this.event("story_beat", npcId, "player", "千代承认律并非整晚在旅馆；她约21:20见他从夕见台方向回来。没有目睹杀人。", ["player", npcId]);
+      return { text: "千代已改口。律尚未收到这条消息，纠正说明也尚未写下。", item: null };
+    }
+    if (npcId === "npc_chiyo" && action === "write" && this.state.storyFlags.includes("chiyo_retracted") && this.state.itemOwners.E12 === "uncreated") {
+      this.state.itemOwners.E12 = npcId; this.readEvidence("E12");
+      return { text: "千代写下并签署纠正说明，实物仍由她保存。", item: null };
+    }
+    if (npcId === "npc_makoto" && this.state.npcStates[npcId].knownFactIds.includes("R01")) {
+      if (action === "protect") {
+        this.state.pendingNpcMove = { npcId, locationId: "loc_inn", arriveAt: this.abs() + 60 };
+        return { text: "犬饲诚准备前往白石旅馆，一小时后到达。", item: null };
+      }
+      if (action === "supplement" && this.state.itemOwners.E13 === "uncreated") {
+        this.state.itemOwners.E13 = npcId; this.flag("case_reopened"); this.readEvidence("E13");
+        return { text: "补充说明已签署。重新核查，不是定罪。", item: null };
+      }
+    }
+    return null;
+  }
+  async chooseTalkOption(optionId: string) {
+    this.assert(this.state.phase === "encounter" && this.state.currentDialogue, "当前没有选择。");
+    this.assert(this.state.dialogueBeatIndex === this.beats().length - 1, "请先看完这段对白。");
+    const option = this.state.currentDialogue.options.find(o => o.id === optionId);
+    this.assert(option, "选项已过期或不存在。");
+    await this.applyDialogueAction();
+    // Old saved menus may use their ID as an action. New generated IDs never execute directly.
+    const effect = option.actionId !== undefined ? option.actionId ?? "" :
+      /^(show:|take:)/.test(optionId) || ["retract","write","protect","supplement"].includes(optionId) ? optionId : "";
+    this.assert(!effect || availableActions(this.state, this.state.activeNpcId!).some(a => a.id === effect), "此动作的条件已发生变化。");
+    this.recordBranch(option);
+    if (optionId === "daily") {
+      const n = this.state.npcStates[this.state.activeNpcId!];
+      const prior = this.state.eventLog.filter(e => e.type === "dialogue_choice" && e.targetId === n.npcId && e.day === this.state.day && e.details.text === option.text).length;
+      if (prior === 1) n.relationship = Math.min(5, n.relationship + 1);
+    }
+    await this.generate(option, effect);
+    if (this.beats().length === 1) await this.applyDialogueAction();
+    return this.finish();
+  }
+  async respondToGift(optionId: string) { this.assert(this.state.interactionMode === "gift", "当前不是赠礼对话。"); return this.chooseTalkOption(optionId); }
+  private recordBranch(option: DialogueOption) {
+    const e = this.event("dialogue_choice", "player", this.state.activeNpcId, option.playerLine ?? option.text, ["player", this.state.activeNpcId!]);
+    e.details.intent = option.intent;
+    e.details.missed = JSON.stringify(this.state.currentDialogue?.options.filter(o => o.id !== option.id).map(o => o.text) ?? []);
+    e.details.closedActions = JSON.stringify(this.state.currentDialogue?.options.map(o => o.actionId ??
+      (/^(show:|take:)/.test(o.id) || ["retract","write","protect","supplement"].includes(o.id) ? o.id : null)).filter(Boolean) ?? []);
+    // Unchosen possibilities are branch metadata only, never NPC memories or witnessed facts.
+  }
+  async completeEncounter() {
+    this.assert(this.state.phase === "encounter", "当前不在会面中。");
+    if (this.state.currentDialogue && this.state.dialogueBeatIndex === this.beats().length - 1) await this.applyDialogueAction();
+    const id = this.state.activeNpcId!;
+    const runtime = this.state.npcStates[id];
+    runtime.reflection = "本次实际交流：" + runtime.memories.slice(-3).map(m => m.summary).join(" ").slice(0,500);
+    runtime.openLoops = this.state.storyFlags.includes("chiyo_retracted") && id === "npc_chiyo" ?
+      ["考虑把纠正说明交给警署；不要假定律已经知道。"] :
+      this.state.currentDialogue?.options.length ? ["交流停在：" + (runtime.memories.at(-1)?.summary ?? "").slice(0, 240)] : [];
+    this.event("encounter_completed", "player", id, "结束会面。", ["player",id]);
+    // An independent decision, not automatic shared knowledge or automatic murder.
+    if (id === "npc_chiyo" && this.state.storyFlags.includes("chiyo_retracted") && !this.state.storyFlags.includes("chiyo_planned")) {
+      this.flag("chiyo_planned");
+      const action = await this.provider.planWitness?.(structuredClone(this.state)) ?? "wait";
+      if (action === "write" && this.state.itemOwners.E12 === "uncreated") {
+        this.state.itemOwners.E12 = id;
+        this.event("story_beat", id, null, "千代拿起纸笔，写下并签署纠正说明。她把实物留在柜台边。", ["player", id]);
+        this.readEvidence("E12");
+      }
+      if (action === "notify_ritsu" || action === "notify_police") {
+        const recipient = action === "notify_ritsu" ? "npc_ritsu" : "npc_makoto";
+        this.event("story_beat", id, recipient, "千代当着遥的面打电话，告诉" + demoBootstrap.npcs.find(n => n.id === recipient)!.name + "自己决定纠正旧证词。", ["player", id, recipient]);
+        this.deliver(recipient, ["R01"], "千代亲口来电：我决定纠正律整晚在旅馆的旧证词。", id);
+        if (recipient === "npc_makoto") this.state.pendingNpcMove = { npcId: recipient, locationId: "loc_inn", arriveAt: this.abs() + 60 };
+        await this.maybePlan();
+      }
+    }
+    this.clearEncounter(); this.state.phase = this.state.currentMinute >= 1080 ? "night" : "location";
+    if (this.state.phase === "night") this.state.currentLocationId = null;
+    return this.finish();
+  }
+  private readEvidence(id: string) {
+    const data = evidence[id]; if (!data) return;
+    if (!this.state.evidenceJournal.some(e => e.id === id)) {
+      this.state.evidenceJournal.push({ id, name: this.itemName(id), text: data.text, source: data.source, day: this.state.day });
+      this.event("evidence_read", "player", null, this.itemName(id) + "：" + data.text, ["player"], id);
+      this.discover(data.text);
+    }
+  }
+  inspectItem(itemId: string, take = false) {
+    this.assert(this.state.phase === "location" || (this.state.phase !== "ending" && this.state.itemOwners[itemId] === "player"), "请先进入物品所在地点。");
+    this.assert(demoBootstrap.items.some(i => i.id === itemId), "物品不存在。");
+    const owner = this.state.itemOwners[itemId];
+    this.assert(owner === "player" || owner === this.state.currentLocationId, "这件物品不在你面前。");
+    this.readEvidence(itemId);
+    if (take && owner !== "player") this.transfer(itemId, "player");
+    return this.finish((take ? "获得" : "已查看") + this.itemName(itemId) + "。", take ? itemId : null);
+  }
+  async presentEvidence(itemId: string) {
+    this.assert(this.state.phase === "encounter" && this.state.interactionMode === "talk" && this.state.currentDialogue, "请先开始交谈。");
+    this.assert(this.state.currentDialogue.options.length, "本次会面已经结束，请返回场景。");
+    this.assert(this.state.dialogueBeatIndex === this.beats().length - 1, "请先听完眼前这段话。");
+    this.assert(this.state.itemOwners[itemId] === "player" && evidence[itemId], "只有持有的材料才能当面出示。记得内容不等于持有原件。");
+    const npc = this.state.activeNpcId!;
+    this.readEvidence(itemId); this.deliver(npc, evidence[itemId].facts, "遥出示了" + this.itemName(itemId) + "：" + evidence[itemId].text);
+    await this.maybePlan();
+    const choice = { id: "present", text: "看看这个。", playerLine: "看看这份" + this.itemName(itemId) + "。", intent: "出示实物请对方回应，不赠送" };
+    this.recordBranch(choice);
+    await this.generate(choice, "");
+    return this.finish("已出示，物品仍在背包。");
+  }
+  async tellRetraction() {
+    this.assert(this.state.phase === "encounter" && this.state.interactionMode === "talk" && this.state.storyFlags.includes("chiyo_retracted"), "你还没有听到千代改口，或尚未开始交谈。");
+    this.assert(this.state.currentDialogue?.options.length, "本次会面已经结束，请返回场景。");
+    this.assert(this.state.dialogueBeatIndex === this.beats().length - 1, "请先听完这段话。");
+    const npc = this.state.activeNpcId!;
+    this.deliver(npc, ["R01"], "遥转告：千代已承认律整晚在旅馆的证词不实，准备纠正。");
+    await this.maybePlan();
+    const choice = { id: "tell_retraction", text: "千代改口了。", playerLine: "千代改口了。她说你们可以去问她本人。", intent: "转述已知证词，不宣称亲眼见过案发" };
+    this.recordBranch(choice);
+    await this.generate(choice, "");
+    return this.finish("消息已实际送达。");
+  }
+  private async maybePlan() {
+    if (!this.state.npcStates.npc_ritsu.knownFactIds.includes("R01") || this.state.incident) return;
+    if (this.state.npcStates.npc_chiyo.lifeState !== "alive" || this.state.npcStates.npc_ritsu.lifeState !== "alive") return;
+    const intent: PlanIntent = await this.provider.plan(structuredClone(this.state), "npc_ritsu");
+    const earliest = this.abs() + 60;
+    this.state.incident = { id: "evt_chiyo_retracts_statement", stage: intent === "withdraw" ? "resolved" : "scheduled", intent,
+      nextAt: earliest, resolvedText: intent === "withdraw" ? "律没有前往旅馆。" : "", interruptedUntil: null };
+    this.event("npc_action", "npc_ritsu", "npc_chiyo", "律决定：" + intent, ["npc_ritsu"], null, "loc_inn");
+  }
+  resolvePlayerIncident(choice: string) {
+    this.assert(this.state.phase === "incident" && this.state.incident, "当前没有需要处理的现场事件。");
+    this.assert(["stay","intervene","leave","help"].includes(choice), "现场选项无效。");
+    const i = this.state.incident;
+    const remainder = i.interruptedUntil ?? this.abs(); i.interruptedUntil = null;
+    const attacking = i.stage === "attack";
+    if (choice === "stay" || choice === "intervene") {
+      this.resolveIncident(attacking ? "遥上前挡开律，千代受伤但活着。律逃离旅馆。" : "遥留在千代身旁。律见无法单独谈话，放弃了这次接触。", attacking ? "injured" : "alive");
+      this.state.phase = "location";
+      this.advance(Math.max(remainder, this.abs()), "loc_inn");
     } else {
-      draft.currentDialogue = null;
+      this.event("incident", "player", null, choice === "help" ? "遥离开旅馆，准备去找人帮忙。没有人因此自动赶到。" : "遥离开了现场。");
+      this.state.currentLocationId = null; this.state.phase = "action";
+      this.advance(Math.max(remainder, this.abs()), null);
     }
-
-    return this.commit(
-      draft,
-      mode === "talk"
-        ? `与${npc.name}开始交谈，时间推进至 ${formatTime(draft.currentMinute)}。`
-        : `请选择要赠送给${npc.name}的物品；确认前不会消耗交谈时间。`,
-      null
-    );
+    this.clearEncounter();
+    if (this.state.currentMinute >= 1080) { this.state.phase = "night"; this.state.currentLocationId = null; }
+    return this.finish(choice === "help" ? "请在地图上实际前往警署或诊所；路途会继续消耗时间。" : "选择已经影响现场。");
   }
-
-  cancelInteractionMode(): GameActionResponse {
-    this.assertEncounterMode("gift");
-    if (this.state.giftItemId) {
-      throw new GameRuleError("礼物已经交出，不能返回会面入口。");
-    }
-
-    const draft = this.draft();
-    draft.interactionMode = null;
-    draft.currentDialogue = null;
-    draft.lastPlayerChoice = null;
-    return this.commit(draft, "已返回会面方式选择。", null);
+  changeRule(slotId: RuleSlotId, itemId: string) {
+    this.assert(this.state.phase === "night" && !this.state.ruleChangedThisNight, "每晚只能修改一次规则。");
+    this.assert(this.state.itemOwners[itemId] === "player", "你没有这件物品。");
+    const item = demoBootstrap.items.find(i => i.id === itemId)!;
+    const concept = demoBootstrap.concepts.find(c => c.id === item.carriedConceptId)!;
+    const old = this.state.activeRules[slotId];
+    if (old) this.state.itemOwners[old.carrierItemId] = "loc_shrine";
+    this.transfer(itemId, "rule:" + slotId);
+    this.state.activeRules[slotId] = { slotId, carrierItemId: itemId, conceptId: concept.id, displayText: concept.slotText[slotId], activatedDay: this.state.day };
+    this.state.ruleChangedThisNight = true;
+    const e = this.event("rule_changed", "player", null, concept.slotText[slotId], ["player", ...demoBootstrap.npcs.map(n => n.id)]);
+    for (const n of Object.values(this.state.npcStates)) if (n.lifeState !== "dead") this.memory(n.npcId, "全镇公共规则改为：" + concept.slotText[slotId] + "。历史事实不变。", e);
+    return this.finish("全镇规则已改变：" + concept.slotText[slotId]);
   }
-
-  async chooseTalkOption(optionId: string): Promise<GameActionResponse> {
-    this.assertEncounterMode("talk");
-    const npc = this.requireActiveNpc();
-    const option = this.state.currentDialogue?.options.find((candidate) => candidate.id === optionId);
-    if (!option) {
-      throw new GameRuleError("这个对话选项当前不可用。");
+  async endDay() {
+    this.assert(this.state.phase === "night", "请先等到入夜。");
+    if (this.state.day === 7) {
+      this.advance(6 * 1440 + 1439, null);
+      this.state.phase = "ending"; this.state.currentLocationId = null;
+      this.state.ending = await this.provider.generateEnding(this.getState());
+      this.event("ending_generated", "player", null, "七日结束，保存实际结果。");
+      return this.finish("七日结束。");
     }
-
-    if (option.intent === "结束会面") {
-      return this.completeEncounter(`结束了与${npc.name}的交谈。`);
-    }
-
-    const draft = this.draft();
-    const playerLine = resolvePlayerLine(option);
-    draft.lastPlayerChoice = playerLine;
-    const choiceEvent = this.appendEvent(draft, {
-      type: "dialogue_choice",
-      actorId: "player",
-      targetId: npc.id,
-      itemId: null,
-      locationId: draft.currentLocationId,
-      details: { mode: "talk", option_id: option.id, option_text: option.text, player_line: playerLine }
-    });
-    this.remember(draft, npc.id, {
-      kind: "player_choice",
-      summary: `朝雾遥说：“${playerLine}”`,
-      interpretation: `她在这次谈话中选择了“${option.intent}”的态度。`,
-      sourceEventId: choiceEvent.id,
-      confidence: "certain"
-    });
-    const npcState = draft.npcStates[npc.id]!;
-    npcState.relationship = Math.max(-5, Math.min(5, npcState.relationship + relationshipDelta(option.intent)));
-    draft.currentDialogue = await this.dialogueProvider.generate({
-      state: draft,
-      npc,
-      locationId: draft.currentLocationId!,
-      mode: "talk",
-      giftItem: null,
-      selectedOption: option
-    });
-    this.recordGeneratedDialogue(draft, npc.id, draft.currentDialogue);
-
-    let acquiredItemId: string | null = null;
-    let notice: string | null = null;
-    const reward = talkRewards[`${npc.id}:${option.id}`];
-    if (reward && !draft.claimedRewardIds.includes(reward.rewardId)) {
-      const item = demoBootstrap.items.find((candidate) => candidate.id === reward.itemId);
-      if (item && draft.itemOwners[item.id] !== "player") {
-        const previousOwner = draft.itemOwners[item.id];
-        draft.itemOwners[item.id] = "player";
-        draft.claimedRewardIds.push(reward.rewardId);
-        acquiredItemId = item.id;
-        notice = `${npc.name}把“${item.baseName}”交给了你。`;
-        this.appendEvent(draft, {
-          type: "item_transfer",
-          actorId: previousOwner,
-          targetId: "player",
-          itemId: item.id,
-          locationId: draft.currentLocationId,
-          details: { reason: "dialogue_reward", reward_id: reward.rewardId }
-        });
-      }
-    }
-
-    return this.commit(draft, notice, acquiredItemId);
-  }
-
-  async confirmGift(itemId: string): Promise<GameActionResponse> {
-    this.assertEncounterMode("gift");
-    if (this.state.giftItemId) {
-      throw new GameRuleError("本次会面已经赠送过物品。");
-    }
-    if (this.state.itemOwners[itemId] !== "player") {
-      throw new GameRuleError("这件物品已经不在你的背包里。");
-    }
-
-    const npc = this.requireActiveNpc();
-    const item = demoBootstrap.items.find((candidate) => candidate.id === itemId);
-    if (!item) throw new GameRuleError("找不到这件物品。");
-    this.assertConversationTime();
-
-    const draft = this.draft();
-    const timeBefore = draft.currentMinute;
-    draft.currentMinute += draft.conversationDurationMinutes;
-    draft.period = periodForMinute(draft.currentMinute, draft.nightStartMinute);
-    draft.itemOwners[item.id] = npc.id;
-    draft.giftItemId = item.id;
-    draft.lastPlayerChoice = null;
-    const giftEvent = this.appendEvent(draft, {
-      type: "item_transfer",
-      actorId: "player",
-      targetId: npc.id,
-      itemId: item.id,
-      locationId: draft.currentLocationId,
-      details: {
-        reason: "gift",
-        irreversible: "true",
-        duration_minutes: String(draft.conversationDurationMinutes),
-        time_before: formatTime(timeBefore),
-        time_after: formatTime(draft.currentMinute)
-      }
-    });
-    this.remember(draft, npc.id, {
-      kind: "gift",
-      summary: `朝雾遥主动把“${item.baseName}”交给了我。`,
-      interpretation: "物品已经属于我，但她为什么选择我仍需要结合后续说法判断。",
-      sourceEventId: giftEvent.id,
-      confidence: "certain"
-    });
-    draft.currentDialogue = await this.dialogueProvider.generate({
-      state: draft,
-      npc,
-      locationId: draft.currentLocationId!,
-      mode: "gift",
-      giftItem: item,
-      selectedOption: null
-    });
-    this.recordGeneratedDialogue(draft, npc.id, draft.currentDialogue);
-
-    return this.commit(draft, `“${item.baseName}”已经交给${npc.name}，时间推进至 ${formatTime(draft.currentMinute)}，物品所有权不可撤销。`, null);
-  }
-
-  async respondToGift(optionId: string): Promise<GameActionResponse> {
-    this.assertEncounterMode("gift");
-    const npc = this.requireActiveNpc();
-    const item = demoBootstrap.items.find((candidate) => candidate.id === this.state.giftItemId);
-    const option = this.state.currentDialogue?.options.find((candidate) => candidate.id === optionId);
-    if (!item || !option) {
-      throw new GameRuleError("当前没有可以继续的礼物对话。");
-    }
-
-    const draft = this.draft();
-    const playerLine = resolvePlayerLine(option);
-    draft.lastPlayerChoice = playerLine;
-    const giftChoiceEvent = this.appendEvent(draft, {
-      type: "dialogue_choice",
-      actorId: "player",
-      targetId: npc.id,
-      itemId: item.id,
-      locationId: draft.currentLocationId,
-      details: { mode: "gift", option_id: option.id, option_text: option.text, player_line: playerLine }
-    });
-    this.remember(draft, npc.id, {
-      kind: "player_choice",
-      summary: `赠礼后，朝雾遥说：“${playerLine}”`,
-      interpretation: `她用“${option.intent}”解释或回避了赠礼动机。`,
-      sourceEventId: giftChoiceEvent.id,
-      confidence: "interpreted"
-    });
-    draft.currentDialogue = await this.dialogueProvider.generate({
-      state: draft,
-      npc,
-      locationId: draft.currentLocationId!,
-      mode: "gift",
-      giftItem: item,
-      selectedOption: option
-    });
-    this.recordGeneratedDialogue(draft, npc.id, draft.currentDialogue);
-
-    return this.commit(draft, null, null);
-  }
-
-  completeEncounter(notice = "本次会面已经结束。"): GameActionResponse {
-    this.assertPhase("encounter");
-    const draft = this.draft();
-    const completedLocationId = draft.currentLocationId;
-    const completedNpcId = draft.activeNpcId;
-    const reflectionCandidate = draft.currentDialogue?.debug.reflectionCandidate;
-    if (completedNpcId && reflectionCandidate && draft.npcStates[completedNpcId]) {
-      const completedNpc = demoBootstrap.npcs.find((npc) => npc.id === completedNpcId)!;
-      const nextPlan = draft.lastPlayerChoice
-        ? `围绕朝雾遥刚才说的“${draft.lastPlayerChoice}”，下一步推进：${completedNpc.persona.immediateGoal}`
-        : `下一步推进：${completedNpc.persona.immediateGoal}`;
-      draft.npcStates[completedNpcId]!.reflection = reflectionCandidate;
-      draft.npcStates[completedNpcId]!.openLoops = [nextPlan];
-      const reflectionEvent = this.appendEvent(draft, {
-        type: "reflection_updated",
-        actorId: completedNpcId,
-        targetId: "player",
-        itemId: draft.giftItemId,
-        locationId: completedLocationId,
-        details: { reflection: reflectionCandidate, next_plan: nextPlan }
-      });
-      this.remember(draft, completedNpcId, {
-        kind: "reflection",
-        summary: `会面结束后，我形成了判断：${reflectionCandidate}`,
-        interpretation: "这条判断将影响下一次会面的策略，不是客观世界事实。",
-        sourceEventId: reflectionEvent.id,
-        confidence: "interpreted",
-        importance: 7,
-        tags: ["player", "reflection", `day:${draft.day}`]
-      });
-    }
-    this.appendEvent(draft, {
-      type: "encounter_completed",
-      actorId: "player",
-      targetId: completedNpcId,
-      itemId: draft.giftItemId,
-      locationId: completedLocationId,
-      details: { mode: draft.interactionMode ?? "skipped" }
-    });
-    draft.currentLocationId = null;
-    draft.activeNpcId = null;
-    draft.interactionMode = null;
-    draft.currentDialogue = null;
-    draft.lastPlayerChoice = null;
-    draft.giftItemId = null;
-    draft.period = periodForMinute(draft.currentMinute, draft.nightStartMinute);
-    draft.phase = draft.currentMinute >= draft.nightStartMinute ? "night" : "action";
-
-    const finalNotice = draft.phase === "night"
-      ? `${notice} 现在是 ${formatTime(draft.currentMinute)}，夜间猫神社开放。`
-      : notice;
-    return this.commit(draft, finalNotice, null);
-  }
-
-  changeRule(slotId: RuleSlotId, itemId: string): GameActionResponse {
-    this.assertPhase("night");
-    if (this.state.ruleChangedThisNight) {
-      throw new GameRuleError("今晚已经修改过一次世界规则。");
-    }
-    if (this.state.itemOwners[itemId] !== "player") {
-      throw new GameRuleError("这件物品已经不在你的背包里。");
-    }
-
-    const item = demoBootstrap.items.find((candidate) => candidate.id === itemId);
-    const concept = demoBootstrap.concepts.find((candidate) => candidate.id === item?.carriedConceptId);
-    if (!item || !concept) throw new GameRuleError("物品没有可用的承载概念。");
-
-    const draft = this.draft();
-    const previousRule = draft.activeRules[slotId];
-    if (previousRule) {
-      draft.itemOwners[previousRule.carrierItemId] = "loc_shrine";
-    }
-    draft.itemOwners[item.id] = `rule:${slotId}`;
-    draft.activeRules[slotId] = {
-      slotId,
-      carrierItemId: item.id,
-      conceptId: concept.id,
-      displayText: concept.slotText[slotId],
-      activatedDay: draft.day
-    };
-    draft.ruleChangedThisNight = true;
-    this.appendEvent(draft, {
-      type: "item_transfer",
-      actorId: "player",
-      targetId: `rule:${slotId}`,
-      itemId: item.id,
-      locationId: "loc_shrine",
-      details: { reason: "rule_carrier" }
-    });
-    const ruleEvent = this.appendEvent(draft, {
-      type: "rule_changed",
-      actorId: "player",
-      targetId: slotId,
-      itemId: item.id,
-      locationId: "loc_shrine",
-      details: { concept_id: concept.id, display_text: concept.slotText[slotId] }
-    });
-    for (const npc of demoBootstrap.npcs) {
-      const callback = ruleCallbackFor(npc.id, concept.slotText[slotId]);
-      this.appendEvent(draft, {
-        type: "rule_callback",
-        actorId: npc.id,
-        targetId: slotId,
-        itemId: item.id,
-        locationId: draft.npcStates[npc.id]?.currentLocationId ?? npc.initialLocationId,
-        details: { source_event_id: ruleEvent.id, callback }
-      });
-      this.remember(draft, npc.id, {
-        kind: "rule_callback",
-        summary: callback,
-        interpretation: `这条规则触碰了我与神的既有关系：${npc.godRelationship}`,
-        sourceEventId: ruleEvent.id,
-        confidence: "certain"
-      });
-    }
-
-    return this.commit(draft, `世界规则已经变为：“${concept.slotText[slotId]}”。`, null);
-  }
-
-  async endDay(): Promise<GameActionResponse> {
-    this.assertPhase("night");
-    if (this.state.day >= 7) {
-      const draft = this.draft();
-      draft.ending = await this.dialogueProvider.generateEnding(draft);
-      draft.phase = "ending";
-      this.appendEvent(draft, {
-        type: "ending_generated",
-        actorId: "system",
-        targetId: null,
-        itemId: null,
-        locationId: "loc_shrine",
-        details: {
-          title: draft.ending.title,
-          provider: draft.ending.provider,
-          prompt_version: draft.ending.promptVersion
-        }
-      });
-      return this.commit(draft, "第七天已经结束。世界状态被冻结，结局已生成。", null);
-    }
-
-    const draft = this.draft();
-    const hasKoharuHandoff = draft.eventLog.some(
-      (event) => event.type === "item_transfer" && event.details.reason === "npc_handoff_koharu_to_saya"
-    );
-    if (!hasKoharuHandoff) {
-      const handoffItem = demoBootstrap.items.find((item) => draft.itemOwners[item.id] === "npc_koharu");
-      if (handoffItem) {
-        draft.itemOwners[handoffItem.id] = "npc_saya";
-        const handoffEvent = this.appendEvent(draft, {
-          type: "item_transfer",
-          actorId: "npc_koharu",
-          targetId: "npc_saya",
-          itemId: handoffItem.id,
-          locationId: draft.npcStates.npc_koharu?.currentLocationId ?? "loc_shrine",
-          details: { reason: "npc_handoff_koharu_to_saya", source_owner: "npc_koharu" }
-        });
-        this.remember(draft, "npc_koharu", {
-          kind: "item_change",
-          summary: `我把“${handoffItem.baseName}”交给纱夜核对来历。`,
-          interpretation: "我需要纱夜确认这件物品是否与雨宫真昼、黑色车票或零号站台有关。",
-          sourceEventId: handoffEvent.id,
-          confidence: "certain"
-        });
-        this.remember(draft, "npc_saya", {
-          kind: "item_change",
-          summary: `小春把“${handoffItem.baseName}”交给我核对来历。`,
-          interpretation: "小春已经把我当作真昼失踪案的知情者；我必须决定是否拿出五年前的原记录。",
-          sourceEventId: handoffEvent.id,
-          confidence: "interpreted"
-        });
-        if (!draft.storyFlags.includes("koharu_saya_handoff")) {
-          draft.storyFlags.push("koharu_saya_handoff");
-        }
-      }
-    }
-
-    draft.day += 1;
-    draft.period = "morning";
-    draft.phase = "action";
-    draft.currentMinute = draft.dayStartMinute;
-    draft.ruleChangedThisNight = false;
-    const schedule = npcSchedules[draft.day]!;
-    demoBootstrap.npcs.forEach((npc) => {
-      const npcState = draft.npcStates[npc.id]!;
-      const previousLocationId = npcState.currentLocationId;
-      const nextLocationId = schedule[npc.id]!;
-      npcState.currentLocationId = nextLocationId;
-      if (previousLocationId !== nextLocationId) {
-        this.appendEvent(draft, {
-          type: "npc_moved",
-          actorId: npc.id,
-          targetId: null,
-          itemId: null,
-          locationId: nextLocationId,
-          details: { from_location_id: previousLocationId, to_location_id: nextLocationId }
-        });
-      }
-    });
-    this.appendEvent(draft, {
-      type: "day_advanced",
-      actorId: "system",
-      targetId: null,
-      itemId: null,
-      locationId: null,
-      details: { new_day: String(draft.day) }
-    });
-    const dailyEvent = demoBootstrap.dailyEvents.find((event) => event.day === draft.day)!;
-    this.appendEvent(draft, {
-      type: "daily_event",
-      actorId: "system",
-      targetId: dailyEvent.id,
-      itemId: null,
-      locationId: null,
-      details: { title: dailyEvent.title, summary: dailyEvent.summary }
-    });
-    this.advanceRelationshipChain(draft);
-
-    return this.commit(draft, `第 ${draft.day} 天开始了：${dailyEvent.title}。`, null);
-  }
-
-  private advanceRelationshipChain(state: GameState) {
-    if (state.storyFlags.includes("koharu_saya_handoff") && !state.storyFlags.includes("saya_audit_started")) {
-      const summary = "小春把收到的物品交给纱夜，要求她核对是否与雨宫真昼的黑色车票有关；纱夜没有否认真昼这个姓名。";
-      const event = this.appendEvent(state, {
-        type: "story_beat",
-        actorId: "npc_saya",
-        targetId: "npc_koharu",
-        itemId: null,
-        locationId: state.npcStates.npc_saya?.currentLocationId ?? "loc_station",
-        details: { flag: "saya_audit_started", summary }
-      });
-      state.storyFlags.push("saya_audit_started");
-      this.remember(state, "npc_koharu", {
-        kind: "observation",
-        summary,
-        interpretation: "纱夜认识真昼，而且她的反应说明五年前的零号站台确实打开过。",
-        sourceEventId: event.id,
-        confidence: "certain"
-      });
-      this.remember(state, "npc_saya", {
-        kind: "observation",
-        summary,
-        interpretation: "小春已经掌握真昼姓名和猫铃；继续隐瞒只会让她独自闯进零号站台。",
-        sourceEventId: event.id,
-        confidence: "interpreted"
-      });
-    }
-
-    const genichiHasMetPlayer = state.eventLog.some(
-      (event) => event.type === "encounter_started" && event.targetId === "npc_genichi"
-    );
-    if (
-      state.day >= 4
-      && genichiHasMetPlayer
-      && state.storyFlags.includes("saya_audit_started")
-      && !state.storyFlags.includes("genichi_curates_dispute")
-    ) {
-      const summary = "弦一得知小春和纱夜正在核对真昼的票根，抢先宣布“第二次神明离町”，并把朝雾遥印成第七天17:47场次的主演。";
-      const event = this.appendEvent(state, {
-        type: "story_beat",
-        actorId: "npc_genichi",
-        targetId: "npc_saya",
-        itemId: null,
-        locationId: state.npcStates.npc_genichi?.currentLocationId ?? "loc_arcade",
-        details: { flag: "genichi_curates_dispute", summary }
-      });
-      state.storyFlags.push("genichi_curates_dispute");
-      for (const npc of demoBootstrap.npcs) {
-        this.remember(state, npc.id, {
-          kind: "observation",
-          summary,
-          interpretation: npc.id === "npc_genichi"
-            ? "只要朝雾遥亲手接票并走向站台，五年前的实验就能再次成立。"
-            : "弦一准备让朝雾遥重复真昼的失踪；宣传不是评论，而是行动预告。",
-          sourceEventId: event.id,
-          confidence: "certain"
-        });
-      }
-    }
-
-    if (
-      state.day >= 6
-      && Object.values(state.activeRules).some(Boolean)
-      && !state.storyFlags.includes("final_public_test")
-    ) {
-      const ruleNames = Object.values(state.activeRules)
-        .filter((rule): rule is NonNullable<typeof rule> => Boolean(rule))
-        .map((rule) => `“${rule.displayText}”`)
-        .join("、");
-      const summary = `第七天17:47，三个人将在零号站台正面对质${ruleNames}：小春带真昼的猫铃，纱夜带原始通行令，弦一带写有朝雾遥姓名的新车票。`;
-      const event = this.appendEvent(state, {
-        type: "story_beat",
-        actorId: "system",
-        targetId: "final_public_test",
-        itemId: null,
-        locationId: "loc_shrine",
-        details: { flag: "final_public_test", summary }
-      });
-      state.storyFlags.push("final_public_test");
-      for (const npc of demoBootstrap.npcs) {
-        this.remember(state, npc.id, {
-          kind: "observation",
-          summary,
-          interpretation: npc.ruleResponseStyle,
-          sourceEventId: event.id,
-          confidence: "certain"
-        });
-      }
-    }
-  }
-
-  private requireActiveNpc() {
-    const npc = demoBootstrap.npcs.find((candidate) => candidate.id === this.state.activeNpcId);
-    if (!npc) throw new GameRuleError("当前没有可以会面的 NPC。");
-    return npc;
-  }
-
-  private recordGeneratedDialogue(
-    state: GameState,
-    npcId: string,
-    dialogue: NonNullable<GameState["currentDialogue"]>
-  ) {
-    const npc = demoBootstrap.npcs.find((candidate) => candidate.id === npcId);
-    if (!npc) return;
-    const transcript = [
-      `${npc.name}：${dialogue.line}`,
-      ...dialogue.continuations.map((beat) => {
-        const speaker = beat.speakerId === demoBootstrap.player.id ? demoBootstrap.player.name : npc.name;
-        return `${speaker}：${beat.line}`;
-      })
-    ].join("\n");
-    const dialogueEvent = this.appendEvent(state, {
-      type: "dialogue_generated",
-      actorId: npcId,
-      targetId: npcId,
-      itemId: state.giftItemId,
-      locationId: state.currentLocationId,
-      details: {
-        mode: state.interactionMode ?? "talk",
-        transcript,
-        scene_goal: dialogue.debug.sceneGoal ?? "推进当前会面",
-        memory_candidate: dialogue.debug.memoryCandidate ?? transcript,
-        prompt_version: dialogue.debug.promptVersion ?? "mock"
-      }
-    });
-    this.remember(state, npcId, {
-      kind: "dialogue",
-      summary: dialogue.debug.memoryCandidate ?? transcript,
-      interpretation: dialogue.debug.reflectionCandidate ?? "这段对白尚未形成稳定判断。",
-      sourceEventId: dialogueEvent.id,
-      confidence: "certain",
-      importance: state.lastPlayerChoice ? 6 : 4,
-      tags: [npcId, state.currentLocationId ?? "unknown_location", state.interactionMode ?? "talk", `day:${state.day}`]
-    });
-
-    const actionId = dialogue.debug.npcActionId;
-    const actionText = dialogue.debug.npcAction;
-    if (actionId && actionText) {
-      this.appendEvent(state, {
-        type: "npc_action",
-        actorId: npcId,
-        targetId: "player",
-        itemId: state.giftItemId,
-        locationId: state.currentLocationId,
-        details: { action_id: actionId, action: actionText, source_dialogue_event_id: dialogueEvent.id }
-      });
-      const actionFlag = `npc_action:${actionId}`;
-      if (!state.storyFlags.includes(actionFlag)) state.storyFlags.push(actionFlag);
-    }
-  }
-
-  private npcAtLocation(state: GameState, locationId: string | null) {
-    if (!locationId) return undefined;
-    return demoBootstrap.npcs.find(
-      (candidate) => state.npcStates[candidate.id]?.currentLocationId === locationId
-    );
-  }
-
-  private assertPhase(expected: GameState["phase"]) {
-    if (this.state.phase !== expected) {
-      throw new GameRuleError(`当前阶段不能执行这个操作，需要阶段：${expected}。`);
-    }
-  }
-
-  private assertEncounterMode(expected: InteractionMode) {
-    this.assertPhase("encounter");
-    if (this.state.interactionMode !== expected) {
-      throw new GameRuleError(`本次会面没有选择${expected === "talk" ? "交谈" : "赠送礼物"}。`);
-    }
-  }
-
-  private assertConversationTime() {
-    const endMinute = this.state.currentMinute + this.state.conversationDurationMinutes;
-    if (endMinute > this.state.nightStartMinute) {
-      throw new GameRuleError(
-        `现在是 ${formatTime(this.state.currentMinute)}，剩余时间不足以开始 ${this.state.conversationDurationMinutes / 60} 小时的会面。`
-      );
-    }
-  }
-
-  private draft(): GameState {
-    return structuredClone(this.state);
-  }
-
-  private remember(
-    state: GameState,
-    npcId: string,
-    memory: {
-      kind: MemoryKind;
-      summary: string;
-      interpretation: string;
-      sourceEventId: string;
-      confidence: "certain" | "interpreted" | "uncertain";
-      importance?: number;
-      tags?: string[];
-    }
-  ) {
-    const npcState = state.npcStates[npcId];
-    if (!npcState) return;
-    const memorySequence = state.eventLog.length + npcState.memories.length;
-    npcState.memories.push({
-      id: `memory_${npcId}_${String(memorySequence).padStart(4, "0")}`,
-      npcId,
-      createdDay: state.day,
-      importance: memory.importance ?? 5,
-      tags: memory.tags ?? [],
-      ...memory
-    });
-    if (npcState.memories.length > 80) npcState.memories.shift();
-  }
-
-  private appendEvent(
-    state: GameState,
-    event: Omit<GameEvent, "id" | "sequence" | "day" | "period">
-  ) {
-    const sequence = (state.eventLog.at(-1)?.sequence ?? -1) + 1;
-    const recordedEvent: GameEvent = {
-      id: `event_${String(sequence).padStart(4, "0")}`,
-      sequence,
-      day: state.day,
-      period: state.period,
-      ...event
-    };
-    state.eventLog.push(recordedEvent);
-    return recordedEvent;
-  }
-
-  private commit(
-    state: GameState,
-    notice: string | null,
-    acquiredItemId: string | null
-  ): GameActionResponse {
-    state.revision += 1;
-    this.state = GameStateSchema.parse(state);
-    this.store.save(this.state);
-    return this.response(notice, acquiredItemId);
-  }
-
-  private response(notice: string | null, acquiredItemId: string | null): GameActionResponse {
-    return GameActionResponseSchema.parse({
-      state: this.getState(),
-      notice,
-      acquiredItemId
-    });
+    const nextDay = this.state.day + 1;
+    this.advance((nextDay - 1) * 1440 + 540, null);
+    this.state.phase = "action"; this.state.currentLocationId = null; this.state.ruleChangedThisNight = false;
+    this.event("day_advanced", "player", null, "第" + nextDay + "天开始。");
+    return this.finish();
   }
 }

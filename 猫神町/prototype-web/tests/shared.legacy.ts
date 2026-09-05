@@ -1,3 +1,4 @@
+// Archived pre-refactor baseline. Active coverage: caseShared.test.ts.
 import { describe, expect, it } from "vitest";
 import {
   DemoBootstrapSchema,

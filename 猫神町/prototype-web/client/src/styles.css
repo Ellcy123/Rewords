@@ -1729,6 +1729,13 @@ button:disabled {
   grid-column: 1 / -1;
 }
 
+.scene-materials { display: grid; gap: 12px; margin: 20px 0; }
+.scene-materials article { display: flex; gap: 12px; align-items: center; padding: 12px; border: 1px solid #baab95; border-radius: 8px; }
+.scene-materials strong { flex: 1; }
+.evidence-tools { margin: 18px 0; padding: 12px; background: #eae0cf; border-radius: 8px; }
+.incident-panel { border: 2px solid #a7554b; }
+.chibi-row { flex-wrap: wrap; }
+
 .bottom-nav {
   position: fixed;
   z-index: 30;
@@ -2086,4 +2093,16 @@ button:disabled {
   .bottom-nav button {
     width: 64px;
   }
+}
+
+/* Expanded chapter: auto-flow locations and multiple people without overlap. */
+.map-grid { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); grid-template-rows: auto; gap: 22px; min-height: 340px; }
+.map-grid .location-card { grid-column: auto; grid-row: auto; min-height: 150px; }
+.chibi-row { position: relative; right: auto; bottom: auto; left: auto; padding: 20px 16px 32px; flex-wrap: wrap; }
+.location-stage { min-height: 480px; }
+@media (max-width: 600px) {
+  .map-grid { grid-template-columns: 1fr; padding: 18px; }
+  .chibi-row { gap: 8px; }
+  .chibi-card { width: 140px; }
+  .bottom-nav button { width: 52px; }
 }

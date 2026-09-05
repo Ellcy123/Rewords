@@ -7,17 +7,19 @@ import {
   type Npc,
   type NpcMemory
 } from "../../../packages/shared/src/index.ts";
+import { dialogueVoices, openingVoiceExamples } from "./dialogueVoice.ts";
 
-export const AGENT_PROMPT_VERSION = "agent-dialogue-v3";
+export const AGENT_PROMPT_VERSION = "agent-dialogue-v4.2-natural";
 
 export const AGENT_PROMPT_STRUCTURE = [
   "精简且常驻的角色行为核心",
+  "角色当下的小心思与中文对话示例（非剧情事实）",
   "当前世界、地点和具体案件事实",
   "本次会面的完整短期对白",
   "按相关性、近期性和重要度检索的长期记忆",
   "角色当前反思与未完成事项",
   "预先约束的本轮目标和可执行动作",
-  "玩家当前选择的语义边界",
+  "玩家已知信息、当前关注点与选择语义边界",
   "对白、动作、记忆候选和下一选项的结构化输出"
 ] as const;
 
@@ -56,6 +58,8 @@ export type BuiltPrompt = {
   optionIntentById: Record<string, string>;
   optionTextById: Record<string, string>;
   optionPlayerLineById: Record<string, string>;
+  optionRequiredWordsById: Record<string, string[]>;
+  optionRequiredActionsById: Record<string, string[]>;
   knownFactIds: string[];
   factTextById: Record<string, string>;
   requiredFactIds: string[];
@@ -69,7 +73,7 @@ export type BuiltPrompt = {
 const talkOptions: Record<string, OptionDefinition[][]> = {
   npc_koharu: [
     [
-      { id: "ask_memory", shortText: "她叫什么？", playerLine: "先把事情说清楚。你姐姐叫什么，哪一天、在哪里失踪的？", intent: "核对姐姐身份", purpose: "要求小春给出姓名、日期和地点" },
+      { id: "ask_memory", shortText: "铃铛给我看看。", playerLine: "铃铛给我看看。", intent: "核对姐姐身份", purpose: "通过眼前猫铃核对姐姐的存在；已经说过名字就不再问名字，不答应调查" },
       { id: "koharu_ask_god", shortText: "带我去后殿。", playerLine: "带我去后殿。既然你说真昼留下过东西，我们现在就去找。", intent: "立即查后殿", purpose: "接受小春的行动邀请并要求现场查证" },
       { id: "koharu_doubt_memory", shortText: "谁见过她？", playerLine: "除了你，还有谁亲眼见过雨宫真昼？我要一个活着的证人。", intent: "寻找目击者", purpose: "不接受单一证词，要求指出纱夜或弦一" }
     ],
@@ -81,9 +85,9 @@ const talkOptions: Record<string, OptionDefinition[][]> = {
   ],
   npc_saya: [
     [
-      { id: "saya_open_gentle", shortText: "谁上了车？", playerLine: "你一直盯着23:47。五年前那个晚上，究竟是谁上了车？", intent: "温和追问乘客", purpose: "要求纱夜先说出雨宫真昼的名字" },
-      { id: "saya_open_press", shortText: "是你开的门？", playerLine: "别再拿流程挡着。零号站台是你亲手打开的吗？", intent: "逼问开门责任", purpose: "直接追究纱夜在失踪当晚的行动" },
-      { id: "saya_open_absurd", shortText: "车票还魂了？", playerLine: "同一张死人车票回来第二次，车站至少该给常客打折吧。", intent: "黑色玩笑试探", purpose: "用冒犯性的玩笑观察纱夜是否承认车票与真昼有关" }
+      { id: "saya_open_gentle", shortText: "票给我看看？", playerLine: "票给我看看？", intent: "温和追问乘客", purpose: "温和核对眼前黑票与乘客的关联，可以请求查看或追问票如何回来；不重问已知姓名，不声称已经得到票" },
+      { id: "saya_open_press", shortText: "你为什么开门？", playerLine: "你为什么开门？", intent: "逼问开门责任", purpose: "追问她为什么放人进去或为什么如今才说；已承认开门就不再问是不是她开的" },
+      { id: "saya_open_absurd", shortText: "它自己跑回来的？", playerLine: "它自己跑回来的？", intent: "黑色玩笑试探", purpose: "对黑票重现这件怪事吐槽或开玩笑，不宣布真昼死亡，不嘲笑受害者" }
     ],
     [
       { id: "saya_ticket_inspect", shortText: "证据都给我。", playerLine: "把黑色车票、票根和通行令全给我看。少一张都不算坦白。", intent: "索要全部证据", purpose: "要求查看三个可以互证的物证" },
@@ -103,7 +107,7 @@ const talkOptions: Record<string, OptionDefinition[][]> = {
   ],
   npc_genichi: [
     [
-      { id: "ask_gallery", shortText: "票是你给的？", playerLine: "五年前给雨宫真昼黑色车票的人，是你吗？", intent: "追问给票事实", purpose: "要求弦一对一个可以回答是或否的行动负责" },
+      { id: "ask_gallery", shortText: "为什么把票给她？", playerLine: "为什么把票给她？", intent: "追问给票事实", purpose: "追问给票理由或当时如何递票；已经承认给票就不再问是不是他给的，不替玩家得出新结论" },
       { id: "genichi_ask_power", shortText: "把原片交出来。", playerLine: "把猫神祭的未剪辑原片交出来。我不要看你办展用的版本。", intent: "索要未剪辑原片", purpose: "直接索取锁在保险柜里的证据" },
       { id: "disagree", shortText: "你知道她会消失。", playerLine: "你明知道上车的人会被全镇忘掉，还是把票递给了她。", intent: "指控故意伤害", purpose: "剥掉弦一的演出话术，明确指出他预见后果" }
     ],
@@ -116,19 +120,38 @@ const talkOptions: Record<string, OptionDefinition[][]> = {
 };
 
 const giftOptions: OptionDefinition[] = [
-  { id: "gift_ask_use", shortText: "你拿它做什么？", playerLine: "东西已经给你了。现在告诉我，你准备拿它做什么？", intent: "追问具体用途", purpose: "要求收礼人说出一个可执行用途" },
-  { id: "gift_explain", shortText: "用它查真昼。", playerLine: "我把它给你，是因为它可能帮我们查到雨宫真昼。", intent: "说明调查目的", purpose: "明确礼物服务于共同案件" },
-  { id: "gift_silence", shortText: "别问，先收好。", playerLine: "别问理由，先把它藏好。别让另外两个人看见。", intent: "要求秘密保管", purpose: "把礼物变成角色之间的信息差" }
+  { id: "gift_ask_use", shortText: "你打算怎么用？", playerLine: "你打算怎么用？", intent: "追问具体用途", purpose: "好奇对方打算如何使用，已经讲过用途则追问该用途，不强迫用于案件" },
+  { id: "gift_explain", shortText: "就是想送给你。", playerLine: "就是想送给你。", intent: "说明赠礼心意", purpose: "表达单纯赠礼，不暗示交换条件、调查任务或恋爱承诺" },
+  { id: "gift_silence", shortText: "收着就好。", playerLine: "收着就好。", intent: "暂不解释动机", purpose: "不想解释原因，但不是要求对方瞒着其他人" }
 ];
 
+// Constrain only targets needed by state transitions, not the wording of each sentence.
+const optionRequiredWordsById: Record<string, string[]> = {
+  ask_memory: ["铃"],
+  koharu_ask_god: ["后殿"],
+  koharu_guard_memory: ["帮", "一起", "陪"],
+  koharu_test_god: ["纱夜"],
+  koharu_leave_empty: ["弦一", "九条"],
+  saya_take_ticket: ["给我", "我拿", "我带"],
+  saya_leave_ticket: ["复制", "备份", "两份"],
+  saya_report_ticket: ["九条", "弦一"],
+  genichi_play_along: ["站台", "参加", "演"],
+  genichi_refuse_power: ["公开", "公布"]
+};
+const optionRequiredActionsById: Record<string, string[]> = {
+  koharu_test_god: ["找", "去", "问"],
+  koharu_leave_empty: ["找", "去", "问"],
+  saya_report_ticket: ["找", "去", "当面", "对质"]
+};
+
 const selectedOutcomeById: Record<string, string> = {
-  ask_memory: "小春只确认雨宫真昼的姓名、十八岁、五年前猫神祭、23:47和零号站台，并指出纱夜是开门者、弦一是给票者。",
+  ask_memory: "小春让遥仔细检查刻名猫铃，回应她对姐姐的疑问；姓名等已说过的信息不再整段复述。可以指出纱夜是开门者、弦一是给票者，但不能认为遥已经答应帮忙。",
   koharu_ask_god: "小春承认后殿钥匙在自己手里，并把后殿列为下一处调查地点；不得描述尚未进入的后殿里有什么。",
   koharu_doubt_memory: "小春只指出水野纱夜和九条弦一两名现有证人，不新增其他目击者。",
   koharu_guard_memory: "小春在寻人启事背面写下“神社后殿”，约定带刻名猫铃和后殿钥匙与朝雾遥共同调查。",
   koharu_test_god: "小春在寻人启事背面写下“水野纱夜／猫神町站”，决定带猫铃去要求纱夜当面承认开门。",
   koharu_leave_empty: "小春在寻人启事背面写下“九条弦一／镜庭商店街”，决定带寻人启事去质问给票者。",
-  saya_open_gentle: "纱夜说出雨宫真昼姓名，并承认自己在23:47开门和目送她登车。",
+  saya_open_gentle: "纱夜允许遥看清黑票但不转交所有权，回应她对乘客或车票的疑问；只知道同编号黑票重现，不知道是谁放回，不编造原因；已经说过的开门经过不再复述。",
   saya_open_press: "纱夜直接承认是自己开的门，然后展示盖有九条家印章的通行令复写纸。",
   saya_open_absurd: "纱夜反感玩笑，但仍用同编号黑票和九条家通行令纠正朝雾遥；不能把真昼说成已死。",
   saya_ticket_inspect: "纱夜依次展示黑票、票根和通行令复写纸，不把原件转交给玩家。",
@@ -146,9 +169,9 @@ const selectedOutcomeById: Record<string, string> = {
   genichi_play_along: "弦一在撤资通知上签名，把画廊保险柜钥匙和零号站台进入机会作为交易条件；不得宣告玩家已经答应上车。",
   genichi_refuse_power: "弦一在撤资通知上签名，以撤回猫神社、车站和商店街合计三百万元的九条家资助威胁玩家。",
   ask_player: "弦一承认想让朝雾遥成为第二位乘客，攥住保险柜钥匙，但不能替玩家接受车票或登车。",
-  gift_ask_use: "收礼人只说明如何用当前礼物调查真昼，并执行系统给定的收纳动作。",
-  gift_explain: "收礼人接受礼物用于调查真昼，只执行系统给定的收纳动作，不发明额外用途。",
-  gift_silence: "收礼人同意暂不告诉另外两人，只执行系统给定的收纳动作，不发明藏匿地点。"
+  gift_ask_use: "收礼人按物品实际用途回应好奇；可说打算怎样用，不能宣告未执行的使用、转赠或消耗已经发生。",
+  gift_explain: "收礼人回应这份心意，可以高兴、不好意思、嫌弃或怀疑，不能把礼物强行解释为调查工具、委托或恋爱承诺。",
+  gift_silence: "收礼人接受玩家暂不解释，可以好奇但不逼问，不凭空达成保密约定。"
 };
 
 const sceneBeats: Record<string, SceneBeat[]> = {
@@ -174,7 +197,7 @@ const sceneBeats: Record<string, SceneBeat[]> = {
 const incidentFactsByNpc: Record<string, Array<{ id: string; text: string }>> = {
   npc_koharu: [
     { id: "FACT_KOHARU_BELL", text: "小春持有一枚刻着“真昼”的褪色猫铃，这是她目前愿意交给玩家检查的证物。" },
-    { id: "FACT_KOHARU_WITNESSES", text: "小春知道纱夜是五年前的开门者、弦一是给票者；她不知道两人各自隐瞒了什么。" },
+    { id: "FACT_KOHARU_WITNESSES", text: "小春知道纱夜是五年前的开门者、弦一是给票者；她不知道两人各自隐瞒了什么。资料未提供她亲眼目击的经过，不能自称亲眼看见递票或开门。" },
     { id: "FACT_KOHARU_KEY", text: "小春已经偷走神社后殿钥匙，但不敢独自进入后殿。" }
   ],
   npc_saya: [
@@ -285,16 +308,16 @@ function selectedDefinition(npcId: string, option: DialogueOption | null) {
 function giftBeat(context: DialogueGenerationContext): SceneBeat {
   const itemName = context.giftItem?.baseName ?? "礼物";
   const actionByNpc: Record<string, { id: string; description: string }> = {
-    npc_koharu: { id: "koharu_hides_gift", description: `小春把${itemName}装进书包内袋，并在袋口别上真昼的寻人启事。` },
-    npc_saya: { id: "saya_bags_gift", description: `纱夜给${itemName}贴上日期封条，装进独立证物袋。` },
-    npc_genichi: { id: "genichi_stages_gift", description: `弦一把${itemName}放到真昼被裁掉的照片前，调整射灯让两者同时入镜。` }
+    npc_koharu: { id: "koharu_hides_gift", description: `小春接稳${itemName}，拿到自己面前仔细看。` },
+    npc_saya: { id: "saya_bags_gift", description: `纱夜接过${itemName}，检查了一下它的状态。` },
+    npc_genichi: { id: "genichi_stages_gift", description: `弦一接过${itemName}，调整拿法，端详这份礼物。` }
   };
   return {
     id: context.selectedOption ? "gift_response" : "gift_opening",
-    goal: context.selectedOption ? "回应玩家赠礼目的并宣布一个具体处置。" : "收下已经转移所有权的物品，并判断它能否用于真昼事件。",
+    goal: context.selectedOption ? "回应玩家刚刚表达的赠礼心意或疑问。" : "先对收到这个具体东西作出符合性格的反应，再试探玩家为何送它。",
     concreteSituation: `${itemName}已经属于${context.npc.name}，不能退还或假装没有收到。`,
     requiredMove: "让礼物进入一个看得见的动作；不能只评价礼物代表什么。",
-    choiceLead: context.selectedOption ? "本次赠礼交谈结束，不再给选项。" : "要求玩家说明用途、调查目的或保密要求。",
+    choiceLead: context.selectedOption ? "本次赠礼交谈结束，不再给选项。" : "留下关于怎么用、为什么送、是否愿意解释的自然接话口，不列举菜单。",
     action: actionByNpc[context.npc.id]!,
     requiredFactIds: context.giftItem ? [`FACT_GIFT_${context.giftItem.id.toUpperCase()}`] : []
   };
@@ -343,6 +366,7 @@ export function buildAgentPrompt(context: DialogueGenerationContext): BuiltPromp
     sceneSequence.slice(0, disclosureIndex + 1).flatMap((scene) => scene.requiredFactIds)
   );
   for (const factId of beat.requiredFactIds) disclosedIncidentFactIds.add(factId);
+  if (beat.id === "genichi_sets_stakes") disclosedIncidentFactIds.add("FACT_KUJO_FUNDING");
   const disclosedIncidentFacts = (incidentFactsByNpc[context.npc.id] ?? [])
     .filter((fact) => disclosedIncidentFactIds.has(fact.id));
   const secretIsDisclosed = disclosedIncidentFactIds.has(secretRevealFactByNpc[context.npc.id]!);
@@ -368,27 +392,32 @@ export function buildAgentPrompt(context: DialogueGenerationContext): BuiltPromp
   const knownFactIds = facts.map((fact) => fact.id);
   const requiredOptions = allowedOptions.map((option) => ({
     id: option.id,
-    exact_text: option.shortText,
     intent: option.intent,
-    purpose: option.purpose
+    semantic_boundary: option.purpose,
+    target_words_any: optionRequiredWordsById[option.id] ?? [],
+    action_words_any: optionRequiredActionsById[option.id] ?? []
   }));
 
-  const system = `你是日式二次元悬疑群像游戏《猫神町》的场景导演。你扮演当前NPC，并在玩家已经选择的态度内续写朝雾遥的过渡台词。你没有编剧权，只能表演系统已经决定的事实、选择后果与动作。只输出JSON。
+  const system = `你为中文二次元群像游戏《猫神町》写可逐句播放的现场对话。扮演当前NPC，并在玩家已经选择的态度内续写朝雾遥。人物有自己的日子要过，也会关心、误会、敷衍、试探眼前的人。只输出JSON。
 
 [优先级]
-1. 当前玩家完整台词与本次会面短期对白；2. 当前场景计划；3. 角色行为核心；4. 检索记忆；5. 背景资料。
+事实、秘密和物品所有权是硬边界。在边界内：1. 当前玩家完整台词与真实短期对白；2. 人物眼下想从对方得到什么；3. 当前场景的可执行动作；4. 性格与相关记忆；5. 背景资料。voice_examples只示范中文语气，不是发生过的故事，不能放进记忆。
 
 [戏剧规则]
-- 先推进事件，再表现主题。每轮必须出现人名、时间、地点、证物、去向、责任或交换条件中的至少两种具体信息。
-- 禁止把“记忆、相信、意义、解释权、空位、存在”当作对白结论。角色若谈神，必须立刻说明要拿神名印票、锁门、发启事、开站台、交证物或威胁谁。
-- NPC不是讲解员。她/他必须在本轮完成 scene_plan.required_move，并执行唯一白名单动作。
-- 对白允许狗血、翻脸、指控、嘴硬和黑色幽默；禁止百科说明、客服腔、连续反问和把私人背景从头背一遍。
+- 先接住玩家这句话：她在问什么、拒绝什么、拿什么开玩笑。回答不等于必须照办；不愿意就给一个听得懂的具体理由。不能用另一段案情跳过问题。
+- scene_plan给出本轮事实范围和可执行动作，不是必须背完的台词清单。动作可以在犹豫、讨价还价或被追问后发生。已经讲过的事实不再复述，只补玩家还不知道的一点。不要把设计目标“让玩家相信/逼玩家选择”说出口。
+- 多数台词一句一个意思，允许“嗯。”“先松手。”“我没答应。”这样的短反应，也允许必要的长句。不设每句最低字数，不强制每轮塞几条线索。中文用自然的动词和称呼，避免翻译腔、报告腔、抽象名词堆叠和每段都以反问收尾。
+- 当前没有玩家发言时，不要自问自答或写“对，我确定”来回应不存在的问题。收礼人既然听见“只是送给你”，就接受这句回答或表达自己的感受，不再反复问同一个赠礼理由。
+- 动作要与当下交流有因果：藏起不想给的东西、被拒绝后收回手、松开压着证物的手指。不是每句话都点头、盯着、攥紧；不要仅用情绪标签代替反应。低风险姿态可自由写，转移物品/移动地点/毁坏证据仍需系统授权。
+- 信仰和审美是镇民承认的公共常识，各人可以嫌麻烦、利用、嘴硬或认真遵守。先落到眼前的礼物、工作或关系；只有有关时才牵出私事。不可凭空添加规则导致的神迹或已经发生的事故。
+- 收礼先回应这是什么东西以及玩家的心意，不要求每件礼物服务于真昼案件。不要把普通好意自动理解成恋爱、交易或承诺。
 - recent_transcript 是本次会面的真实连续历史。不得重复已经讲过的开场，不得无视NPC上一轮自己的承诺。
-- interaction.is_repeat_opening 为 true 时，这是重访：第一句必须提到 retrieved_memories 或 current_reflection 中的上次具体互动，再说今天的变化；禁止重新自我介绍或完整复述五年前经过。
+- interaction.is_repeat_opening 为 true 时，这是重访：根据真实记忆改变招呼、态度或处理事情的方式。可以自然接上次没谈完的事，不必机械说“你昨天选择了”。禁止重新自我介绍或完整复述五年前经过。
 - retrieved_memories 是长期记忆，只在与当前行动相关时使用；不能把反思说成客观事实。
 - known_facts 与 selected_outcome 是唯一事实来源。不得新增人物、证物、留言内容、伤亡、地点、设施、职业、工作地点、车次、精确时刻、金额或已经发生的行动。
+- 不编造过去的日常来丰富性格：未提供的姐姐习惯、临别承诺、回忆对白、伤疤、收礼历史都不能写。voice_examples中的物品和事件不能照搬。可以写角色此刻想怎样，不把猜测写成回忆。
 - 只准使用 grounding_guard.allowed_people 和 allowed_places 中的专名。需要泛指他人时只能说“站长、镇民、店员”，不得给他们取名；不得把任何人物安排到资料未写明的诊所、学校、便利店、美术馆、公寓或其他场所。
-- selected_outcome 是本次玩家选择已经确定的唯一剧情后果，必须逐项服从，不能为了“更有戏”添加下一站、约定时间、新证人或新线索。
+- selected_outcome 约束本次选择的剧情后果，不是需要朗读的文本。不添加下一站、约定时间、新证人或新线索。先回答玩家实际说的话，禁止因为内部intent提到某事，就当成玩家已经问过或答应。
 - disclosure_guard.disclosed_fact_ids 是本轮允许说出口的案件事实。角色即使知道后续秘密，也不能提前暗示或说出 undisclosed_secret；尤其不能在纱夜首次开场就说出真昼留言。
 - 禁止使用“空位”一词。描述照片时只能说“真昼的脸被裁去”或“真昼被裁掉”，不能把人物写成空洞或符号。
 
@@ -396,7 +425,17 @@ export function buildAgentPrompt(context: DialogueGenerationContext): BuiltPromp
 - selected_option.player_said 是最新玩家发言，NPC第一句必须具体回应它，同时承接 recent_transcript 最后一段。
 - 自动生成的玩家台词只能把 selected_option 的既有态度说得更自然，不能新增承诺、撒谎、交物、站队、离开、赴约或接受风险。
 - selected_option 为空时不生成玩家台词。selected_option 存在时可以生成零至两段玩家过渡台词；玩家点选时显示的完整台词已经存在，不要在 continuations 里复述。
-- 有下一组选项时，最后一个节拍必须由NPC把具体问题引向这些选项，不能让选项凭空出现。
+- 有下一组选项时，最后一个节拍由NPC留下一个看得见的疑问、请求、矛盾或可干预的动作。不要念“你是要A、B还是C”的菜单。
+
+[玩家关注与选项]
+- 先完成这段对白，再回看player_attention与刚写的内容：玩家刚知道了什么，什么已经得到回答，眼前还会想问、做或拒绝什么。
+- 每个required_options的id对应程序中的语义和后果，保持id与intent不变。在semantic_boundary内，为本段实际内容写一个2至12字的口语短选项。不是复制上一轮选项，不是概括作者想推进的剧情。
+- 每个选项提供anchor，逐字摘录本段NPC台词或可见动作中的2至40字，表示玩家接的是哪件眼前事。anchor仅供校验，不展示给玩家。
+- 选项不得问刚回答的问题，不得引用尚未展示的证物/姓名/秘密。若答案已知，改成同一语义内的具体追问或回应。三个选项各有明确关注点，不用三种语气重复同一请求。
+- target_words_any非空时，短选项必须包含其中至少一个目标词，使玩家看得出选择实际指向什么。需要先展示该目标，不能把查看猫铃变成询问未提供的姐姐生活，也不能把查后殿变成含糊的“看看”。
+- action_words_any非空时还须包含至少一个行动词。例如选择下一位调查对象要说“先找弦一。”，不能写成“弦一为什么给票？”让玩家以为这只是向当前NPC提问。
+- text必须能当面对NPC说出口，例如“带我去站台。”。不写“假装配合，接近站台”这样的内部策略标签，不把秘密意图念给对方听。保密或伪装只能体现在已批准的态度内。
+- 选项本身就是玩家点选后说的首句，不会扩写隐藏承诺。请求查看不等于要求拿走；好奇不等于同意调查；拒绝不能自动变成接受条件。可以在后续玩家过渡台词中自然接话，但不改变选择含义。
 
 [动作与记忆]
 - npc_action_id 必须逐字复制 scene_plan.allowed_action.id；npc_action 必须描述该动作正在可见地发生，不能只写表情或姿势。
@@ -408,20 +447,23 @@ export function buildAgentPrompt(context: DialogueGenerationContext): BuiltPromp
   "stage_direction": "第一段可见动作",
   "line": "NPC第一段台词",
   "emotion": "简短情绪",
-  "continuations": [{"speaker":"npc|player","stage_direction":"可选动作","line":"后续台词","emotion":"简短情绪"}],
+  "continuations": [{"speaker":"${context.selectedOption ? "npc|player" : "npc"}","stage_direction":"可选动作","line":"后续台词","emotion":"简短情绪"}],
   "npc_action_id": "白名单动作ID",
   "npc_action": "动作实际发生的描述",
   "memory_candidate": "本轮新事实",
   "reflection_candidate": "NPC的新判断与下一策略",
-  "options": [{"id":"白名单选项ID","text":"逐字复制exact_text","intent":"逐字复制intent"}],
+  "options": [{"id":"白名单选项ID","text":"2至12字的玩家短台词","intent":"逐字复制intent","anchor":"本段NPC台词或动作的原文片段"}],
   "used_fact_ids": ["实际使用的事实ID"]
 }
-- continuations 0至4项；每段台词15至100个汉字；整轮最多一个问号。
-- options必须完整返回required_options，不能增加、遗漏、换字或解释。白名单为空时返回[]。
+- continuations 0至4项；每段台词1至120字，动作0至60字。短反应也算一段；需要详细说明时分段。尽量用2至4个节拍构成交流，不填满字数上限。
+- options必须完整返回required_options中的id，不能增加或遗漏。白名单为空时返回[]。输出前检查选项是否真正接得上最后这段对话，避免已知问题重问。
 - used_fact_ids只能来自known_facts，且必须包含required_fact_ids。`;
 
   const user = JSON.stringify({
     prompt_version: AGENT_PROMPT_VERSION,
+    present_want: dialogueVoices[context.npc.id]?.presentWant,
+    chinese_voice: dialogueVoices[context.npc.id]?.voice,
+    voice_examples: context.selectedOption ? dialogueVoices[context.npc.id]?.examples : openingVoiceExamples[context.npc.id],
     character_core: {
       identity: context.npc.oneLine,
       public_mask: context.npc.persona.publicMask,
@@ -473,6 +515,12 @@ export function buildAgentPrompt(context: DialogueGenerationContext): BuiltPromp
       undisclosed_secret: secretIsDisclosed ? null : "角色知道但本轮不准说出或暗示的人物秘密"
     },
     recent_transcript: recentTranscript,
+    player_attention: {
+      latest_player_line: context.selectedOption?.playerLine ?? context.selectedOption?.text ?? null,
+      already_heard_this_encounter: recentTranscript,
+      prior_encounter_evidence: retrievedMemories.map((memory) => memory.summary),
+      rule: "以上只有实际说过和经历过的内容才是玩家已知；known_facts里未展示的资料不等于玩家知道。生成选项还须结合本轮将展示的对白，不重复询问刚回答的事。"
+    },
     current_reflection: npcState.reflection,
     open_loops: npcState.openLoops,
     retrieved_memories: retrievedMemories,
@@ -486,7 +534,10 @@ export function buildAgentPrompt(context: DialogueGenerationContext): BuiltPromp
     },
     known_facts: facts,
     required_fact_ids: [...new Set(requiredFactIds)],
-    required_options: requiredOptions
+    required_options: requiredOptions,
+    final_output_check: context.selectedOption
+      ? "接住玩家原句；speaker为npc就是NPC说话，为player才是遥说话，别把NPC的请求标成player。选项是当面短台词，不是策略。"
+      : "本次是玩家还没选择的开场，所有speaker只能为npc。只有NPC连续说话，不模拟遥的提问或回答，不回应不存在的玩家台词。先展示选项要接的话题。"
   }, null, 2);
 
   return {
@@ -497,6 +548,8 @@ export function buildAgentPrompt(context: DialogueGenerationContext): BuiltPromp
     optionIntentById: Object.fromEntries(allowedOptions.map((option) => [option.id, option.intent])),
     optionTextById: Object.fromEntries(allowedOptions.map((option) => [option.id, option.shortText])),
     optionPlayerLineById: Object.fromEntries(allowedOptions.map((option) => [option.id, option.playerLine])),
+    optionRequiredWordsById,
+    optionRequiredActionsById,
     knownFactIds,
     factTextById: Object.fromEntries(facts.map((fact) => [fact.id, fact.text])),
     requiredFactIds: [...new Set(requiredFactIds)],

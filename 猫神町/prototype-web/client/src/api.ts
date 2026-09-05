@@ -25,11 +25,21 @@ async function readError(response: Response): Promise<string> {
 }
 
 async function request<T>(path: string, schema: { parse: (input: unknown) => T }, body?: unknown): Promise<T> {
-  const response = await fetch(path, {
-    method: body === undefined ? "GET" : "POST",
-    headers: body === undefined ? undefined : { "Content-Type": "application/json" },
-    body: body === undefined ? undefined : JSON.stringify(body)
-  });
+  let response: Response | undefined;
+  // Only retry idempotent reads during the local dev server's hot-restart window.
+  // Never replay a gift, choice or time-consuming action.
+  for (let attempt = 0; attempt < (body === undefined ? 4 : 1); attempt++) {
+    try {
+      response = await fetch(path, {
+        method: body === undefined ? "GET" : "POST",
+        headers: body === undefined ? undefined : { "Content-Type": "application/json" },
+        body: body === undefined ? undefined : JSON.stringify(body)
+      });
+      if (response.status < 500 || body !== undefined) break;
+    } catch (e) { if (body !== undefined || attempt === 3) throw e; }
+    if (attempt < 3) await new Promise(resolve => setTimeout(resolve, 400 * (attempt + 1)));
+  }
+  if (!response) throw new Error("服务暂时不可用，请稍后刷新。");
   if (!response.ok) throw new Error(await readError(response));
   return schema.parse(await response.json());
 }
@@ -44,8 +54,14 @@ export const gameApi = {
   reset: (): Promise<GameActionResponse> => request("/api/game/reset", GameActionResponseSchema, {}),
   travel: (locationId: string): Promise<GameActionResponse> =>
     request("/api/game/travel", GameActionResponseSchema, { locationId }),
-  startEncounter: (): Promise<GameActionResponse> =>
-    request("/api/game/start-encounter", GameActionResponseSchema, {}),
+  startEncounter: (npcId: string): Promise<GameActionResponse> =>
+    request("/api/game/start-encounter", GameActionResponseSchema, { npcId }),
+  nextBeat: (): Promise<GameActionResponse> => request("/api/game/next-beat", GameActionResponseSchema, {}),
+  inspect: (itemId: string, take = false): Promise<GameActionResponse> => request("/api/game/inspect", GameActionResponseSchema, { itemId, take }),
+  present: (itemId: string): Promise<GameActionResponse> => request("/api/game/present", GameActionResponseSchema, { itemId }),
+  tellRetraction: (): Promise<GameActionResponse> => request("/api/game/tell-retraction", GameActionResponseSchema, {}),
+  incidentChoice: (optionId: string): Promise<GameActionResponse> => request("/api/game/incident-choice", GameActionResponseSchema, { optionId }),
+  wait: (minutes = 30): Promise<GameActionResponse> => request("/api/game/wait", GameActionResponseSchema, { minutes }),
   leaveLocation: (): Promise<GameActionResponse> =>
     request("/api/game/leave-location", GameActionResponseSchema, {}),
   waitUntilNight: (): Promise<GameActionResponse> =>
