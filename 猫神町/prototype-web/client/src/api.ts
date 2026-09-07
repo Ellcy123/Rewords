@@ -56,7 +56,9 @@ export const gameApi = {
     request("/api/game/travel", GameActionResponseSchema, { locationId }),
   startEncounter: (npcId: string): Promise<GameActionResponse> =>
     request("/api/game/start-encounter", GameActionResponseSchema, { npcId }),
-  nextBeat: (): Promise<GameActionResponse> => request("/api/game/next-beat", GameActionResponseSchema, {}),
+  nextBeat: (revision?: number): Promise<GameActionResponse> => request("/api/game/next-beat", GameActionResponseSchema, { revision }),
+  startHearts: (revision: number): Promise<GameActionResponse> => request("/api/game/hearts/start", GameActionResponseSchema, { revision }),
+  useHeart: (cardId: string | null, revision: number): Promise<GameActionResponse> => request("/api/game/hearts/use", GameActionResponseSchema, { cardId, revision }),
   inspect: (itemId: string, take = false): Promise<GameActionResponse> => request("/api/game/inspect", GameActionResponseSchema, { itemId, take }),
   present: (itemId: string): Promise<GameActionResponse> => request("/api/game/present", GameActionResponseSchema, { itemId }),
   tellRetraction: (): Promise<GameActionResponse> => request("/api/game/tell-retraction", GameActionResponseSchema, {}),

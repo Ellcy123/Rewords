@@ -2096,6 +2096,46 @@ button:disabled {
 }
 
 /* Expanded chapter: auto-flow locations and multiple people without overlap. */
+.heart-hand { margin: 24px 0; padding: 20px; border: 1px solid #bdb09b; border-radius: 16px; background: #f5eddf; }
+.heart-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.heart-heading strong { font-size: 18px; letter-spacing: 2px; }
+.heart-heading small, .heart-hint, .heart-trial-note { color: #736759; }
+.heart-hint, .heart-empty, .heart-trial-note { font-size: 13px; line-height: 1.7; }
+.heart-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 18px 0; }
+.heart-card { position: relative; display: flex; flex-direction: column; align-items: center; min-width: 0; padding: 12px 10px 16px; border: 1px solid #b3a48e; border-radius: 12px; background: #fffaf0; color: #39332e; transition: transform .18s, box-shadow .18s; }
+.heart-card:not(:disabled):hover { transform: translateY(-4px); }
+.heart-card.chosen { outline: 2px solid #94734d; outline-offset: 3px; box-shadow: 0 8px 18px #79664920; }
+.heart-card:disabled { opacity: .5; cursor: default; }
+.heart-card strong { font-size: 20px; letter-spacing: 4px; margin: 4px 0 8px; }
+.heart-card small { font-size: 12px; line-height: 1.6; text-align: center; }
+.heart-count { align-self: flex-end; font-size: 11px; color: #78694f; }
+.heart-art { width: 80px; height: 85px; display: block; position: relative; margin: 4px 0; }
+.heart-art i { position: absolute; display: block; border: 1px solid currentColor; }
+.heart-fear .heart-art { color: #6b7697; }
+.heart-fear .heart-art i { width: 36px; height: 60px; top: 10px; left: 21px; border-radius: 50% 40% 50% 35%; transform: rotate(18deg); }
+.heart-fear .heart-art i:nth-child(2) { transform: rotate(-24deg) scale(.76); }
+.heart-fear .heart-art i:nth-child(3) { transform: rotate(30deg) scale(.48); background: #6b769715; }
+.heart-sympathy .heart-art { color: #70896e; }
+.heart-sympathy .heart-art i { width: 54px; height: 32px; top: 36px; left: 13px; border-radius: 0 0 60% 60%; border-top: 0; }
+.heart-sympathy .heart-art i:nth-child(2) { top: 20px; transform: scale(.68); }
+.heart-sympathy .heart-art i:nth-child(3) { width: 9px; height: 9px; border: 1px solid; border-radius: 50%; top: 18px; left: 35px; background: #70896e20; }
+.heart-affection .heart-art { color: #b3746d; }
+.heart-affection .heart-art i { width: 36px; height: 48px; top: 19px; left: 11px; border-radius: 50%; transform: rotate(-25deg); background: #b3746d0d; }
+.heart-affection .heart-art i:nth-child(2) { left: 32px; transform: rotate(25deg); }
+.heart-affection .heart-art i:nth-child(3) { width: 5px; height: 5px; left: 36px; top: 40px; border: 0; background: #b3746d; }
+.heart-preview { padding: 14px; background: #fffaf0; border-radius: 10px; margin-bottom: 14px; }
+.heart-preview p, .heart-preview blockquote { font-size: 13px; line-height: 1.7; margin: 0 0 12px; overflow-wrap: anywhere; }
+.heart-preview blockquote { color: #786956; border-left: 2px solid #bdab8b; padding-left: 10px; }
+.heart-preview button, .heart-listen { padding: 10px 14px; border-radius: 8px; border: 1px solid #8d795e; background: #ede0c9; }
+.heart-preview .heart-cancel { margin: 8px 0 0 8px; background: transparent; }
+.heart-listen { width: 100%; background: transparent; }
+.heart-listen small { margin-left: 8px; color: #756b5f; }
+.heart-pickup { padding: 12px 16px; border: 1px solid #baa784; border-radius: 9px; background: #ece3d0; color: #67543b; animation: heart-arrive .35s ease-out; }
+.heart-pending { color: #78634b; font-size: 13px; }
+.meeting-actions .heart-entry { border-color: #9e8053; background: #ede2ce; }
+@keyframes heart-arrive { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) { .heart-pickup { animation: none; } .heart-card { transition: none; } }
+@media (max-width: 600px) { .heart-hand { padding: 12px; } .heart-cards { gap: 8px; } .heart-card { padding: 8px 5px 12px; } .heart-art { transform: scale(.8); height: 72px; } .heart-card strong { font-size: 18px; letter-spacing: 2px; } .heart-heading { flex-wrap: wrap; } }
 .map-grid { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); grid-template-rows: auto; gap: 22px; min-height: 340px; }
 .map-grid .location-card { grid-column: auto; grid-row: auto; min-height: 150px; }
 .chibi-row { position: relative; right: auto; bottom: auto; left: auto; padding: 20px 16px 32px; flex-wrap: wrap; }
@@ -2106,3 +2146,13 @@ button:disabled {
   .chibi-card { width: 140px; }
   .bottom-nav button { width: 52px; }
 }
+.meeting-plans { padding: 14px 20px; margin-bottom: 18px; border: 1px solid #aa916f; border-radius: 12px; background: #f3ead8; }
+.meeting-plans p { margin: 8px 0 0; line-height: 1.6; }
+.meeting-plans small { color: #78654f; }
+.narration-panel .portrait-placeholder { filter: saturate(.55); }
+.narration-panel .dialogue-content { background: #f1eadc; }
+.narration-beat { min-height: 150px; padding: 28px 10px 24px; display: flex; align-items: flex-start; gap: 18px; animation: narration-in .22s ease-out; }
+.narration-beat > span { color: #9c805b; padding-top: 7px; }
+.narration-beat p { margin: 0; font-size: 20px; line-height: 1.9; letter-spacing: .06em; color: #655b4b; }
+@keyframes narration-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) { .narration-beat { animation: none; } }

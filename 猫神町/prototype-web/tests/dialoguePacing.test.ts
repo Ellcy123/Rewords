@@ -1,3 +1,4 @@
+import { dialoguePlaybackFinished } from "../packages/shared/src/index.ts";
 import { describe, it, expect, vi } from "vitest";
 import { createInitialState, GameService } from "../server/src/gameService.ts";
 import { CaseDialogueProvider, buildCasePrompt, fallbackDialogue, type CaseContext } from "../server/src/caseProvider.ts";
@@ -23,7 +24,7 @@ const body = (extra = {}) => ({ line: "谢谢。今天先说这些，我去扫�
 const response = (value: unknown) => new Response(JSON.stringify({ choices: [{ finish_reason: "stop", message: { content: JSON.stringify(value) } }] }));
 async function readAll(g: GameService) {
   let s = g.getState();
-  while (s.currentDialogue && s.dialogueBeatIndex < s.currentDialogue.continuations.length + Number(!!s.lastPlayerChoice)) {
+  while (s.currentDialogue && !dialoguePlaybackFinished(s)) {
     await g.nextDialogueBeat(); s = g.getState();
   }
 }

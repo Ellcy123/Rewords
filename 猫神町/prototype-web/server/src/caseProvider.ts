@@ -3,8 +3,10 @@ import { encounterPacing, characterFarewell } from "./dialoguePacing.ts";
 import { randomUUID } from "node:crypto";
 import { demoBootstrap, DialogueResultSchema, EndingResultSchema, type AiLogEntry, type AiProviderStatus, type DialogueOption, type DialogueResult, type EndingResult, type GameState, type Item } from "../../packages/shared/src/index.ts";
 import { availableActions, characters, evidence, facts } from "./caseData.ts";
+import { buildHeartPrompt, validateHeartDraft, heartResult, mockHeartDialogue, type HeartContext } from "./heartDialogue.ts";
+import { SPARSE_NARRATION_GUIDANCE } from "./narrationPrompt.ts";
 
-export const CASE_PROMPT_VERSION = "sunset-v4-graceful-conversation";
+export const CASE_PROMPT_VERSION = "sunset-v7-named-major-actions";
 export class DialogueGenerationError extends Error {
   constructor() { super("这次回复没能生成成功，会面还没结束。原选项和进度已保留，请重试刚才的选择。"); }
 }
@@ -12,6 +14,7 @@ export const CASE_PROMPT_STRUCTURE = ["角色行为和自然中文示例", "仅�
 export type CaseContext = { state: GameState; npcId: string; mode: "talk" | "gift"; selectedOption: DialogueOption | null; giftItem: Item | null; effect: string };
 export type PlanIntent = "approach" | "threaten" | "attack" | "withdraw";
 export interface CaseProvider {
+  generateHearts?(context: HeartContext): Promise<DialogueResult>;
   generate(context: CaseContext): Promise<DialogueResult>;
   plan(state: GameState, npcId: "npc_ritsu"): Promise<PlanIntent>;
   planWitness?(state: GameState): Promise<"wait" | "write" | "notify_ritsu" | "notify_police">;
@@ -84,15 +87,16 @@ export function buildCasePrompt(c: CaseContext) {
     system: [
       "你在写中文角色扮演游戏里的现场对话。像人说话，不像解说员。返回JSON。",
       "先接玩家刚说的这句话，再往下演。短句可以不完整，允许打断、迟疑、反问，但不要每句省略号。",
-      "通常一段2至5个对白节拍，但不能超过conversation_pacing.maxGeneratedLines；收尾只剩1句时允许1句。每个节拍只做一件事。用拿东西、倒茶、收报纸等具体动作承接情绪，禁止空泛气氛描写和谜语。",
+      "通常一段2至5个对白节拍，但不能超过conversation_pacing.maxGeneratedLines；收尾只剩1句时允许1句。每个节拍只做一件事。禁止空泛气氛描写和谜语；line仅台词，stage_direction默认留空，只写确实改变现场的大动作，小动作和微表情不展示。",
+      SPARSE_NARRATION_GUIDANCE,
       "会面不是无限聊天：总计最多24句（玩家和NPC每个显示节拍各算1句，不按标点计数），约18句开始收尾，最多5次玩家选择。以conversation_pacing的计数为准，不要自行重新计数或对玩家报预算。",
       "conversation_pacing.mustClose=true时，本段必须先接玩家本句，再由NPC用符合人设和当前状况的理由结束会面，options必须为空，closing_reason说明缘由。末句不能问问题、邀玩家再追问或展开新线索。",
       "收尾可以去做职业杂务、收拾手头东西、借故避谈或需要独处休息。参考farewell_hint.reason与语气，自然改写，避免七个人同一句‘今天先这样’。不得编造新客户、电话、预约、证物或已发生的离场。受伤者不能突然恢复工作。",
-      "未到上限也可自然结束。若options为空，也要有角色自己的告别理由与动作；收尾的离开意向不直接改变NPC位置或推进游戏时间。",
+      "未到上限也可自然结束。若options为空，也要有角色自己的告别理由；旁白只写真正改变现场的大动作，不是收尾必填。收尾的离开意向不直接改变NPC位置或推进游戏时间。",
       "role.lead只是初次开场的切入口，不是每轮必须回到的话题。已有交谈先接最近的实际经历；选了分支就继续当前问题，不能重新介绍或重开话题菜单。",
       "玩家首句已由UI播放，不要重复替玩家再说一次。后续可让玩家说话，但只能延续所选态度，不可替玩家承诺、定罪、赠礼或选新的立场。",
       "主角后续并非必须说话。玩家选‘那不是你的错’是安慰，不是授权主角追问新案情、盘问细节或保证查清凶手；让NPC接住安慰，是否继续追问留到下一决策点。",
-      "conversation_pacing.stage=developing时，优先让眼前问题得到充分回应，不因为一句安慰或暂时不知道答案就突然告别。winding_down时先收拢当前话题，可用自然小动作透露稍后要忙，仍让玩家回应一次。closing时才回应最后的选择、接住情绪、做一件收拾动作并告别，通常2至4个节拍（以剩余额度为准），不要一句‘去干活’替代玩家正在等的回答。",
+      "conversation_pacing.stage=developing时，优先让眼前问题得到充分回应，不因为一句安慰或暂时不知道答案就突然告别。winding_down时先收拢当前话题，仍让玩家回应一次。closing时才回应最后的选择、接住情绪并自然告别，动作不是必需，通常2至4个节拍（以剩余额度为准），不要一句‘去干活’替代玩家正在等的回答。",
       "player_just_said为空时是开场，所有节拍只能由NPC说话，绝不能替尚未选择的玩家发问、选材料或回答。首次见面先自然介绍自己并确认遥的来意，不当作已聊了一半。",
       "别编造玩家以前见过谁、是谁让玩家来的。主角后续台词只能用刚听到的信息和player_read_materials里的信息，不可使用NPC私下知道的秘密。",
       "不知道车票购买时间、目的地、吵架后具体行为时就说不清楚，不能为了接话补出新公司、工作安排、电话、星期或案发前几天等经历。不替角色讲出未知道的真相。知道事实不等于愿意坦白，可以撒谎或回避，但不得编造新证物、死亡方式、地点、人物或既成行为。",
@@ -107,7 +111,7 @@ export function buildCasePrompt(c: CaseContext) {
       "任何看/拿材料的选项，都要求NPC本段或上一段实际说过该材料的名称；不能只自我介绍就冒出委托单、车票等玩家没听过的东西。",
       "accept_action控制是否同意本次具体请求。无请求则false。未同意不能声称已经展示、交付或签字；同意则围绕请求说话，正式物品内容和状态由系统落实。",
       "收到show:请求就是玩家请求查看；take:请求是索要实物。如果说看吧、把材料摊开/递到玩家面前，就是同意，必须accept_action:true。拒绝请明确说暂时不给看，不要一边递出一边false。材料归属以held_materials为准，不能把自己持有的副本说成只有别人那里才有。",
-      'JSON结构：{"line":"NPC首句","stage_direction":"动作","emotion":"情绪","continuations":[{"speaker":"npc或player","line":"台词","stage_direction":"动作","emotion":"情绪"}],"options":[{"text":"短接话","intent":"玩家本次具体意图","angle":"角度","action_id":null}],"used_fact_ids":["本轮使用事实ID"],"accept_action":false}'
+      'JSON结构：{"line":"NPC首句","stage_direction":"","emotion":"情绪","continuations":[{"speaker":"npc或player","line":"台词","stage_direction":"","emotion":"情绪"}],"options":[{"text":"短接话","intent":"玩家本次具体意图","angle":"角度","action_id":null}],"used_fact_ids":["本轮使用事实ID"],"accept_action":false}'
     ].join("\n"),
     user: JSON.stringify({
       role: { name: demoBootstrap.npcs.find(n => n.id === c.npcId)!.name, ...core, known: undefined,
@@ -116,7 +120,7 @@ export function buildCasePrompt(c: CaseContext) {
       allowed_facts: Object.fromEntries(known.map(id => [id, facts[id]])),
       correction: c.npcId === "npc_chiyo" ? "只知道信里的离町计划，不知道两张票，除非玩家展示过E01。" : undefined,
       current: { day: c.state.day, minute: c.state.currentMinute, location: demoBootstrap.locations.find(l => l.id === c.state.currentLocationId)?.name,
-        rule: c.state.activeRules, health: runtime.lifeState, relationship: runtime.relationship },
+        rule: c.state.activeRules, health: runtime.lifeState, relationship: runtime.relationship, actionPlan: runtime.actionPlan },
       town_places: demoBootstrap.locations.map(l => ({ name: l.name, description: l.description })),
       public_contacts: demoBootstrap.npcs.map(n => ({ name: n.name, occupation: n.occupation })),
       first_meeting: runtime.memories.length === 0,
@@ -142,7 +146,7 @@ export function buildCasePrompt(c: CaseContext) {
       player_read_materials: c.state.evidenceJournal.map(e => ({ name: e.name, text: e.text })),
       output_example: {
         line: c.selectedOption ? "请在这里直接回应玩家本句请求，不要照抄此占位文字" : "请用角色口气自我介绍后引出lead里的具体事情，不要照抄此占位文字",
-        stage_direction: "放下手里的东西，看向你。", emotion: "平静", continuations: [],
+        stage_direction: "", emotion: "平静", continuations: [],
         options: [], used_fact_ids: [], accept_action: false, closing_reason: ""
       },
       requested_material: /^(show:|take:)/.test(c.effect) ? evidence[c.effect.split(":")[1]]?.text : undefined,
@@ -232,7 +236,7 @@ export class CaseDialogueProvider implements CaseProvider {
   }
   getStatus(): AiProviderStatus { return { targetNpcId: "all_case_npcs", configured: !!this.options.apiKey, provider: this.options.apiKey ? "deepseek" : "mock", model: this.options.model, promptVersion: CASE_PROMPT_VERSION }; }
   getLogs() { return structuredClone(this.logs); }
-  private async request<T>(npcId: string, mode: AiLogEntry["mode"], system: string, user: string, validate: (draft: unknown) => T | Promise<T>): Promise<T | null> {
+  private async request<T>(npcId: string, mode: AiLogEntry["mode"], system: string, user: string, validate: (draft: unknown) => T | Promise<T>, retryInstruction?: string): Promise<T | null> {
     if (!this.options.apiKey) return null;
     const started = Date.now();
     let attempt = 0;
@@ -246,7 +250,7 @@ export class CaseDialogueProvider implements CaseProvider {
           signal: AbortSignal.timeout(this.options.timeoutMs),
           body: JSON.stringify({ model: this.options.model, temperature: mode === "review" ? 0 : 0.65, max_tokens: mode === "ending" ? 2400 : 1800,
             thinking: { type: "disabled" }, response_format: { type: "json_object" },
-            messages: [{ role: "system", content: system }, { role: "user", content: user + (attempt ? "\n上次失败代码：" + failureCode + (repairHint ? "；具体问题：" + repairHint : "") + "。修正：开场只能NPC说话；options生成2至3个承接本段末尾NPC原话的短选项（或自然结束为空）；不能返回已选/错过话题，不利用未说出口的私密事实出选项；action_id只能用合法动作或null；使用给定事实ID；出示/递出所请求材料必须accept_action=true。" : "") }] })
+            messages: [{ role: "system", content: system }, { role: "user", content: user + (attempt ? "\n上次失败代码：" + failureCode + (repairHint ? "；具体问题：" + repairHint : "") + (retryInstruction ?? "。修正：开场只能NPC说话；options生成2至3个承接本段末尾NPC原话的短选项（或自然结束为空）；不能返回已选/错过话题，不利用未说出口的私密事实出选项；action_id只能用合法动作或null；使用给定事实ID；出示/递出所请求材料必须accept_action=true。") : "") }] })
         });
         if (!r.ok) { failureCode = "http_" + r.status; if ([401,403,402].includes(r.status)) break; throw new Error("http_error"); }
         const body = await r.json() as { choices?: { finish_reason: string; message: { content: string } }[] };
@@ -257,7 +261,7 @@ export class CaseDialogueProvider implements CaseProvider {
         repairHint = error instanceof DialogueValidationError ? error.repairHint.slice(0, 300) : "";
         const safe = ["unselected_player_speech", "unknown_fact", "invalid_choice", "unintroduced_material", "legacy_case", "incomplete", "action_mismatch", "timeline_mismatch", "new_case_fact", "player_intent", "ownership", "review_unavailable", "branch_rewind", "off_topic", "option_intent", "conversation_closing", "dialogue_length"];
         if (error instanceof z.ZodError) { failureCode = "schema_validation"; repairHint = error.issues.map(i => i.path.join(".") + ": " + i.message).slice(0, 3).join("; ").slice(0, 300); }
-        else if (error instanceof Error && safe.includes(error.message)) failureCode = error.message;
+        else if (error instanceof Error && [...safe, "invalid_pickup", "decision_point", "invalid_action_plan"].includes(error.message)) failureCode = error.message;
         else if (error instanceof SyntaxError) failureCode = "invalid_json";
       }
     }
@@ -335,6 +339,31 @@ export class CaseDialogueProvider implements CaseProvider {
     // A technical failure is not an NPC's decision to leave. Keep the current node retryable.
     if (!result && this.options.apiKey && c.selectedOption && !p.pacing.mustClose) throw new DialogueGenerationError();
     return result ?? fallbackDialogue(c);
+  }
+  async generateHearts(c: HeartContext): Promise<DialogueResult> {
+    if (!this.options.apiKey) return mockHeartDialogue(c);
+    const p = buildHeartPrompt(c, buildCasePrompt(c).user);
+    const result = await this.request(c.npcId, "talk", p.system, p.user, async raw => {
+      const d = validateHeartDraft(raw, c, p.known);
+      if (this.options.review) {
+        // Choice timing belongs only to the generator. Do not send its choice metadata
+        // or pending-choice guidance to the content reviewer for a second decision.
+        const { pending_choice: _pendingChoice, ...reviewContext } = JSON.parse(p.user);
+        const { choice_point: _choicePoint, ...reviewCandidate } = d;
+        const review = await this.request(c.npcId, "review",
+          '你只审查对白内容，不决定玩家何时选牌，不检查漏点或多余选择，不要求截停、补节点或重排对白。选牌时机由生成对白的AI独立决定，未逐句让玩家选择、NPC情绪强烈、遥继续回应都不是拒绝理由。只返回JSON {"approved":true或false,"reason":"none|new_case_fact|player_intent|ownership|off_topic|conversation_closing|invalid_pickup","issue":"具体内容违规原句与规则，合法时为空"}。遥和NPC可自由来回接话；listen是顺着聊而非沉默。问句、反问、安慰、口头承诺、答应、转告已知消息、赠礼提议、指责和表达爱意均允许，允许有惊喜的人际发展。不检查‘我+害怕’句式，不因恐惧仅由动作或迟疑体现而拒绝，不要求出牌有效、帮助对方或获得新牌。只检查：1案件事实及人物过去经历来自allowed_facts及已知材料，不凭空补写往事；人物当下观点和指责不是正式定罪。2角色不得凭空知道未收到的秘密；口头承诺合法，但不能把物品转移、签写、移动等未执行状态写成完成。3自然或强制收尾由NPC合理告别；尚在交流的NPC问题可以作为本段结尾，不要求遥必须在同段回答。4pickup非空时须有NPC自身明确情绪来源，悲伤自责不等于同情。player_intent只用于所选牌的表达态度明显不符，不得用来否决选牌时机或自然接话。不要沿用旧版禁止遥接话/禁止问句/禁止承诺的规则。',
+          JSON.stringify({ context: reviewContext, candidate: reviewCandidate,
+            extra_checks: "过去经历也需事实依据，不得编造姐姐怕黑、拍照回来开灯、临别行为等日常往事。这个试玩无材料动作，掏出票、展示票、递给遥看均不允许。后悔/自责/悲伤不是同情；同情是对他人处境的体谅。" }),
+          input => z.object({ approved: z.boolean(), reason: z.enum(["none", "new_case_fact", "player_intent", "ownership", "off_topic", "conversation_closing", "invalid_pickup", "decision_point"]), issue: z.string().max(1000) }).parse(input));
+        if (!review) throw new Error("review_unavailable");
+        // Ignore an out-of-scope legacy timing veto; never regenerate or move a
+        // generator-selected choice because the content reviewer disagrees with it.
+        if (review.reason !== "decision_point" && (!review.approved || review.reason !== "none")) throw new DialogueValidationError(review.reason === "none" ? "player_intent" : review.reason, review.issue);
+      }
+      return heartResult(d, c, "deepseek");
+    }, "。修正上述结构或内容问题，继续使用拾绪beats结构，最多5项且不超过maxGeneratedLines；出牌首句player，开场首句npc，随后双方可来回接话。listen也允许遥说话。问句、口头承诺和自然示好允许，不检查恐惧的固定句式。不生成options。选牌时机只由你根据语境决定，不服从内容审校对选牌时机的建议；若程序报告decision_point，只修复标记与NPC末句原文的对应、can_continue等结构矛盾，不按关键词决定是否需要表态。短段合法，不凑句数。同步检查pickup索引；普通段落和结束时choice_point=null，已授权的pending_choice要回应而非重复提问。不编造案件往事或把未执行系统动作写成完成。");
+    if (!result) throw new DialogueGenerationError();
+    return result;
   }
   async plan(state: GameState, npcId: "npc_ritsu"): Promise<PlanIntent> {
     if (!state.npcStates[npcId].knownFactIds.includes("R01")) return "withdraw";

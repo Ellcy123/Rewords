@@ -1,3 +1,4 @@
+import { dialoguePlaybackFinished } from "../packages/shared/src/index.ts";
 import { describe, expect, it, vi } from "vitest";
 import { CaseDialogueProvider, buildCasePrompt, fallbackDialogue, type CaseContext } from "../server/src/caseProvider.ts";
 import { createInitialState, GameService } from "../server/src/gameService.ts";
@@ -15,7 +16,7 @@ function context(): CaseContext {
 }
 async function readAll(g: GameService) {
   let s = g.getState();
-  while (s.currentDialogue && s.dialogueBeatIndex < s.currentDialogue.continuations.length + (s.lastPlayerChoice ? 1 : 0)) {
+  while (s.currentDialogue && !dialoguePlaybackFinished(s)) {
     await g.nextDialogueBeat(); s = g.getState();
   }
 }

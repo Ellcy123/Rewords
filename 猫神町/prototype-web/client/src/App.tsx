@@ -9,9 +9,10 @@ import {
   type GameState,
   type Item,
   type RuleSlotId,
-  resolvePlayerLine
+  resolvePlayerLine, separateDialogueText, narrationSentences, dialoguePlaybackFinished
 } from "../../packages/shared/src/index.ts";
 import { gameApi } from "./api.ts";
+import { HeartHand } from "./HeartHand.tsx";
 
 type ViewId = "map" | "location" | "inventory" | "journal" | "shrine" | "ending" | "debug";
 
@@ -167,6 +168,8 @@ export function App() {
       void gameApi.aiLogs().then(setAiLogs).catch(() => undefined);
     } catch (error) {
       setActionError(error instanceof Error ? error.message : "操作失败");
+      // A lost HTTP response may follow a committed spend. Recover, never replay the POST.
+      try { const recovered = await gameApi.state(); setGameState(recovered); setView(routeForState(recovered)); } catch { /* Keep last known state with the original error. */ }
     } finally {
       setPendingPlayerLine(null);
       setBusy(false);
@@ -213,30 +216,38 @@ export function App() {
     const visibleBeat = pendingPlayerLine
       ? { speakerId: player.id, line: pendingPlayerLine, stageDirection: undefined, emotion: "回应" }
       : dialogueBeats[visibleBeatIndex]!;
-    const isLastBeat = visibleBeatIndex === dialogueBeats.length - 1;
+    const isLastBeat = dialoguePlaybackFinished(state);
     const isPlayerBeat = visibleBeat.speakerId === player.id || visibleBeat.speakerId === "player";
     const visibleSpeakerName = isPlayerBeat ? player.name : activeNpc.name;
+    const display = separateDialogueText(visibleBeat.line, visibleBeat.stageDirection, visibleSpeakerName);
+    const isNarration = !isWaitingForNpc && state.dialogueNarrationIndex !== null;
+    const narrationText = isNarration ? narrationSentences(display.stageDirection)[state.dialogueNarrationIndex!] : null;
     const playerLineForOption = (option: DialogueOption) => resolvePlayerLine(option);
+    const canContinue = dialogue.heart?.canContinue ?? dialogue.options.length > 0;
+    const lastSpoken = state.eventLog.filter(e => e.type === "dialogue_generated" || e.type === "narration_generated").at(-1);
+    const pickup = state.eventLog.filter(e => e.type === "heart_gathered" && e.details.sourceEventId === lastSpoken?.id).at(-1);
     return (
-      <div className="dialogue-panel">
+      <div className={`dialogue-panel ${isNarration ? "narration-panel" : ""}`}>
         <div className={`portrait-placeholder ${isPlayerBeat ? "player-speaking" : ""}`} style={{ "--npc-accent": isPlayerBeat ? "#a7554b" : activeNpc.accent } as CSSProperties}>
           <span>{visibleSpeakerName.slice(0, 1)}</span>
-          <small>{isPlayerBeat ? "回应" : visibleBeat.emotion}</small>
+          <small>{isNarration ? "此刻" : isPlayerBeat ? "回应" : visibleBeat.emotion}</small>
         </div>
         <div className="dialogue-content">
           <div className="dialogue-name-row">
-            <strong>{visibleSpeakerName}</strong>
-            <span>{isPlayerBeat ? `主角 · ${modeLabel}` : `${dialogue.debug.provider === "deepseek" ? "DeepSeek" : dialogue.debug.provider === "mock_fallback" ? "Mock 保底" : "Mock"} · ${modeLabel}`}</span>
+            <strong>{isNarration ? "旁白" : visibleSpeakerName}</strong>
+            <span>{isNarration ? `此刻 · ${visibleSpeakerName}` : isPlayerBeat ? `主角 · ${modeLabel}` : `${dialogue.debug.provider === "deepseek" ? "DeepSeek" : dialogue.heart && dialogue.debug.provider === "mock" ? "固定演示对白" : dialogue.debug.provider === "mock_fallback" ? "Mock 保底" : "Mock"} · ${modeLabel}`}</span>
           </div>
-          {visibleBeat.stageDirection && <p className="stage-direction">{visibleBeat.stageDirection}</p>}
-          {isPlayerBeat
-            ? <p className="player-dialogue-line" aria-label={`${player.name}说`} key={`${visibleBeat.line}-${visibleBeatIndex}`}><span>{player.name}</span>{visibleBeat.line}</p>
-            : <p className="dialogue-line" key={`${visibleBeat.line}-${visibleBeatIndex}`}>{visibleBeat.line}</p>}
+          {isNarration
+            ? <div className="narration-beat" aria-label="旁白" aria-live="polite" key={`${visibleBeatIndex}-${state.dialogueNarrationIndex}-${narrationText}`}><span aria-hidden="true">◇</span><p>{narrationText}</p></div>
+            : isPlayerBeat
+              ? <p className="player-dialogue-line" aria-label={`${player.name}说`} key={`${display.line}-${visibleBeatIndex}`}><span>{player.name}</span>{display.line}</p>
+              : <p className="dialogue-line" key={`${display.line}-${visibleBeatIndex}`}>{display.line}</p>}
           {isWaitingForNpc && <p className="pending-response-note">{activeNpc.name}正在回应……</p>}
+          {dialogue.heart && pickup && <p className="heart-pickup" role="status" key={pickup.id}>✧ {pickup.details.text}</p>}
           {!isWaitingForNpc && !isLastBeat && (
             <div className="dialogue-continue-row">
-              <span>{visibleBeatIndex + 1} / {dialogueBeats.length}</span>
-              <button disabled={busy} type="button" onClick={() => void perform(gameApi.nextBeat)}>下一句 →</button>
+              <span>{isNarration ? "动作与神情 · 点击继续" : `${visibleBeatIndex + 1} / ${dialogueBeats.length}`}</span>
+              <button disabled={busy} type="button" onClick={() => void perform(() => gameApi.nextBeat(state.revision))}>下一句 →</button>
             </div>
           )}
           {isLastBeat && !isWaitingForNpc && dialogue.options.length > 0 && (
@@ -258,7 +269,11 @@ export function App() {
               ))}
             </div>
           )}
-          {isLastBeat && dialogue.options.length === 0 && !isWaitingForNpc && (
+          {isLastBeat && dialogue.heart?.canContinue && (dialogue.heart.choicePoint
+            ? <><p className="heart-choice-prompt">这一刻，你想以怎样的心绪回应？</p><HeartHand state={state} bootstrap={bootstrap!} busy={busy} onUse={cardId => void perform(() => gameApi.useHeart(cardId, state.revision))} /></>
+            : <div className="dialogue-continue-row"><span>{busy ? "两人的对话正在继续……" : "对话自然推进，重要时刻再选择心绪。"}</span><button disabled={busy} type="button" onClick={() => void perform(() => gameApi.useHeart(null, state.revision))}>继续对话 →</button></div>)}
+          {dialogue.heart && <p className="heart-trial-note">小春 · 首日试玩。先体验心绪交流；材料请求仍在原交谈中办理。</p>}
+          {isLastBeat && !canContinue && !isWaitingForNpc && (
             <p className="conversation-done">本次交谈已结束。返回场景，继续你的行程吧。</p>
           )}
           {isLastBeat && dialogue.options.length > 0 && !isWaitingForNpc && state.interactionMode === "talk" && (
@@ -275,7 +290,7 @@ export function App() {
             </details>
           )}
           <button className="end-meeting" disabled={busy} type="button" onClick={() => void perform(gameApi.completeEncounter)}>
-            {isLastBeat && dialogue.options.length === 0 ? "返回场景" : "结束本次会面"}
+            {isLastBeat && !canContinue ? "返回场景" : "结束本次会面"}
           </button>
         </div>
       </div>
@@ -326,6 +341,15 @@ export function App() {
       )}
 
       <main className="content-shell" aria-busy={busy}>
+        {Object.values(gameState.npcStates).some(n => n.actionPlan) && <aside className="meeting-plans" aria-label="会面约定">
+          <strong>会面约定</strong>
+          {Object.values(gameState.npcStates).filter(n => n.actionPlan).map(n => {
+            const p = n.actionPlan!;
+            const time = (v: number) => `第${Math.floor(v / 1440) + 1}天 ${formatClock(v % 1440)}`;
+            return <p key={p.id}>{bootstrap.npcs.find(npc => npc.id === n.npcId)?.name} · {bootstrap.locations.find(l => l.id === p.locationId)?.name} · {time(p.arriveAt)}，等到 {time(p.waitUntil)}
+              <small> · {{ planned: "已约定（不代表已到场）", waiting: "等待中", completed: "已见面", expired: "等候已结束", cancelled: "已取消" }[p.status]}</small></p>;
+          })}
+        </aside>}
         {view === "map" && (
           <section className="view map-view">
             <div className="view-heading">
@@ -468,6 +492,7 @@ export function App() {
               <div className="meeting-entry">
                 <div><span className="eyebrow">会面方式 · {formatClock(gameState.currentMinute)}</span><h2>与{activeNpc?.name}怎样开始？</h2><p>直接离开不再花时间。交谈会在开始时计时；选择赠礼可在确认交出前返回且不计时。</p></div>
                 <div className="meeting-actions">
+                  {activeNpc?.id === "npc_koharu" && <button className="heart-entry" disabled={busy || !canStartConversation} type="button" onClick={() => void perform(() => gameApi.startHearts(state.revision))}><strong>✧ 拾绪试玩 · {formatDuration(gameState.conversationDurationMinutes)}</strong><small>{busy ? "正在等待小春开口……" : "恐惧 · 同情 · 爱意，从对方的情绪开始"}</small></button>}
                   <button disabled={busy || !canStartConversation} type="button" onClick={() => void perform(() => gameApi.selectMode("talk"))}><strong>交谈 · {formatDuration(gameState.conversationDurationMinutes)}</strong><small>{canStartConversation ? "根据人设、当前情况与世界规则闲聊" : "今天剩余时间不足"}</small></button>
                   <button disabled={busy || inventoryItems.length === 0 || !canStartConversation} type="button" onClick={() => void perform(() => gameApi.selectMode("gift"))}><strong>赠送礼物 · {formatDuration(gameState.conversationDurationMinutes)}</strong><small>{!canStartConversation ? "今天剩余时间不足" : inventoryItems.length ? "确认礼物后计时，再围绕礼物交谈" : "背包里没有可赠送的东西"}</small></button>
                 </div>
@@ -475,7 +500,7 @@ export function App() {
               </div>
             )}
 
-            {gameState.interactionMode === "talk" && renderDialogue("交谈")}
+            {gameState.interactionMode === "talk" && renderDialogue(state.heartSession ? "拾绪" : "交谈")}
 
             {gameState.interactionMode === "gift" && !gameState.giftItemId && sceneNpc && (
               <div className="gift-panel">
@@ -503,6 +528,7 @@ export function App() {
 
         {view === "inventory" && (
           <section className="view inventory-view">
+            <HeartHand state={state} bootstrap={bootstrap} busy={busy} />
             <div className="view-heading"><div><span className="eyebrow">随身物品</span><h1>背包</h1></div><p>只显示仍属于你的物品。赠送或供奉后，它会立刻从这里消失。</p></div>
             <div className="inventory-layout">
               <div className="inventory-grid">

@@ -6,6 +6,7 @@ import {
   DemoBootstrapSchema,
   DialogueChoiceRequestSchema,
   GiftRequestSchema,
+  HeartActionRequestSchema,
   InteractionModeRequestSchema,
   RuleChangeRequestSchema,
   TravelRequestSchema,
@@ -14,12 +15,15 @@ import {
 import { GameRuleError, GameService } from "./gameService.ts";
 import { CaseDialogueProvider, CASE_PROMPT_STRUCTURE, CASE_PROMPT_VERSION } from "./caseProvider.ts";
 import { z } from "zod";
-import { SqliteGameStore } from "./persistence.ts";
+import { MemoryGameStore, SqliteGameStore } from "./persistence.ts";
+import { MeetingPreviewProvider } from "./meetingPreview.ts";
 
 dotenv.config({ path: fileURLToPath(new URL("../.env.local", import.meta.url)), quiet: true });
 const app = Fastify({ logger: true });
-const dialogueProvider = new CaseDialogueProvider();
-const gameService = new GameService(new SqliteGameStore(), dialogueProvider);
+// Opt-in isolated UI QA: deterministic, memory-only and a separate local port.
+const heartPreview = process.env.CAT_HEART_PREVIEW === "1";
+const dialogueProvider = heartPreview && process.env.CAT_MEETING_PREVIEW === "1" ? new MeetingPreviewProvider() : new CaseDialogueProvider(heartPreview ? { apiKey: "" } : {});
+const gameService = new GameService(heartPreview ? new MemoryGameStore() : new SqliteGameStore(), dialogueProvider, { heartTestPack: true });
 let gameActionQueue: Promise<void> = Promise.resolve();
 
 await app.register(cors, {
@@ -86,7 +90,14 @@ app.post("/api/game/start-encounter", async (request, reply) =>
   runGameAction(() => gameService.startEncounter(parseBody(z.object({ npcId: z.string().min(1) }), request.body).npcId), reply)
 );
 
-app.post("/api/game/next-beat", async (_request, reply) => runGameAction(() => gameService.nextDialogueBeat(), reply));
+app.post("/api/game/next-beat", async (request, reply) => runGameAction(() =>
+  gameService.nextDialogueBeat(parseBody(z.object({ revision: z.number().int().nonnegative().optional() }), request.body).revision), reply));
+app.post("/api/game/hearts/start", async (request, reply) => runGameAction(() =>
+  gameService.startHeartEncounter(parseBody(z.object({ revision: z.number().int().nonnegative() }), request.body).revision), reply));
+app.post("/api/game/hearts/use", async (request, reply) => runGameAction(() => {
+  const b = parseBody(HeartActionRequestSchema, request.body);
+  return gameService.useHeart(b.cardId, b.revision);
+}, reply));
 app.post("/api/game/inspect", async (request, reply) => runGameAction(() => {
   const b = parseBody(z.object({ itemId: z.string(), take: z.boolean().default(false) }), request.body);
   return gameService.inspectItem(b.itemId, b.take);
@@ -154,7 +165,7 @@ app.post("/api/game/end-day", async (_request, reply) =>
   runGameAction(() => gameService.endDay(), reply)
 );
 
-const port = Number(process.env.PORT ?? 8787);
+const port = heartPreview ? 8790 : Number(process.env.PORT ?? 8787);
 
 try {
   await app.listen({ host: "127.0.0.1", port });

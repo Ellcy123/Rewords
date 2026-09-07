@@ -13,6 +13,8 @@
     "start:server": "tsx server/src/index.ts",
     "record:dialogues": "tsx scripts/recordCaseDialogue.ts",
     "record:natural": "tsx scripts/recordCaseDialogue.ts",
+    "record:hearts": "tsx scripts/recordHearts.ts",
+    "record:heart-attitudes": "tsx scripts/recordHeartAttitudes.ts",
     "typecheck": "tsc -p packages/shared/tsconfig.json --noEmit && tsc -p server/tsconfig.json --noEmit && tsc -p client/tsconfig.json --noEmit",
     "test": "vitest run",
     "build": "npm run typecheck && vite build --config client/vite.config.ts"

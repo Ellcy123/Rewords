@@ -153,10 +153,22 @@ export const DialogueOptionSchema = z.object({
 });
 export type DialogueOption = z.infer<typeof DialogueOptionSchema>;
 
+export const HeartKindSchema = z.enum(["fear", "sympathy", "affection"]);
+export type HeartKind = z.infer<typeof HeartKindSchema>;
+export const HeartCardSchema = z.object({
+  sourceType: z.enum(["npc", "test"]).optional(),
+  id: z.string().min(1), kind: HeartKindSchema, sourceNpcId: z.string().min(1),
+  sourceEventId: z.string().min(1), sourceText: z.string().min(1),
+  day: z.number().int().min(1).max(7), locationId: z.string().nullable()
+});
+export const HeartActionRequestSchema = z.object({
+  revision: z.number().int().nonnegative(), cardId: z.string().min(1).nullable()
+});
+
 export const DialogueContinuationSchema = z.object({
   speakerId: z.string().min(1).optional(),
   line: z.string().min(1).max(120),
-  stageDirection: z.string().max(60).optional(),
+  stageDirection: z.string().max(240).optional(),
   emotion: z.string().min(1)
 });
 export type DialogueContinuation = z.infer<typeof DialogueContinuationSchema>;
@@ -177,10 +189,29 @@ export const DialogueRequestSchema = z.object({
 });
 export type DialogueRequest = z.infer<typeof DialogueRequestSchema>;
 
+export const ActionPlanProposalSchema = z.object({
+  type: z.literal("meet"), targetNpcId: z.literal("player"), locationId: z.string().min(1),
+  arriveAt: z.number().int().nonnegative(), waitUntil: z.number().int().nonnegative(),
+  reason: z.string().min(1).max(160), quote: z.string().min(1).max(120),
+  beatIndex: z.number().int().min(0).max(4)
+});
+export type ActionPlanProposal = z.infer<typeof ActionPlanProposalSchema>;
+export const NpcActionPlanSchema = ActionPlanProposalSchema.omit({ beatIndex: true }).extend({
+  id: z.string().min(1), sourceEventId: z.string().min(1),
+  status: z.enum(["planned", "waiting", "completed", "expired", "cancelled"])
+});
+export type NpcActionPlan = z.infer<typeof NpcActionPlanSchema>;
+
 export const DialogueResultSchema = z.object({
+  heart: z.object({
+    canContinue: z.boolean(),
+    choicePoint: z.object({ quote: z.string().min(1).max(120), reason: z.string().min(1).max(160) }).nullable().default(null),
+    actionPlan: ActionPlanProposalSchema.nullable().default(null),
+    pickups: z.array(z.object({ beatIndex: z.number().int().min(0).max(4), kind: HeartKindSchema, quote: z.string().min(1).max(180) })).max(1)
+  }).optional(),
   speakerId: z.string().min(1),
   line: z.string().min(1).max(240),
-  stageDirection: z.string().max(60).optional(),
+  stageDirection: z.string().max(240).optional(),
   emotion: z.string().min(1),
   continuations: z.array(DialogueContinuationSchema).max(4).default([]),
   options: z.array(DialogueOptionSchema).max(3),
@@ -264,6 +295,7 @@ export const NpcMemorySchema = z.object({
 export type NpcMemory = z.infer<typeof NpcMemorySchema>;
 
 export const NpcRuntimeStateSchema = z.object({
+  actionPlan: NpcActionPlanSchema.nullable().default(null),
   lifeState: z.enum(["alive", "injured", "dead"]).default("alive"),
   knownFactIds: z.array(z.string()).default([]),
   npcId: z.string().min(1),
@@ -318,8 +350,14 @@ export const GameEventSchema = z.object({
     "location_left",
     "interaction_mode_selected",
     "dialogue_choice",
+    "dialogue_continued",
     "dialogue_generated",
+    "narration_generated",
+    "heart_gathered",
+    "heart_spent",
+    "heart_test_pack",
     "npc_action",
+    "action_plan_updated",
     "reflection_updated",
     "item_transfer",
     "encounter_completed",
@@ -352,11 +390,16 @@ export const EvidenceEntrySchema = z.object({
   id: z.string(), name: z.string(), text: z.string(), source: z.string(), day: z.number().int()
 });
 export const GameStateSchema = z.object({
+  // Additive v3 extension: old saves start empty; no retrospective rewards or reset.
+  heartCards: z.array(HeartCardSchema).default([]),
+  heartSession: z.object({ id: z.string().min(1), claimedKinds: z.array(HeartKindSchema).max(3) }).nullable().default(null),
   saveVersion: z.literal(3),
   chapterId: z.literal("sunset-case-v1"),
   discoveredLocationIds: z.array(z.string()),
   evidenceJournal: z.array(EvidenceEntrySchema).default([]),
   dialogueBeatIndex: z.number().int().min(0).default(0),
+  // null = spoken line. Existing saves have already shown the stage direction: do not replay it.
+  dialogueNarrationIndex: z.number().int().nonnegative().nullable().default(null),
   incident: IncidentSchema.nullable().default(null),
   pendingNpcMove: z.object({ npcId: z.string(), locationId: z.string(), arriveAt: z.number().int() }).nullable().default(null),
   revision: z.number().int().nonnegative(),

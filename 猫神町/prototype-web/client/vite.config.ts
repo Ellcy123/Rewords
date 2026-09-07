@@ -10,12 +10,12 @@ export default defineConfig({
   plugins: [react()],
   server: {
     host: "127.0.0.1",
-    port: 5173,
+    port: process.env.CAT_HEART_PREVIEW === "1" ? 5174 : 5173,
     fs: {
       allow: [projectRoot]
     },
     proxy: {
-      "/api": "http://127.0.0.1:8787"
+      "/api": process.env.CAT_HEART_PREVIEW === "1" ? "http://127.0.0.1:8790" : "http://127.0.0.1:8787"
     }
   },
   build: {
@@ -23,4 +23,3 @@ export default defineConfig({
     emptyOutDir: true
   }
 });
-

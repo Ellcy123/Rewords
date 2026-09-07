@@ -1,3 +1,5 @@
+import { dialoguePlaybackFinished } from "../packages/shared/src/index.ts";
+import { nextSpeech } from "./playback.ts";
 import { describe, expect, it } from "vitest";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -28,9 +30,9 @@ function setup(patch: Partial<GameState> = {}, p = new TestProvider()) {
   return { store, g: new GameService(store,p), p };
 }
 async function allBeats(g: GameService) {
-  for (let limit = 0; limit < 8; limit++) {
+  for (let limit = 0; limit < 150; limit++) {
     const s = g.getState(), d = s.currentDialogue;
-    if (!d || s.dialogueBeatIndex >= d.continuations.length + (s.lastPlayerChoice ? 1 : 0)) return;
+    if (!d || dialoguePlaybackFinished(s)) return;
     await g.nextDialogueBeat();
   }
 }
@@ -69,7 +71,7 @@ describe("exploration and dialogue", () => {
     const {g,store,p}=setup({},new Future()); g.travel("loc_shrine"); g.startEncounter("npc_koharu"); await g.selectInteractionMode("talk");
     expect(g.getState().discoveredLocationIds).not.toContain("loc_inn");
     await expect(g.chooseTalkOption("daily")).rejects.toThrow("看完");
-    await g.nextDialogueBeat();
+    await nextSpeech(g);
     expect(g.getState().discoveredLocationIds).toContain("loc_inn");
     const restored = new GameService(store,p); expect(restored.getState().dialogueBeatIndex).toBe(1);
     expect(restored.getState().eventLog.filter(e=>e.type==="location_discovered"&&e.locationId==="loc_inn")).toHaveLength(1);

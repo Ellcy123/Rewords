@@ -1,3 +1,4 @@
+import { dialoguePlaybackFinished } from "../packages/shared/src/index.ts";
 import dotenv from "dotenv";
 import { fileURLToPath } from "node:url";
 import { writeFileSync, mkdirSync } from "node:fs";
@@ -30,7 +31,7 @@ for (const npc of demoBootstrap.npcs.filter(n => !selectedIds || selectedIds.inc
   records.push("## " + npc.name, "");
   for (let round = 0; round < rounds; round++) {
     let s = game.getState();
-    while (s.currentDialogue && s.dialogueBeatIndex < s.currentDialogue.continuations.length + (s.lastPlayerChoice ? 1 : 0)) {
+    while (s.currentDialogue && !dialoguePlaybackFinished(s)) {
       await game.nextDialogueBeat(); s = game.getState();
     }
     const d = s.currentDialogue!;
