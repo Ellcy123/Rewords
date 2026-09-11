@@ -98,6 +98,8 @@ app.post("/api/game/hearts/use", async (request, reply) => runGameAction(() => {
   const b = parseBody(HeartActionRequestSchema, request.body);
   return gameService.useHeart(b.cardId, b.revision);
 }, reply));
+app.post("/api/game/hearts/activity", async (request, reply) => runGameAction(() =>
+  gameService.completeHeartActivity(parseBody(z.object({ revision: z.number().int().nonnegative() }), request.body).revision), reply));
 app.post("/api/game/inspect", async (request, reply) => runGameAction(() => {
   const b = parseBody(z.object({ itemId: z.string(), take: z.boolean().default(false) }), request.body);
   return gameService.inspectItem(b.itemId, b.take);

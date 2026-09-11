@@ -261,7 +261,7 @@ export class CaseDialogueProvider implements CaseProvider {
         repairHint = error instanceof DialogueValidationError ? error.repairHint.slice(0, 300) : "";
         const safe = ["unselected_player_speech", "unknown_fact", "invalid_choice", "unintroduced_material", "legacy_case", "incomplete", "action_mismatch", "timeline_mismatch", "new_case_fact", "player_intent", "ownership", "review_unavailable", "branch_rewind", "off_topic", "option_intent", "conversation_closing", "dialogue_length"];
         if (error instanceof z.ZodError) { failureCode = "schema_validation"; repairHint = error.issues.map(i => i.path.join(".") + ": " + i.message).slice(0, 3).join("; ").slice(0, 300); }
-        else if (error instanceof Error && [...safe, "invalid_pickup", "decision_point", "invalid_action_plan"].includes(error.message)) failureCode = error.message;
+        else if (error instanceof Error && [...safe, "invalid_pickup", "decision_point", "invalid_action_plan", "invalid_consequence"].includes(error.message)) failureCode = error.message;
         else if (error instanceof SyntaxError) failureCode = "invalid_json";
       }
     }
@@ -346,22 +346,21 @@ export class CaseDialogueProvider implements CaseProvider {
     const result = await this.request(c.npcId, "talk", p.system, p.user, async raw => {
       const d = validateHeartDraft(raw, c, p.known);
       if (this.options.review) {
-        // Choice timing belongs only to the generator. Do not send its choice metadata
-        // or pending-choice guidance to the content reviewer for a second decision.
-        const { pending_choice: _pendingChoice, ...reviewContext } = JSON.parse(p.user);
-        const { choice_point: _choicePoint, ...reviewCandidate } = d;
+        // Choice timing and pickup semantics belong only to the generator.
+        // The reviewer sees dialogue content, not either decision's metadata.
+        const { pending_choice: _pendingChoice, already_gathered: _alreadyGathered, ...reviewContext } = JSON.parse(p.user);
+        const { choice_point: _choicePoint, pickup: _pickup, ...reviewCandidate } = d;
         const review = await this.request(c.npcId, "review",
-          '你只审查对白内容，不决定玩家何时选牌，不检查漏点或多余选择，不要求截停、补节点或重排对白。选牌时机由生成对白的AI独立决定，未逐句让玩家选择、NPC情绪强烈、遥继续回应都不是拒绝理由。只返回JSON {"approved":true或false,"reason":"none|new_case_fact|player_intent|ownership|off_topic|conversation_closing|invalid_pickup","issue":"具体内容违规原句与规则，合法时为空"}。遥和NPC可自由来回接话；listen是顺着聊而非沉默。问句、反问、安慰、口头承诺、答应、转告已知消息、赠礼提议、指责和表达爱意均允许，允许有惊喜的人际发展。不检查‘我+害怕’句式，不因恐惧仅由动作或迟疑体现而拒绝，不要求出牌有效、帮助对方或获得新牌。只检查：1案件事实及人物过去经历来自allowed_facts及已知材料，不凭空补写往事；人物当下观点和指责不是正式定罪。2角色不得凭空知道未收到的秘密；口头承诺合法，但不能把物品转移、签写、移动等未执行状态写成完成。3自然或强制收尾由NPC合理告别；尚在交流的NPC问题可以作为本段结尾，不要求遥必须在同段回答。4pickup非空时须有NPC自身明确情绪来源，悲伤自责不等于同情。player_intent只用于所选牌的表达态度明显不符，不得用来否决选牌时机或自然接话。不要沿用旧版禁止遥接话/禁止问句/禁止承诺的规则。',
+          '你只审查对白内容，不决定玩家何时选牌，不检查漏点或多余选择，不要求截停、补节点或重排对白。选牌时机和拾绪情绪分类、是否产牌均由生成对白的AI独立决定，不重判pickup，不因情绪轻微、含蓄、缺少情绪词而拒绝。未逐句让玩家选择、NPC情绪强烈、遥继续回应都不是拒绝理由。只返回JSON {"approved":true或false,"reason":"none|new_case_fact|player_intent|ownership|off_topic|conversation_closing","issue":"具体内容违规原句与规则，合法时为空"}。遥和NPC可自由来回接话；listen是顺着聊而非沉默。问句、反问、安慰、口头承诺、答应、转告已知消息、赠礼提议、指责和表达爱意均允许，允许有惊喜的人际发展。不检查‘我+害怕’句式，不因恐惧仅由动作或迟疑体现而拒绝，不要求出牌有效、帮助对方或获得新牌。只检查：1案件事实及人物过去经历来自allowed_facts及已知材料，不凭空补写往事；人物当下观点和指责不是正式定罪。2角色不得凭空知道未收到的秘密；口头承诺合法，但不能把物品转移、签写、移动等未执行状态写成完成。candidate.consequence是本次由程序执行的能力：material按指定show/take执行已有材料查看或交付，sorting_offer只开放整理邀请而不是已经完成，sorting_cancel撤销邀请，meeting约定而非瞬移，pause中止会面。这些操作在对应NPC决定台词播放时落地，不当作越权；只检查事实和表达是否符合声明操作，不重判该不该产生事件。3自然或强制收尾由NPC合理告别；尚在交流的NPC问题可以作为本段结尾，不要求遥必须在同段回答。player_intent只用于所选牌的表达态度明显不符，不得用来否决选牌时机、拾绪情绪分类或自然接话。不要沿用旧版禁止遥接话/禁止问句/禁止承诺的规则。',
           JSON.stringify({ context: reviewContext, candidate: reviewCandidate,
-            extra_checks: "过去经历也需事实依据，不得编造姐姐怕黑、拍照回来开灯、临别行为等日常往事。这个试玩无材料动作，掏出票、展示票、递给遥看均不允许。后悔/自责/悲伤不是同情；同情是对他人处境的体谅。" }),
+            extra_checks: "过去经历也需事实依据，不得编造姐姐怕黑、拍照回来开灯、临别行为等日常往事。材料操作必须与consequence中合法的actionId一致；不能增加新的案件事实或其他未声明的实物操作。事件类型由生成AI决定，不二次决定该给哪种后果，不要求情绪牌必定有利。" }),
           input => z.object({ approved: z.boolean(), reason: z.enum(["none", "new_case_fact", "player_intent", "ownership", "off_topic", "conversation_closing", "invalid_pickup", "decision_point"]), issue: z.string().max(1000) }).parse(input));
         if (!review) throw new Error("review_unavailable");
-        // Ignore an out-of-scope legacy timing veto; never regenerate or move a
-        // generator-selected choice because the content reviewer disagrees with it.
-        if (review.reason !== "decision_point" && (!review.approved || review.reason !== "none")) throw new DialogueValidationError(review.reason === "none" ? "player_intent" : review.reason, review.issue);
+        // Ignore legacy semantic vetoes; structural pickup validation already ran above.
+        if (!["decision_point", "invalid_pickup"].includes(review.reason) && (!review.approved || review.reason !== "none")) throw new DialogueValidationError(review.reason === "none" ? "player_intent" : review.reason, review.issue);
       }
       return heartResult(d, c, "deepseek");
-    }, "。修正上述结构或内容问题，继续使用拾绪beats结构，最多5项且不超过maxGeneratedLines；出牌首句player，开场首句npc，随后双方可来回接话。listen也允许遥说话。问句、口头承诺和自然示好允许，不检查恐惧的固定句式。不生成options。选牌时机只由你根据语境决定，不服从内容审校对选牌时机的建议；若程序报告decision_point，只修复标记与NPC末句原文的对应、can_continue等结构矛盾，不按关键词决定是否需要表态。短段合法，不凑句数。同步检查pickup索引；普通段落和结束时choice_point=null，已授权的pending_choice要回应而非重复提问。不编造案件往事或把未执行系统动作写成完成。");
+    }, "。修正上述结构或内容问题，继续使用拾绪beats结构，最多5项且不超过maxGeneratedLines；出牌首句player，开场首句npc，随后双方可来回接话。listen也允许遥说话。问句、口头承诺和自然示好允许，不检查恐惧的固定句式。不生成options。选牌时机只由你根据语境决定，不服从内容审校对选牌时机的建议；若程序报告decision_point，只修复标记与NPC末句原文的对应、can_continue等结构矛盾，不按关键词决定是否需要表态。短段合法，不凑句数。若失败代码invalid_consequence，检查出牌必须非空consequence、其NPC原文索引、能力是否可用及不是既有状态重复；material只用材料能力原ID且对应stage_direction为空，meeting同步合法action_plan且不重复旧约定，pause须末句收尾且无计划。不能用null、好感变化或空话修复出牌后果。同步检查pickup索引；普通段落和结束时choice_point=null，已授权的pending_choice要回应而非重复提问。不编造案件往事或把未执行系统动作写成完成。");
     if (!result) throw new DialogueGenerationError();
     return result;
   }

@@ -59,6 +59,7 @@ export const gameApi = {
   nextBeat: (revision?: number): Promise<GameActionResponse> => request("/api/game/next-beat", GameActionResponseSchema, { revision }),
   startHearts: (revision: number): Promise<GameActionResponse> => request("/api/game/hearts/start", GameActionResponseSchema, { revision }),
   useHeart: (cardId: string | null, revision: number): Promise<GameActionResponse> => request("/api/game/hearts/use", GameActionResponseSchema, { cardId, revision }),
+  completeHeartActivity: (revision: number): Promise<GameActionResponse> => request("/api/game/hearts/activity", GameActionResponseSchema, { revision }),
   inspect: (itemId: string, take = false): Promise<GameActionResponse> => request("/api/game/inspect", GameActionResponseSchema, { itemId, take }),
   present: (itemId: string): Promise<GameActionResponse> => request("/api/game/present", GameActionResponseSchema, { itemId }),
   tellRetraction: (): Promise<GameActionResponse> => request("/api/game/tell-retraction", GameActionResponseSchema, {}),

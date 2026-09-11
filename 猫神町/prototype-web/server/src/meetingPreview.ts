@@ -10,7 +10,7 @@ export class MeetingPreviewProvider extends CaseDialogueProvider {
     const arriveAt = now + 60, waitUntil = now + 180;
     d.line = `我${gameTimeLabel(arriveAt)}到雨宫家旧居，等你到${gameTimeLabel(waitUntil)}，我们在那里聊。`;
     d.continuations = []; d.speakerId = c.npcId;
-    d.heart = { canContinue: false, choicePoint: null, pickups: [], actionPlan: {
+    d.heart = { consequence: null, spendEventId: null, consequenceApplied: false, canContinue: false, choicePoint: null, pickups: [], actionPlan: {
       type: "meet", targetNpcId: "player", locationId: "loc_home", arriveAt, waitUntil,
       reason: "固定演示：在旧居会面", quote: d.line, beatIndex: 0
     } };

@@ -272,7 +272,7 @@ export function App() {
           {isLastBeat && dialogue.heart?.canContinue && (dialogue.heart.choicePoint
             ? <><p className="heart-choice-prompt">这一刻，你想以怎样的心绪回应？</p><HeartHand state={state} bootstrap={bootstrap!} busy={busy} onUse={cardId => void perform(() => gameApi.useHeart(cardId, state.revision))} /></>
             : <div className="dialogue-continue-row"><span>{busy ? "两人的对话正在继续……" : "对话自然推进，重要时刻再选择心绪。"}</span><button disabled={busy} type="button" onClick={() => void perform(() => gameApi.useHeart(null, state.revision))}>继续对话 →</button></div>)}
-          {dialogue.heart && <p className="heart-trial-note">小春 · 首日试玩。先体验心绪交流；材料请求仍在原交谈中办理。</p>}
+          {dialogue.heart && <p className="heart-trial-note">小春 · 事件试玩。出牌改变实际事情，结果不保证有利。</p>}
           {isLastBeat && !canContinue && !isWaitingForNpc && (
             <p className="conversation-done">本次交谈已结束。返回场景，继续你的行程吧。</p>
           )}
@@ -289,7 +289,8 @@ export function App() {
               </div>
             </details>
           )}
-          <button className="end-meeting" disabled={busy} type="button" onClick={() => void perform(gameApi.completeEncounter)}>
+          {dialogue.heart?.spendEventId && !dialogue.heart.consequenceApplied && <p className="heart-pending" role="status">这张牌的后果待播放。请继续看完对方的决定，进度已保存。</p>}
+          <button className="end-meeting" disabled={busy || !!(dialogue.heart?.spendEventId && !dialogue.heart.consequenceApplied)} type="button" onClick={() => void perform(gameApi.completeEncounter)}>
             {isLastBeat && !canContinue ? "返回场景" : "结束本次会面"}
           </button>
         </div>
@@ -341,6 +342,17 @@ export function App() {
       )}
 
       <main className="content-shell" aria-busy={busy}>
+        {gameState.eventLog.some(e => e.type === "heart_consequence" || e.type === "heart_activity") && <aside className="meeting-plans" aria-label="心绪事件">
+          <strong>交流带来的变化</strong>
+          {gameState.eventLog.filter(e => e.type === "heart_consequence" || e.type === "heart_activity").slice(-2).map(e => <p key={e.id}>{e.details.text}</p>)}
+          {gameState.npcStates.npc_koharu.sortingHelp === "offered" && <>
+            <p>待办：和小春一起整理遗物 · 30 分钟。邀请会保留，需与小春在同一地点完成。</p>
+            <button type="button" disabled={busy || gameState.npcStates.npc_koharu.currentLocationId !== gameState.currentLocationId ||
+              gameState.npcStates.npc_koharu.unavailableUntil > (gameState.day - 1) * 1440 + gameState.currentMinute || gameState.currentMinute + 30 > 1080 ||
+              !(gameState.phase === "location" || (gameState.phase === "encounter" && gameState.activeNpcId === "npc_koharu" && dialoguePlaybackFinished(gameState)))}
+              onClick={() => void perform(() => gameApi.completeHeartActivity(gameState.revision))}>一起整理遗物 · 30 分钟</button>
+          </>}
+        </aside>}
         {Object.values(gameState.npcStates).some(n => n.actionPlan) && <aside className="meeting-plans" aria-label="会面约定">
           <strong>会面约定</strong>
           {Object.values(gameState.npcStates).filter(n => n.actionPlan).map(n => {
@@ -440,13 +452,13 @@ export function App() {
                 <button
                   key={sceneNpc.id}
                   className={`chibi-card ${gameState.activeNpcId === sceneNpc.id ? "selected" : ""}`}
-                  disabled={busy || gameState.phase !== "location" || !canStartConversation || state.npcStates[sceneNpc.id].lifeState !== "alive"}
+                  disabled={busy || gameState.phase !== "location" || !canStartConversation || state.npcStates[sceneNpc.id].lifeState !== "alive" || state.npcStates[sceneNpc.id].unavailableUntil > (state.day - 1) * 1440 + state.currentMinute}
                   type="button"
                   onClick={() => void perform(() => gameApi.startEncounter(sceneNpc.id))}
                 >
                   <span className="chibi" style={{ "--npc-accent": sceneNpc.accent } as CSSProperties}><i className="chibi-hair" /><i className="chibi-face">• ᴗ •</i><i className="chibi-body" /></span>
                   <strong>{sceneNpc.name}</strong><small>{state.npcStates[sceneNpc.id].lifeState === "injured" ? "受伤休养中，暂不能交谈" : sceneNpc.occupation}</small>
-                  <span>{gameState.phase === "location" ? (canStartConversation ? "点击开始会面" : "今天已没有会面时间") : gameState.activeNpcId === sceneNpc.id ? "会面中" : "在场"}</span>
+                  <span>{state.npcStates[sceneNpc.id].unavailableUntil > (state.day - 1) * 1440 + state.currentMinute ? `暂不接待 · ${formatClock(state.npcStates[sceneNpc.id].unavailableUntil % 1440)}后再来` : gameState.phase === "location" ? (canStartConversation ? "点击开始会面" : "今天已没有会面时间") : gameState.activeNpcId === sceneNpc.id ? "会面中" : "在场"}</span>
                 </button>
                 ))}
                 {sceneNpcs.length === 0 && <p>这里暂时没有能交谈的人，你仍然可以查看现场。</p>}

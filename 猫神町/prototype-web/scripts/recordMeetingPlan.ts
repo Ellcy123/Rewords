@@ -16,7 +16,7 @@ class Provider extends CaseDialogueProvider {
     const d = mockHeartDialogue(c);
     d.line = "我想换个地方，跟你聊聊姐姐。";
     d.continuations = [{ speakerId: "player", line: "那你今天一点到雨宫家旧居，等我到三点，可以吗？", emotion: "询问" }];
-    d.heart = { canContinue: true, choicePoint: null, actionPlan: null, pickups: [] };
+    d.heart = { consequence: null, spendEventId: null, consequenceApplied: false, canContinue: true, choicePoint: null, actionPlan: null, pickups: [] };
     return d;
   }
 }

@@ -8,7 +8,7 @@ export function HeartHand({ state, bootstrap, busy = false, onUse }: {
   const card = state.heartCards.find(c => c.kind === selected);
   return <section className="heart-hand" aria-label="心绪牌">
     <div className="heart-heading"><strong>拾绪 · 心绪牌</strong><small>{state.heartCards.length} 张留在心中</small></div>
-    <p className="heart-hint">{onUse ? "选择遥的态度，而不是对方的答案。每次出示消耗一张。" : "在小春的新会面中选择「拾绪试玩」。从对方流露的情绪中获得，不是案件证据。"}</p>
+    <p className="heart-hint">{onUse ? "选择遥的态度，每次出示消耗一张，并产生实际事件后果；不保证对方答应。" : "在小春的新会面中选择「拾绪试玩」。从对方流露的情绪中获得，不是案件证据。"}</p>
     <div className="heart-cards">
       {heartKinds.map(kind => {
         const count = state.heartCards.filter(c => c.kind === kind).length;

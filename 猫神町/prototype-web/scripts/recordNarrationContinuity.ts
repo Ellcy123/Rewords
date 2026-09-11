@@ -16,7 +16,7 @@ class Provider extends CaseDialogueProvider {
     d.line = "……嗯，那我们走吧。";
     d.stageDirection = "小春已经穿好那双旧拖鞋，跟着遥跨过玄关，走到了通往姐姐房间的走廊。";
     d.continuations = [{ speakerId: "player", line: "我就在这里陪着你。", stageDirection: "遥在走廊上停住，等小春跟上。", emotion: "关切" }];
-    d.heart = { canContinue: true, choicePoint: null, actionPlan: null, pickups: [] };
+    d.heart = { consequence: null, spendEventId: null, consequenceApplied: false, canContinue: true, choicePoint: null, actionPlan: null, pickups: [] };
     return d;
   }
 }

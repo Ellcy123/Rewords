@@ -1,11 +1,12 @@
 import { z } from "zod";
-import { ActionPlanProposalSchema, DialogueResultSchema, HeartKindSchema, heartCatalog, demoBootstrap, separateDialogueText, type DialogueResult, type HeartKind } from "../../packages/shared/src/index.ts";
+import { ActionPlanProposalSchema, HeartConsequenceSchema, DialogueResultSchema, HeartKindSchema, heartCatalog, demoBootstrap, separateDialogueText, type DialogueResult, type HeartKind } from "../../packages/shared/src/index.ts";
+import { heartCapabilities, validHeartConsequence, validConsequenceBeats } from "./heartConsequences.ts";
 import { validMeetingPlan } from "./actionPlans.ts";
 import { characterFarewell, encounterPacing } from "./dialoguePacing.ts";
 import { SPARSE_NARRATION_GUIDANCE } from "./narrationPrompt.ts";
 import type { CaseContext } from "./caseProvider.ts";
 
-export const HEART_PROMPT_VERSION = "shixu-v10-named-major-actions";
+export const HEART_PROMPT_VERSION = "shixu-v12-executable-consequences";
 // Generator-only semantic guidance; the content reviewer never decides choice timing.
 export const HEART_CHOICE_GUIDANCE = [
   "先逐句判断是否出现值得玩家介入的情绪回应机会，再决定是否让遥接话。自责中寻求回应、试探信任、关系靠近或边界、情绪冲突，若不同态度会让当下交流走向不同，应优先停给玩家。无需重大剧情分岔、正式请求或问号；‘我连对不起都没说出口’也可能是在向眼前的人求回应，结合语境判断。",
@@ -20,6 +21,7 @@ const HeartBeat = z.object({
   stage_direction: z.string().max(240).default(""), emotion: z.string().min(1).max(20)
 });
 export const HeartDraft = z.object({
+  consequence: HeartConsequenceSchema.nullable().default(null),
   action_plan: ActionPlanProposalSchema.nullable().default(null),
   beats: z.array(HeartBeat).min(1).max(5), can_continue: z.boolean(),
   choice_point: z.object({ quote: z.string().min(1).max(120), reason: z.string().min(1).max(160) }).nullable(),
@@ -66,27 +68,19 @@ export function heartConversationHistory(c: HeartContext) {
   };
 }
 
-// Conservative day-one gate: uncertain classification means no reward, not a failed conversation.
-// These cues must occur in a quoted, displayed line/action, never in a hidden emotion label.
-export function hasObservableHeartCue(kind: HeartKind, quote: string): boolean {
-  return ({
-    fear: /我(?:很|有点|其实|也|真的)?(?:怕|害怕|担心|不敢)|不安|害怕地|恐惧|吓得|退缩|发怵/,
-    sympathy: /心疼|替.{0,8}难过|你也.{0,6}不好受|知道.{0,8}不好受|别勉强自己|委屈你|难为你|辛苦你|体谅|同情地/,
-    affection: /(?:很想|想念|挂念|眷恋|舍不得|放不下|在乎)|想(?:姐姐|她|你)|温柔|关爱|关切|好好照顾|姐姐对我.{0,5}好/
-  })[kind].test(quote);
-}
-
 export function buildHeartPrompt(c: HeartContext, baseUser: string) {
   const base = JSON.parse(baseUser);
   const pacing = encounterPacing(c.state, false); // Player expression is inside beats, not prepended.
   const expression = isHeartPlay(c) ? heartCatalog[c.heartIntent as HeartKind].expression : null;
   const context = {
-    role: { ...base.role, lead: undefined, goal: "跟随已发生的现场进展继续交流，不固定从整理遗物或谈姐姐重新开头；允许自然转移话题与推进动作，不展示材料，不编写额外往事，也不为了产牌变换情绪。" }, allowed_facts: base.allowed_facts, correction: base.correction,
+    role: { ...base.role, lead: undefined, goal: "跟随已发生的现场进展继续交流，不固定从整理遗物或谈姐姐重新开头；允许自然转移话题与推进动作；只执行能力列表允许的材料操作，不编写额外往事，也不为了产牌变换情绪。" }, allowed_facts: base.allowed_facts, correction: base.correction,
     current: base.current, protagonist: base.protagonist, timeline_guard: base.timeline_guard,
     first_meeting: base.first_meeting, dialogue_history: heartConversationHistory(c),
     player_read_materials: base.player_read_materials,
     held_materials: base.held_materials, conversation_pacing: pacing, farewell_hint: base.farewell_hint,
     input: c.heartIntent, player_expression: expression,
+    event_capabilities: heartCapabilities(c.state, c.npcId),
+    recent_consequences: c.state.eventLog.filter(e => ["heart_consequence", "heart_activity"].includes(e.type) && e.targetId === c.npcId).slice(-8).map(e => ({ id: e.id, text: e.details.text })),
     action_plan: c.state.npcStates[c.npcId].actionPlan,
     action_capabilities: { type: "meet", targetNpcId: "player", now: (c.state.day - 1) * 1440 + c.state.currentMinute,
       locations: demoBootstrap.locations.map(l => ({ id: l.id, name: l.name })), minimumTravelMinutes: 60,
@@ -109,14 +103,18 @@ export function buildHeartPrompt(c: HeartContext, baseUser: string) {
     "案件事实及人物过去经历只能来自allowed_facts及已展示材料。dialogue_history只记录实际听见的话，不能洗白旧轮编造。普通即时动作、当下情绪、主观怀疑可以写；不能补出星期、购票时间、目的地、通话、约会或新证物，也不能编造姐姐怕黑、拍照回家开灯、临别动作等额外往事。",
     "本入口支持NPC约遥在已有地点会面：明确邀请或承诺到某处等遥时，由你同时输出action_plan，不另找AI重判动机。先自然商定具体地点、到达和等待结束时间；只有假设、可能、回忆、单纯‘去扫地’或遥替NPC作的决定不生成计划。没有新约定时action_plan=null，保留原计划；不要每段重复约定。现有计划及完成/过期状态是权威记忆，赴约见面后接住约定，不重作陌生人介绍。",
     'action_plan格式：{"type":"meet","targetNpcId":"player","locationId":"目录中的ID","arriveAt":绝对分钟,"waitUntil":绝对分钟,"reason":"约定目的","quote":"NPC约定台词连续原文","beatIndex":从0开始的NPC节拍索引}。至少留60分钟抵达，同一天白天等待，最晚可约未来24小时内；台词须说清地点与到达/等到的钟点，并与数字一致。建议等候至少1小时。计划在该句实际播放后保存，游戏时间到了才执行；不可声称已经移动完成。计划不是强迫玩家赴约，玩家可不去。',
-    "材料交付、签字、改口、关系数值等仍无新执行接口，不能声称已完成。表达爱意或答应陪伴可以发生，但不自动改写物品所有权或关系状态。",
-    "这个试玩入口只做情绪交流。不能掏出/摊开/递出/展示车票或任何案件材料，不能说‘你看，票在这里’；可以口头谈论已知事实，正式材料须留到原交谈中查看。",
+    "出牌必须改变实际事情，不只是语气或好感。input为fear/sympathy/affection时必须输出一个合法consequence；opening/listen可为null，也允许自然产生合法事件。同一个你决定对白与事件，不另找AI重判。先基于当下交流选择可执行后果，再写有因果的遥表达与NPC决定；不能只写‘谢谢/好受一点’，也不固定某张牌必然对应某种结果。普通续聊不需强造事件；表态节点应有可改变事情的空间，不能在无执行余地时硬弹牌。",
+    'consequence格式：{"type":"material|sorting_offer|sorting_cancel|meeting|pause","actionId":null或材料能力ID,"beatIndex":NPC决定台词索引,"quote":"该NPC台词连续原文"}。每次至多一个，来源必须是本段NPC实际说出的决定，不能只是遥单方面提议。合法结果在来源台词播放时落地，遥首句播放时扣牌，未播后果会保存待续。出牌后先落实当前结果，再引出下一次表态，不能让新选择截断本次后果。',
+    "type=material时actionId只能从event_capabilities.materials选取原ID。show:表示NPC出示已有材料，台词播放后内容进入手记；take:表示NPC交付已有实物，台词播放后进入背包。不得展示目录外材料、编造新证据或提前在更早的旁白完成交付；对应材料操作的stage_direction留空，决定台词中自然说明正在出示或交付。没有material后果则不得声称已经展示或交付。签字、改口等其他案件动作仍不支持。",
+    "type=sorting_offer仅当能力为true：小春接受遥帮忙整理真昼遗物，生成具体邀请，解锁‘一起整理遗物’操作。只是邀请还没整理完成；玩家另行选择花30分钟实施，系统会共同查看小春仍持有的已有材料，不凭空发现新证物。type=sorting_cancel仅当能力为true：小春撤回尚未完成的整理邀请，原操作被关闭；需要有语境原因，不用反复邀请撤回来制造事件。已完成的整理不能再当未完成。",
+    "type=meeting必须同时提供合法action_plan，两者指向同一NPC决定节拍；沿用约定时间地点规则，不能把同地点同时间的旧约定重复当新后果。type=pause只在NPC确实要停止交流时使用：明确今天此刻先不聊、需要至少一小时独处，必须末句NPC、can_continue=false、choice_point=null、action_plan=null；系统立即封闭会面并在60游戏分钟内禁止新会面。不把pause当作缺少创意的通用惩罚保底。不保证好结果，但必须有合理后果。",
     "每段通常3至5个节拍，总数不超过conversation_pacing.maxGeneratedLines，允许双方来回。分段长度不是决策点。mustClose=true必须can_continue=false、choice_point=null，由NPC用符合farewell_hint的理由收尾；自然结束也要说明理由，不再等待回答。",
     HEART_CHOICE_GUIDANCE,
     "决定触发时立即在那句NPC台词停笔，即使只有1至2个节拍也合法，不必凑满3至5句；把它作为本段最后一个节拍，choice_point.quote原样引用该末句的关键文字，reason说明不同情绪回应为何会影响此刻交流。不要先替遥回答这句再让玩家补选。can_continue=true才可有choice_point。非决策段落可以以任一方台词结束，下一段自然接续。",
-    "pickup是本段至多一次可观察的NPC情绪流露，不保证产牌。fear=对方自己害怕不安；sympathy=对方体谅、心疼别人；affection=对方表现关爱、眷恋或温柔，不限恋爱。悲伤、认真、愤怒、客气、单纯谈及他人害怕都不等于这三种牌。",
-    "pickup.quote必须原样摘录对应beat的line或stage_direction中确实体现该情绪的连续文字，beat_index从0开始，只能指向npc；不能从遥身上拾绪。小春为自己的行为后悔/自责/悲伤不是sympathy；同情必须表现对别人的处境的体谅。无明确流露则pickup=null。already_gathered中的牌种本会面不再产出，不为发牌强迫人物改变情绪。",
-    '格式：{"beats":[{"speaker":"npc或player","line":"台词","stage_direction":"","emotion":"情绪"}],"can_continue":true,"choice_point":null,"action_plan":null,"closing_reason":"未结束时为空","used_fact_ids":[],"pickup":null}。需要玩家表态时choice_point={"quote":"末句NPC台词摘录","reason":"为什么需要玩家选择立场"}。产牌时pickup={"beat_index":0,"kind":"fear或sympathy或affection","quote":"原文摘录"}。提交前数beats项数：只能1至5项，还受maxGeneratedLines限制；未结束也只写下一段。每次必须包含action_plan：若NPC本段明确答应地点时间或发出具体赴约邀请，必须填上述会面对象，不能只在台词里答应却遗漏计划。收尾can_continue=false也能同时有action_plan，约定发生在离开之前。'
+    "pickup的情绪含义只由你在生成本段对白时结合上下文判断，不由关键词或另一个审校AI重判。降低获取门槛：日常、轻微、含蓄但从当前表达和语境能合理感受到的情绪也应拾取，不必强烈爆发、直说情绪词或构成重大事件；符合且未达配额时优先给出pickup，不要惯性填null。fear包括NPC自己的不安、顾虑、担忧、畏缩、害怕失去或被否定；sympathy包括体谅、心疼别人；affection包括关心、依恋、眷恋和亲近，不限恋爱。",
+    "例如NPC说‘你能再待一会儿吗？外面一响我就忍不住往门口看’，结合语境可拾取fear，即使没有‘我怕’；‘这一路都是你一个人撑过来的吧’可体现sympathy；‘你来了，屋里就没那么空了’可体现affection。示例仅用于理解语义，不能照抄为固定对白或词表。悲伤、自责可与恐惧或爱意并存，按实际流露判断，不因主情绪是悲伤就漏掉其他情绪；但纯粹悲伤、自责不自动等于体谅别人的sympathy。",
+    "pickup.quote只作内部来源锚点，原样摘录对应beat的line或保留的stage_direction中的连续文字；语义依据可结合上下文，摘录本身无需包含情绪关键词。beat_index从0开始，只能指向npc，不能从遥或未展示的隐藏设定拾绪，也不能将单纯转述别人害怕当作NPC自己的恐惧。每段至多1张，already_gathered中的牌种本会面不再产出；没有可合理感知的对应情绪才填null。不为发牌强迫人物改变情绪、不补写微表情旁白，也不向玩家解释为何获得。",
+    '格式：{"beats":[{"speaker":"npc或player","line":"台词","stage_direction":"","emotion":"情绪"}],"can_continue":true,"choice_point":null,"action_plan":null,"consequence":null,"closing_reason":"未结束时为空","used_fact_ids":[],"pickup":null}。需要玩家表态时choice_point={"quote":"末句NPC台词摘录","reason":"为什么需要玩家选择立场"}。产牌时pickup={"beat_index":0,"kind":"fear或sympathy或affection","quote":"原文摘录"}。提交前数beats项数：只能1至5项，还受maxGeneratedLines限制；未结束也只写下一段。每次必须包含consequence，出牌时不可为null且必须从event_capabilities里选择合法后果。每次必须包含action_plan：若NPC本段明确答应地点时间或发出具体赴约邀请，必须填上述会面对象，不能只在台词里答应却遗漏计划。收尾can_continue=false也能同时有action_plan，约定发生在离开之前。'
   ].join("\n");
   return { system, user: JSON.stringify(context), pacing, known: Object.keys(base.allowed_facts) };
 }
@@ -146,11 +144,15 @@ export function validateHeartDraft(raw: unknown, c: HeartContext, known: string[
   if ((pacing.mustClose && d.can_continue) || (!d.can_continue && !d.closing_reason.trim())) throw new Error("conversation_closing");
   if (d.used_fact_ids.some(id => !known.includes(id))) throw new Error("unknown_fact");
   const text = d.beats.map(b => b.line + b.stage_direction).join("\n");
-  if (/(?:掏出|摊开|展开|递出|递给|展示|拿出)[^。\n]{0,18}(?:车票|材料|证据|信件)|(?:车票|材料|证据|信件)[^。\n]{0,18}(?:展开|摊开|递给|面前)|(?:签好|写好)(?:了)?(?:说明|证词)/.test(text)) throw new Error("action_mismatch");
+  if (isHeartPlay(c) && !d.consequence) throw new Error("invalid_consequence");
+  if (d.consequence && (!validHeartConsequence(d.consequence, c.state, c.npcId, d.action_plan) ||
+      !validConsequenceBeats(d.consequence, d.beats.map(b => ({ speakerId: b.speaker === "player" ? "player" : c.npcId, line: b.line })), c.npcId, d.can_continue, d.action_plan))) throw new Error("invalid_consequence");
+  if (d.consequence?.type !== "material" && /(?:掏出|摊开|展开|递出|递给|展示|拿出)[^。\n]{0,18}(?:车票|材料|证据|信件)|(?:车票|材料|证据|信件)[^。\n]{0,18}(?:展开|摊开|递给|面前)|(?:签好|写好)(?:了)?(?:说明|证词)/.test(text)) throw new Error("action_mismatch");
+  if (d.consequence?.type === "material" && d.beats[d.consequence.beatIndex].stage_direction.trim()) throw new Error("invalid_consequence");
   if (d.pickup) {
     const b = d.beats[d.pickup.beat_index];
     if (!b || b.speaker !== "npc" || !(b.line.includes(d.pickup.quote) || b.stage_direction.includes(d.pickup.quote)) || c.state.heartSession?.claimedKinds.includes(d.pickup.kind)) throw new Error("invalid_pickup");
-    if (!hasObservableHeartCue(d.pickup.kind, d.pickup.quote)) d.pickup = null;
+    // Semantic classification belongs to the generator; only provenance and quotas are checked here.
   }
   return d;
 }
@@ -158,7 +160,7 @@ export function validateHeartDraft(raw: unknown, c: HeartContext, known: string[
 export function heartResult(d: HeartDraftData, c: HeartContext, provider: "deepseek" | "mock"): DialogueResult {
   const beats = d.beats.map(b => ({ speakerId: b.speaker === "player" ? "player" : c.npcId, line: b.line, stageDirection: b.stage_direction, emotion: b.emotion }));
   return DialogueResultSchema.parse({ ...beats[0], continuations: beats.slice(1), options: [],
-    heart: { canContinue: d.can_continue, choicePoint: d.choice_point, actionPlan: d.action_plan, pickups: d.pickup ? [{ beatIndex: d.pickup.beat_index, kind: d.pickup.kind, quote: d.pickup.quote }] : [] },
+    heart: { canContinue: d.can_continue, choicePoint: d.choice_point, actionPlan: d.action_plan, consequence: d.consequence, pickups: d.pickup ? [{ beatIndex: d.pickup.beat_index, kind: d.pickup.kind, quote: d.pickup.quote }] : [] },
     debug: { provider, decision: "拾绪试玩：遥的表达与人物回应", usedFacts: d.used_fact_ids, promptVersion: HEART_PROMPT_VERSION, npcActionId: "none" }
   });
 }
@@ -184,8 +186,24 @@ export function mockHeartDialogue(c: HeartContext): DialogueResult {
     if (beats.length < pacing.maxGeneratedLines) beats.push({ speaker: "npc", line: farewell.line, stage_direction: farewell.stageDirection, emotion: "平静" });
     else beats[beats.length - 1].line += "我得缓一缓，今天先说到这里。";
   }
-  const choice = !pacing.mustClose && c.heartIntent !== "listen";
+  let consequence: HeartDraftData["consequence"] = null;
+  let paused = false;
+  if (isHeartPlay(c)) {
+    const capabilities = heartCapabilities(c.state, c.npcId);
+    const index = beats.map(b => b.speaker).lastIndexOf("npc");
+    let type: NonNullable<HeartDraftData["consequence"]>["type"], actionId: string | null = null, decision: string;
+    if (capabilities.sorting_offer) { type = "sorting_offer"; decision = "愿意的话，和我一起整理遗物吧。"; }
+    else if (capabilities.materials.length) {
+      type = "material"; actionId = capabilities.materials[0].id;
+      decision = actionId.startsWith("show:") ? "这份材料，你现在可以看看。" : "这份材料交给你保管吧。";
+    } else if (capabilities.sorting_cancel) { type = "sorting_cancel"; decision = "整理的事先不用你帮忙了。"; }
+    else { type = "pause"; decision = "今天先说到这里，让我自己待一小时吧。"; paused = true; }
+    beats[index].line = beats[index].line.slice(0, 80) + decision;
+    beats[index].stage_direction = "";
+    consequence = { type, actionId, beatIndex: index, quote: decision };
+  }
+  const choice = !pacing.mustClose && !paused && c.heartIntent !== "listen";
   if (choice) beats[beats.length - 1].line += "你会不会觉得这样的我很没用？";
-  return heartResult({ action_plan: null, beats, can_continue: !pacing.mustClose, choice_point: choice ? { quote: "你会不会觉得这样的我很没用？", reason: "小春在意遥对自己的看法，需要玩家表态" } : null,
-    closing_reason: pacing.mustClose ? "需要缓一缓" : "", used_fact_ids: [], pickup }, c, "mock");
+  return heartResult({ consequence, action_plan: null, beats, can_continue: !pacing.mustClose && !paused, choice_point: choice ? { quote: "你会不会觉得这样的我很没用？", reason: "小春在意遥对自己的看法，需要玩家表态" } : null,
+    closing_reason: pacing.mustClose || paused ? "需要缓一缓" : "", used_fact_ids: [], pickup }, c, "mock");
 }

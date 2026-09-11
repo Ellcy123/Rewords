@@ -202,11 +202,21 @@ export const NpcActionPlanSchema = ActionPlanProposalSchema.omit({ beatIndex: tr
 });
 export type NpcActionPlan = z.infer<typeof NpcActionPlanSchema>;
 
+export const HeartConsequenceSchema = z.object({
+  type: z.enum(["material", "sorting_offer", "sorting_cancel", "meeting", "pause"]),
+  actionId: z.string().min(1).nullable().default(null),
+  beatIndex: z.number().int().min(0).max(4), quote: z.string().trim().min(1).max(120)
+});
+export type HeartConsequence = z.infer<typeof HeartConsequenceSchema>;
+
 export const DialogueResultSchema = z.object({
   heart: z.object({
     canContinue: z.boolean(),
     choicePoint: z.object({ quote: z.string().min(1).max(120), reason: z.string().min(1).max(160) }).nullable().default(null),
     actionPlan: ActionPlanProposalSchema.nullable().default(null),
+    consequence: HeartConsequenceSchema.nullable().default(null),
+    spendEventId: z.string().nullable().default(null),
+    consequenceApplied: z.boolean().default(false),
     pickups: z.array(z.object({ beatIndex: z.number().int().min(0).max(4), kind: HeartKindSchema, quote: z.string().min(1).max(180) })).max(1)
   }).optional(),
   speakerId: z.string().min(1),
@@ -295,6 +305,8 @@ export const NpcMemorySchema = z.object({
 export type NpcMemory = z.infer<typeof NpcMemorySchema>;
 
 export const NpcRuntimeStateSchema = z.object({
+  sortingHelp: z.enum(["available", "offered", "completed", "cancelled"]).default("available"),
+  unavailableUntil: z.number().int().nonnegative().default(0),
   actionPlan: NpcActionPlanSchema.nullable().default(null),
   lifeState: z.enum(["alive", "injured", "dead"]).default("alive"),
   knownFactIds: z.array(z.string()).default([]),
@@ -355,6 +367,8 @@ export const GameEventSchema = z.object({
     "narration_generated",
     "heart_gathered",
     "heart_spent",
+    "heart_consequence",
+    "heart_activity",
     "heart_test_pack",
     "npc_action",
     "action_plan_updated",

@@ -20,6 +20,12 @@ function draft(stageDirections: string[]) {
   })), can_continue: true, choice_point: null, closing_reason: "", used_fact_ids: [], pickup: null };
 }
 
+function implicitPickupDraft(stageDirections: string[], pickup: "fear" | "sympathy" | "affection" | null) {
+  const value = draft(stageDirections);
+  value.beats[0] = { speaker: "npc", line: "你来了，屋里就没那么空了。", stage_direction: stageDirections[0] ?? "", emotion: "轻声" };
+  return { ...value, pickup: pickup ? { beat_index: 0, kind: pickup, quote: "屋里就没那么空了" } : null };
+}
+
 describe("稀疏旁白契约", () => {
   it("普通与拾绪提示共用大动作专用指导，并保留空旁白示例", () => {
     const c = context(), ordinary = buildCasePrompt(c), heart = buildHeartPrompt(c, ordinary.user);
@@ -64,5 +70,49 @@ describe("稀疏旁白契约", () => {
     expect(calls).toBe(2);
     expect(result.stageDirection).toContain("拉开");
     expect(result.heart?.pickups).toEqual([{ beatIndex: 0, kind: "fear", quote: "我有点害怕" }]);
+  });
+
+  it("implicit fear, sympathy and affection without legacy keywords grant only after their NPC speech plays", async () => {
+    for (const [kind, line] of [["fear", "外面一响，我就忍不住往门口看。"], ["sympathy", "这一路都是你一个人撑过来的吧。"], ["affection", "你来了，屋里就没那么空了。"]] as const) {
+      class ImplicitProvider extends CaseDialogueProvider {
+        async generateHearts(c: HeartContext) {
+          const value = implicitPickupDraft([""], kind);
+          value.beats[0].line = line;
+          value.pickup!.quote = line.slice(0, 8);
+          return heartResult(validateHeartDraft(value, c, []), c, "mock");
+        }
+      }
+      const game = new GameService(new MemoryGameStore(), new ImplicitProvider({ apiKey: "" }));
+      game.travel("loc_shrine"); game.startEncounter("npc_koharu");
+      await game.startHeartEncounter(game.getState().revision);
+      expect(game.getState().heartCards.map(card => card.kind)).toEqual([kind]);
+      expect(game.getState().eventLog.at(-1)?.type).toBe("heart_gathered");
+    }
+  });
+
+  it("a pickup cited from speech waits through narration, and null never auto-grants even with old keywords", async () => {
+    class NarratedProvider extends CaseDialogueProvider {
+      async generateHearts(c: HeartContext) {
+        return heartResult(validateHeartDraft(implicitPickupDraft(["雨宫小春把门拉开。"], "affection"), c, []), c, "mock");
+      }
+    }
+    const narrated = new GameService(new MemoryGameStore(), new NarratedProvider({ apiKey: "" }));
+    narrated.travel("loc_shrine"); narrated.startEncounter("npc_koharu");
+    await narrated.startHeartEncounter(narrated.getState().revision);
+    expect(narrated.getState().heartCards).toEqual([]);
+    await narrated.nextDialogueBeat(narrated.getState().revision);
+    expect(narrated.getState().heartCards.map(card => card.kind)).toEqual(["affection"]);
+
+    class NullProvider extends CaseDialogueProvider {
+      async generateHearts(c: HeartContext) {
+        const value = draft([""]); value.beats[0].line = "我很害怕，也很喜欢你。";
+        return heartResult(validateHeartDraft(value, c, []), c, "mock");
+      }
+    }
+    const nullGame = new GameService(new MemoryGameStore(), new NullProvider({ apiKey: "" }));
+    nullGame.travel("loc_shrine"); nullGame.startEncounter("npc_koharu");
+    await nullGame.startHeartEncounter(nullGame.getState().revision);
+    expect(nullGame.getState().heartCards).toEqual([]);
+    expect(nullGame.getState().eventLog.some(event => event.type === "heart_gathered")).toBe(false);
   });
 });

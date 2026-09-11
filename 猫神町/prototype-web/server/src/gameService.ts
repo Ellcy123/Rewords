@@ -7,9 +7,10 @@ import { availableActions, characters, evidence, initialLocations, locationAlias
 import { CaseDialogueProvider, DialogueGenerationError, fallbackDialogue, type CaseProvider, type PlanIntent } from "./caseProvider.ts";
 import { encounterPacing } from "./dialoguePacing.ts";
 import type { GameStore } from "./persistence.ts";
-import { hasObservableHeartCue, type HeartContext } from "./heartDialogue.ts";
+import type { HeartContext } from "./heartDialogue.ts";
 import { randomUUID } from "node:crypto";
 import { validMeetingPlan, gameTimeLabel } from "./actionPlans.ts";
+import { validHeartConsequence, validConsequenceBeats } from "./heartConsequences.ts";
 
 export class GameRuleError extends Error { constructor(message: string) { super(message); this.name = "GameRuleError"; } }
 export function createInitialState(): GameState {
@@ -124,7 +125,7 @@ export class GameService {
   }
   private canTalk(npcId: string) {
     const n = this.state.npcStates[npcId];
-    return n && n.lifeState === "alive" && n.currentLocationId === this.state.currentLocationId;
+    return n && n.lifeState === "alive" && n.currentLocationId === this.state.currentLocationId && n.unavailableUntil <= this.abs();
   }
   private advance(target: number, observer: string | null): boolean {
     // Chronological stepping prevents a two-hour action from skipping a visible attack.
@@ -362,6 +363,7 @@ export class GameService {
         this.state.heartCards = this.state.heartCards.filter(c => c.id !== card.id);
         const e = this.event("heart_spent", "player", this.state.activeNpcId, "使用了一张「" + heartCatalog[card.kind].name + "」。");
         e.details.cardId = card.id; e.details.kind = card.kind;
+        this.state.currentDialogue!.heart!.spendEventId = e.id;
       }
     });
   }
@@ -381,6 +383,13 @@ export class GameService {
       (heartIntent !== "opening" || result.speakerId === this.state.activeNpcId), "心绪对白的说话者不符合本次操作。");
     const point = result.heart.choicePoint, last = beats.at(-1)!;
     const plan = result.heart.actionPlan;
+    const effect = result.heart.consequence;
+    this.assert(!play || effect, "这次出牌没有产生可执行事件。卡牌与原节点保留，请重试。");
+    this.assert(!effect || (validHeartConsequence(effect, this.state, this.state.activeNpcId!, plan) &&
+      validConsequenceBeats(effect, beats, this.state.activeNpcId!, result.heart.canContinue, plan)), "这次出牌的事件条件或来源无效，未消耗卡牌。");
+    if (effect?.type === "material") this.assert(!beats[effect.beatIndex].stageDirection?.trim(), "材料应在决定台词播放时交付，不能提前展示。");
+    // Model/provider output must never claim a transaction was already settled.
+    result.heart.spendEventId = null; result.heart.consequenceApplied = false;
     if (plan) this.assert(beats[plan.beatIndex]?.speakerId === this.state.activeNpcId && beats[plan.beatIndex].line.includes(plan.quote) &&
       validMeetingPlan(plan, this.state, this.state.activeNpcId!), "会面计划的地点、时间或对白来源无效。");
     this.assert(!point || result.heart.canContinue && last.speakerId === this.state.activeNpcId && last.line.includes(point.quote), "心绪选择没有对应的末句对白。");
@@ -473,7 +482,7 @@ export class GameService {
     const session = this.state.heartSession;
     const pickup = this.state.currentDialogue?.heart?.pickups.find(p => p.beatIndex === this.state.dialogueBeatIndex);
     const observed = narration ? narrationSentences(beat.stageDirection).slice(0, this.state.dialogueNarrationIndex! + 1).join("") : beat.line;
-    if (session && pickup && observed.includes(pickup.quote) && beat.speakerId === npc && hasObservableHeartCue(pickup.kind, pickup.quote) && !session.claimedKinds.includes(pickup.kind)) {
+    if (session && pickup && observed.includes(pickup.quote) && beat.speakerId === npc && !session.claimedKinds.includes(pickup.kind)) {
       session.claimedKinds.push(pickup.kind);
       const cardId = "heart_" + e.id;
       this.state.heartCards.push({ id: cardId, kind: pickup.kind, sourceNpcId: npc,
@@ -481,8 +490,76 @@ export class GameService {
       const gathered = this.event("heart_gathered", npc, "player", "你拾得了一缕「" + heartCatalog[pickup.kind].name + "」。");
       gathered.details.cardId = cardId; gathered.details.kind = pickup.kind; gathered.details.sourceEventId = e.id;
     }
+    if (!narration) this.applyHeartConsequence(e.id);
+  }
+
+  private applyHeartConsequence(sourceEventId: string) {
+    const heart = this.state.currentDialogue?.heart, effect = heart?.consequence;
+    if (!heart || !effect || heart.consequenceApplied || effect.beatIndex !== this.state.dialogueBeatIndex) return;
+    const npcId = this.state.activeNpcId!, npc = this.state.npcStates[npcId];
+    let text: string;
+    switch (effect.type) {
+      case "material": {
+        const [verb, id] = effect.actionId!.split(":");
+        this.assert(this.state.itemOwners[id] === npcId && evidence[id], "材料归属已变化，不能重复交付。");
+        this.readEvidence(id);
+        if (verb === "take") this.transfer(id, "player");
+        text = verb === "take" ? `小春将${this.itemName(id)}交给遥，实物已进入背包。` : `小春出示${this.itemName(id)}，内容已记入手记。`;
+        break;
+      }
+      case "sorting_offer":
+        npc.sortingHelp = "offered"; text = "小春邀请遥一起整理遗物。可以选择花30分钟共同整理。"; break;
+      case "sorting_cancel":
+        npc.sortingHelp = "cancelled"; text = "小春收回了整理遗物的邀请，这次帮忙的入口已关闭。"; break;
+      case "pause":
+        npc.unavailableUntil = this.abs() + 60;
+        text = `小春中止这次交流，${gameTimeLabel(npc.unavailableUntil)}前不再接待。`; break;
+      case "meeting":
+        // The action-plan block above has already persisted the NPC's decision.
+        this.assert(npc.actionPlan?.sourceEventId === sourceEventId, "会面计划尚未落地。");
+        text = `新的会面约定已生效：${gameTimeLabel(npc.actionPlan.arriveAt)}，${demoBootstrap.locations.find(l => l.id === npc.actionPlan!.locationId)!.name}。`; break;
+    }
+    heart.consequenceApplied = true;
+    const e = this.event("heart_consequence", npcId, npcId, text, ["player", npcId]);
+    e.details.sourceEventId = sourceEventId; e.details.spendEventId = heart.spendEventId ?? "";
+    e.details.consequenceType = effect.type;
+    this.memory(npcId, text, e);
+  }
+
+  async completeHeartActivity(revision: number) {
+    this.assertHeartRevision(revision);
+    const npcId = "npc_koharu", npc = this.state.npcStates[npcId];
+    this.assert(this.state.phase === "location" || (this.state.phase === "encounter" && this.state.activeNpcId === npcId && dialoguePlaybackFinished(this.state)), "先看完当前对白，或在场景中与小春一起整理。");
+    this.assert(npc.sortingHelp === "offered" && this.canTalk(npcId), "当前没有可执行的整理邀请，或小春不在场／暂不接待。");
+    this.assert(this.state.currentMinute + 30 <= 1080, "今天已没有30分钟整理，请下次与小春见面时继续。");
+    this.assert(!npc.actionPlan || npc.actionPlan.status !== "planned" || npc.actionPlan.arriveAt > this.abs() + 30 || npc.actionPlan.locationId === this.state.currentLocationId,
+      "小春即将前往约定地点，请先处理会面安排再共同整理。");
+    this.assert(!this.hasPendingHeartConsequence(), "请先看完出牌后的决定。");
+    return this.heartTurn(async () => {
+      if (!this.advance(this.abs() + 30, this.state.currentLocationId)) return;
+      npc.sortingHelp = "completed";
+      const e = this.event("heart_activity", npcId, npcId, "遥与小春花30分钟一起整理了遗物，小春仍持有的材料已共同查看，实物未转移。", ["player", npcId]);
+      this.memory(npcId, e.details.text, e);
+      for (const [id, owner] of Object.entries(this.state.itemOwners)) if (owner === npcId && evidence[id]) this.readEvidence(id);
+      // Never resume a pre-generated segment after the physical activity changed the scene.
+      if (this.state.phase === "encounter") {
+        this.event("encounter_completed", "player", npcId, "交谈转为共同整理，整理已完成。", ["player", npcId]);
+        this.clearEncounter(); this.state.phase = this.state.currentMinute >= 1080 ? "night" : "location";
+        if (this.state.phase === "night") this.state.currentLocationId = null;
+      }
+    });
+  }
+
+  private hasPendingHeartConsequence() {
+    const heart = this.state.currentDialogue?.heart;
+    return !!(heart?.spendEventId && heart.consequence && !heart.consequenceApplied);
   }
   async nextDialogueBeat(revision?: number) {
+    const before = structuredClone(this.state);
+    try { return await this.playNextDialogueBeat(revision); }
+    catch (error) { if (!this.heartBusy) this.state = before; throw error; }
+  }
+  private async playNextDialogueBeat(revision?: number) {
     if (this.state.heartSession || revision !== undefined) this.assertHeartRevision(revision);
     this.assert(this.state.phase === "encounter" && this.state.currentDialogue, "当前没有对白。");
     this.assert(!dialoguePlaybackFinished(this.state), "已经到最后一句。");
@@ -563,7 +640,9 @@ export class GameService {
     // Unchosen possibilities are branch metadata only, never NPC memories or witnessed facts.
   }
   async completeEncounter() {
+    this.assert(!this.heartBusy, "当前心绪正在生成，请稍候。");
     this.assert(this.state.phase === "encounter", "当前不在会面中。");
+    this.assert(!this.hasPendingHeartConsequence(), "这张牌的后果尚未播放，请先看完对方的决定再结束会面。");
     if (dialoguePlaybackFinished(this.state)) await this.applyDialogueAction();
     const id = this.state.activeNpcId!;
     const runtime = this.state.npcStates[id];
