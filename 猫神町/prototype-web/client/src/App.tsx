@@ -13,6 +13,7 @@ import {
 } from "../../packages/shared/src/index.ts";
 import { gameApi } from "./api.ts";
 import { HeartHand } from "./HeartHand.tsx";
+import { HeartObserver } from "./HeartObserver.tsx";
 
 type ViewId = "map" | "location" | "inventory" | "journal" | "shrine" | "ending" | "debug";
 
@@ -26,7 +27,7 @@ const periodLabel = {
 const navItems: Array<{ id: Exclude<ViewId, "location" | "ending">; label: string; icon: string }> = [
   { id: "map", label: "地图", icon: "⌖" },
   { id: "inventory", label: "背包", icon: "▣" },
-  { id: "journal", label: "手记", icon: "▤" },
+  { id: "journal", label: "档案", icon: "▤" },
   { id: "shrine", label: "规则", icon: "◇" },
   { id: "debug", label: "调试", icon: "⌘" }
 ];
@@ -63,6 +64,9 @@ export function App() {
   const [candidateGiftId, setCandidateGiftId] = useState<string | null>(null);
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
   const [pendingPlayerLine, setPendingPlayerLine] = useState<string | null>(null);
+  const [heartObservationRefresh, setHeartObservationRefresh] = useState(0);
+  const [archiveTab, setArchiveTab] = useState<"characters" | "events">("characters");
+  const [selectedArchiveId, setSelectedArchiveId] = useState<string | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -149,6 +153,18 @@ export function App() {
   function changeView(nextView: ViewId) {
     setView(nextView);
     setActionError(null);
+    if (nextView === "journal" && !busy) void refreshArchive();
+  }
+
+  async function refreshArchive() {
+    setBusy(true); setActionError(null);
+    try {
+      const response = await gameApi.syncArchive(state.revision);
+      setGameState(response.state); setNotice(response.notice);
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "档案整理失败");
+      try { setGameState(await gameApi.state()); } catch { /* Keep the last visible archive. */ }
+    } finally { setBusy(false); }
   }
 
   async function perform(action: () => Promise<GameActionResponse>, optimisticPlayerLine?: string) {
@@ -166,10 +182,12 @@ export function App() {
       }
       setView(routeForState(response.state));
       void gameApi.aiLogs().then(setAiLogs).catch(() => undefined);
+      return true;
     } catch (error) {
       setActionError(error instanceof Error ? error.message : "操作失败");
       // A lost HTTP response may follow a committed spend. Recover, never replay the POST.
       try { const recovered = await gameApi.state(); setGameState(recovered); setView(routeForState(recovered)); } catch { /* Keep last known state with the original error. */ }
+      return false;
     } finally {
       setPendingPlayerLine(null);
       setBusy(false);
@@ -270,13 +288,16 @@ export function App() {
             </div>
           )}
           {isLastBeat && dialogue.heart?.canContinue && (dialogue.heart.choicePoint
-            ? <><p className="heart-choice-prompt">这一刻，你想以怎样的心绪回应？</p><HeartHand state={state} bootstrap={bootstrap!} busy={busy} onUse={cardId => void perform(() => gameApi.useHeart(cardId, state.revision))} /></>
+            ? <><p className="heart-choice-prompt">这一刻，你想以怎样的心绪回应？</p><HeartHand key={state.revision} state={state} bootstrap={bootstrap!} busy={busy}
+                onObservationChange={() => setHeartObservationRefresh(n => n + 1)}
+                onPreview={cardId => gameApi.previewHeart(cardId, state.revision)}
+                onUse={(cardId, previewId) => perform(() => gameApi.useHeart(cardId, state.revision, previewId))} /></>
             : <div className="dialogue-continue-row"><span>{busy ? "两人的对话正在继续……" : "对话自然推进，重要时刻再选择心绪。"}</span><button disabled={busy} type="button" onClick={() => void perform(() => gameApi.useHeart(null, state.revision))}>继续对话 →</button></div>)}
-          {dialogue.heart && <p className="heart-trial-note">小春 · 事件试玩。出牌改变实际事情，结果不保证有利。</p>}
+          {dialogue.heart && <><p className="heart-trial-note">七人拾绪 · 九种态度。多数回应会推动实际后果；没有合适后果时，也会转向新的交流焦点。</p><HeartObserver revision={state.revision} refreshKey={heartObservationRefresh} /></>}
           {isLastBeat && !canContinue && !isWaitingForNpc && (
             <p className="conversation-done">本次交谈已结束。返回场景，继续你的行程吧。</p>
           )}
-          {isLastBeat && dialogue.options.length > 0 && !isWaitingForNpc && state.interactionMode === "talk" && (
+          {isLastBeat && (dialogue.options.length > 0 || dialogue.heart?.canContinue) && !isWaitingForNpc && state.interactionMode === "talk" && (
             <details className="evidence-tools">
               <summary>出示材料／转告消息</summary>
               <p>出示不转移所有权。已送出的实物不能再次出示。</p>
@@ -289,8 +310,8 @@ export function App() {
               </div>
             </details>
           )}
-          {dialogue.heart?.spendEventId && !dialogue.heart.consequenceApplied && <p className="heart-pending" role="status">这张牌的后果待播放。请继续看完对方的决定，进度已保存。</p>}
-          <button className="end-meeting" disabled={busy || !!(dialogue.heart?.spendEventId && !dialogue.heart.consequenceApplied)} type="button" onClick={() => void perform(gameApi.completeEncounter)}>
+          {dialogue.heart?.spendEventId && dialogue.heart.consequence && !dialogue.heart.consequenceApplied && <p className="heart-pending" role="status">这张牌的后果待播放。请继续看完对方的决定，进度已保存。</p>}
+          <button className="end-meeting" disabled={busy || !!(dialogue.heart?.spendEventId && dialogue.heart.consequence && !dialogue.heart.consequenceApplied)} type="button" onClick={() => void perform(gameApi.completeEncounter)}>
             {isLastBeat && !canContinue ? "返回场景" : "结束本次会面"}
           </button>
         </div>
@@ -438,8 +459,10 @@ export function App() {
             )}
             <div className="meeting-cost-note">
               {gameState.phase === "location"
-                ? `已抵达但尚未开始会面；点击人物后再选择交谈或赠礼。`
-                : `会面已经开始；交谈或确认赠礼将花费 ${formatDuration(gameState.conversationDurationMinutes)}。`}
+                ? "点击人物只查看互动，不锁定对白；选择拾绪或送礼后才开始会面。"
+                : gameState.interactionMode === "gift" && !gameState.giftItemId
+                  ? `已选择送礼并锁定人物；确认交出礼物才花费 ${formatDuration(gameState.conversationDurationMinutes)}，也可以取消。`
+                  : "当前对白已锁定；结束后可以继续探索或与其他人物互动。"}
             </div>
             <div className="location-stage" style={{ "--location-accent": selectedLocation.accent } as CSSProperties}>
               <div className="stage-copy">
@@ -452,13 +475,13 @@ export function App() {
                 <button
                   key={sceneNpc.id}
                   className={`chibi-card ${gameState.activeNpcId === sceneNpc.id ? "selected" : ""}`}
-                  disabled={busy || gameState.phase !== "location" || !canStartConversation || state.npcStates[sceneNpc.id].lifeState !== "alive" || state.npcStates[sceneNpc.id].unavailableUntil > (state.day - 1) * 1440 + state.currentMinute}
+                  disabled={busy || gameState.phase !== "location" || state.npcStates[sceneNpc.id].lifeState !== "alive" || state.npcStates[sceneNpc.id].unavailableUntil > (state.day - 1) * 1440 + state.currentMinute}
                   type="button"
                   onClick={() => void perform(() => gameApi.startEncounter(sceneNpc.id))}
                 >
                   <span className="chibi" style={{ "--npc-accent": sceneNpc.accent } as CSSProperties}><i className="chibi-hair" /><i className="chibi-face">• ᴗ •</i><i className="chibi-body" /></span>
                   <strong>{sceneNpc.name}</strong><small>{state.npcStates[sceneNpc.id].lifeState === "injured" ? "受伤休养中，暂不能交谈" : sceneNpc.occupation}</small>
-                  <span>{state.npcStates[sceneNpc.id].unavailableUntil > (state.day - 1) * 1440 + state.currentMinute ? `暂不接待 · ${formatClock(state.npcStates[sceneNpc.id].unavailableUntil % 1440)}后再来` : gameState.phase === "location" ? (canStartConversation ? "点击开始会面" : "今天已没有会面时间") : gameState.activeNpcId === sceneNpc.id ? "会面中" : "在场"}</span>
+                  <span>{state.npcStates[sceneNpc.id].unavailableUntil > (state.day - 1) * 1440 + state.currentMinute ? `暂不接待 · ${formatClock(state.npcStates[sceneNpc.id].unavailableUntil % 1440)}后再来` : gameState.phase === "location" ? (gameState.activeNpcId === sceneNpc.id ? "已选中 · 尚未开始对白" : "点击查看互动") : gameState.activeNpcId === sceneNpc.id ? "会面中" : "在场"}</span>
                 </button>
                 ))}
                 {sceneNpcs.length === 0 && <p>这里暂时没有能交谈的人，你仍然可以查看现场。</p>}
@@ -468,8 +491,8 @@ export function App() {
             {gameState.phase === "location" && (
               <div className="scene-entry-note">
                 <span className="eyebrow">场景探索 · {formatClock(gameState.currentMinute)}</span>
-                <h2>你还没有与任何人会面</h2>
-                <p>看看地点和在场人物。想交流时点击人物；直接离开只计算已经发生的移动时间。</p>
+                <h2>{activeNpc ? `已选中${activeNpc.name}，尚未开始对白` : "选择人物或继续探索"}</h2>
+                <p>点击人物后仍可换人或离开。选择拾绪或送礼才锁定这次会面；收起选择不会生成对白或改变人物记忆。</p>
                 <div className="scene-materials">
                   {bootstrap.items.filter(i => state.itemOwners[i.id] === selectedLocation.id).map(i => (
                     <article key={i.id}><strong>{i.icon} {i.baseName}</strong>
@@ -500,19 +523,19 @@ export function App() {
               </div>
             )}
 
-            {gameState.phase === "encounter" && !gameState.interactionMode && (
+            {gameState.phase === "location" && activeNpc && !gameState.interactionMode && (
               <div className="meeting-entry">
-                <div><span className="eyebrow">会面方式 · {formatClock(gameState.currentMinute)}</span><h2>与{activeNpc?.name}怎样开始？</h2><p>直接离开不再花时间。交谈会在开始时计时；选择赠礼可在确认交出前返回且不计时。</p></div>
+                <div><span className="eyebrow">互动选择 · 尚未锁定 · {formatClock(gameState.currentMinute)}</span><h2>与{activeNpc.name}怎样开始？</h2><p>拾绪就是交谈。选择后才开始并计时；送礼在选择后锁定人物、确认交出时计时。现在可以直接换人或离开。</p></div>
                 <div className="meeting-actions">
-                  {activeNpc?.id === "npc_koharu" && <button className="heart-entry" disabled={busy || !canStartConversation} type="button" onClick={() => void perform(() => gameApi.startHearts(state.revision))}><strong>✧ 拾绪试玩 · {formatDuration(gameState.conversationDurationMinutes)}</strong><small>{busy ? "正在等待小春开口……" : "恐惧 · 同情 · 爱意，从对方的情绪开始"}</small></button>}
-                  <button disabled={busy || !canStartConversation} type="button" onClick={() => void perform(() => gameApi.selectMode("talk"))}><strong>交谈 · {formatDuration(gameState.conversationDurationMinutes)}</strong><small>{canStartConversation ? "根据人设、当前情况与世界规则闲聊" : "今天剩余时间不足"}</small></button>
-                  <button disabled={busy || inventoryItems.length === 0 || !canStartConversation} type="button" onClick={() => void perform(() => gameApi.selectMode("gift"))}><strong>赠送礼物 · {formatDuration(gameState.conversationDurationMinutes)}</strong><small>{!canStartConversation ? "今天剩余时间不足" : inventoryItems.length ? "确认礼物后计时，再围绕礼物交谈" : "背包里没有可赠送的东西"}</small></button>
+                  {activeNpc && <button className="heart-entry" disabled={busy || !canStartConversation} type="button" onClick={() => void perform(() => gameApi.startHearts(state.revision))}><strong>✧ 拾绪 · {formatDuration(gameState.conversationDurationMinutes)}</strong><small>{busy ? `正在等待${activeNpc.name}开口……` : "九种态度 · 心绪推荐 · 回复先预览"}</small></button>}
+                  <button disabled={busy || inventoryItems.length === 0 || !canStartConversation} type="button" onClick={() => void perform(() => gameApi.selectMode("gift", state.revision))}><strong>送礼 · {formatDuration(gameState.conversationDurationMinutes)}</strong><small>{!canStartConversation ? "今天剩余时间不足" : inventoryItems.length ? "选择后锁定人物，确认交出时计时" : "背包里没有可赠送的东西"}</small></button>
                 </div>
-                <button className="skip-meeting" disabled={busy} type="button" onClick={() => void perform(gameApi.completeEncounter)}>结束会面，返回场景</button>
+                {!canStartConversation && <p>今天已没有足够的互动时间，仍可查看人物或继续探索。</p>}
+                <button className="skip-meeting" disabled={busy} type="button" onClick={() => void perform(gameApi.completeEncounter)}>收起选择 · 不开始对白</button>
               </div>
             )}
 
-            {gameState.interactionMode === "talk" && renderDialogue(state.heartSession ? "拾绪" : "交谈")}
+            {gameState.interactionMode === "talk" && renderDialogue("拾绪")}
 
             {gameState.interactionMode === "gift" && !gameState.giftItemId && sceneNpc && (
               <div className="gift-panel">
@@ -562,19 +585,53 @@ export function App() {
                 <button type="button" onClick={() => changeView("shrine")}>查看世界规则 →</button>
               </aside>
             </div>
+            <section className="material-records" aria-label="已读材料记录">
+              <div className="journal-divider"><span>已读材料</span></div>
+              <div className="view-heading compact"><div><span className="eyebrow">内容记录 · 不等于随身持有</span><h2>看过的证物与文件</h2></div><p>阅读过的内容会保留在这里；原件是否在你手中，以背包状态为准。</p></div>
+              {state.evidenceJournal.length === 0 && <p className="archive-empty">还没有读过材料。去找小春，或看看商店街的公开旧报。</p>}
+              <div className="material-record-grid">
+                {state.evidenceJournal.map(entry => <article className="info-card" key={entry.id}>
+                  <span className="eyebrow">{entry.id} · 第{entry.day}天 · {entry.source}</span><h2>{entry.name}</h2>
+                  <p>{entry.text}</p><small>{state.itemOwners[entry.id] === "player" ? "原件目前由你保管" : "只保留了阅读记录，原件不在背包"}</small>
+                </article>)}
+              </div>
+            </section>
           </section>
         )}
 
         {view === "journal" && (
           <section className="view">
-            <div className="view-heading"><div><span className="eyebrow">实际看过的材料</span><h1>调查手记</h1></div><p>记录不会随实物送出而消失；同源副本不是两份独立证明。</p></div>
-            {state.evidenceJournal.length === 0 && <p>还没有读过材料。去找小春，或看看商店街的公开旧报。</p>}
-            {state.evidenceJournal.map(entry => <article className="info-card" key={entry.id}>
-              <span className="eyebrow">{entry.id} · 第{entry.day}天 · {entry.source}</span><h2>{entry.name}</h2>
-              <p>{entry.text}</p><small>{state.itemOwners[entry.id] === "player" ? "实物在背包" : "你没有持有这份实物"}</small>
-            </article>)}
-            <h2>亲历与证词</h2>
-            {state.eventLog.filter(e => ["story_beat","incident","information_delivered"].includes(e.type)).map(e => <p key={e.id}>第{e.day}天 {formatClock(e.minute)} · {e.details.text}</p>)}
+            <div className="view-heading"><div><span className="eyebrow">档案官 AI · 只读已见内容</span><h1>调查档案</h1></div><p>人物与事件分开整理，但可以相互关联。NPC的说法默认是待核实记录，不会自动变成真相。</p></div>
+            <div className="archive-status">
+              <span>{state.investigationArchive.status === "ai" ? "AI 档案已启用" : state.investigationArchive.status === "unavailable" ? "档案官暂时不可用" : "等待首次整理"}</span>
+              <small>{state.investigationArchive.pending ? "还有较早见闻待整理" : "已跟进当前记录"}</small>
+              <button disabled={busy} type="button" onClick={() => void refreshArchive()}>{busy ? "档案官正在整理……" : "整理最新见闻"}</button>
+            </div>
+            <div className="archive-tabs" role="tablist" aria-label="档案类型">
+              <button className={archiveTab === "characters" ? "active" : ""} onClick={() => { setArchiveTab("characters"); setSelectedArchiveId(null); }} role="tab">人物档案 <small>{state.investigationArchive.characters.length}</small></button>
+              <button className={archiveTab === "events" ? "active" : ""} onClick={() => { setArchiveTab("events"); setSelectedArchiveId(null); }} role="tab">事件档案 <small>{state.investigationArchive.events.length}</small></button>
+            </div>
+            {archiveTab === "characters" ? <div className="archive-grid">
+              {state.investigationArchive.characters.map(character => <article className={`archive-card ${selectedArchiveId === character.id ? "selected" : ""}`} key={character.id}>
+                <button className="archive-card-heading" onClick={() => setSelectedArchiveId(selectedArchiveId === character.id ? null : character.id)}><span>人</span><div><h2>{character.name}</h2><small>{character.identity}</small></div></button>
+                <p>{character.summary}</p>
+                {selectedArchiveId === character.id && <div className="archive-detail">
+                  {character.claims.map(claim => <div className="archive-claim" key={claim.id}><span data-status={claim.status}>{({ reported: "他人说法", observed: "亲眼所见", documented: "材料记载", confirmed: "已确认", disputed: "存在矛盾" } as const)[claim.status]}</span><p>{claim.text}</p><small>第{claim.learnedDay}天 {formatClock(claim.learnedMinute)} · {claim.sourceEventIds.length}个来源</small></div>)}
+                  {!!character.relatedEventIds.length && <div className="archive-links"><strong>相关事件</strong>{character.relatedEventIds.map(id => { const event = state.investigationArchive.events.find(e => e.id === id); return event && <button key={id} onClick={() => { setArchiveTab("events"); setSelectedArchiveId(id); }}>{event.title}</button>; })}</div>}
+                </div>}
+              </article>)}
+              {!state.investigationArchive.characters.length && <p className="archive-empty">还没有解锁人物档案。档案官只会记录已经明确出现的人。</p>}
+            </div> : <div className="archive-grid">
+              {state.investigationArchive.events.map(event => <article className={`archive-card event-card ${selectedArchiveId === event.id ? "selected" : ""}`} key={event.id}>
+                <button className="archive-card-heading" onClick={() => setSelectedArchiveId(selectedArchiveId === event.id ? null : event.id)}><span>事</span><div><h2>{event.title}</h2><small>{({ reported: "听闻", investigating: "调查中", confirmed: "已确认", resolved: "已收束", disputed: "存在矛盾" } as const)[event.status]}</small></div></button>
+                <p>{event.summary}</p>
+                {selectedArchiveId === event.id && <div className="archive-detail">
+                  {!!event.participantIds.length && <div className="archive-links"><strong>参与人</strong>{event.participantIds.map(id => { const character = state.investigationArchive.characters.find(c => c.id === id); return character && <button key={id} onClick={() => { setArchiveTab("characters"); setSelectedArchiveId(id); }}>{character.name}</button>; })}</div>}
+                  {event.claims.map(claim => <div className="archive-claim" key={claim.id}><span data-status={claim.status}>{({ reported: "他人说法", observed: "亲眼所见", documented: "材料记载", confirmed: "已确认", disputed: "存在矛盾" } as const)[claim.status]}</span><p>{claim.text}</p><small>第{claim.learnedDay}天 {formatClock(claim.learnedMinute)} · {claim.sourceEventIds.length}个来源</small></div>)}
+                </div>}
+              </article>)}
+              {!state.investigationArchive.events.length && <p className="archive-empty">还没有解锁事件档案。只有能说清参与者、行为或后果的事才会单独建档。</p>}
+            </div>}
           </section>
         )}
 
@@ -647,12 +704,13 @@ export function App() {
           <section className="view debug-view">
             <div className="view-heading"><div><span className="eyebrow">开发调试</span><h1>存档状态与事件链</h1></div><p>所有时间推进、物品转移与规则改写均由服务端校验并写入单一存档。</p></div>
             <div className="debug-toolbar"><span>存档修订 #{gameState.revision} · 事件 {gameState.eventLog.length} 条</span><button type="button" onClick={() => setResetConfirmOpen(true)}>重新开始游戏</button></div>
+            <HeartObserver revision={gameState.revision} refreshKey={heartObservationRefresh} initiallyOpen />
             <div className="debug-grid">
               <article><h2>当前状态</h2><pre>{JSON.stringify({ day: gameState.day, time: formatClock(gameState.currentMinute), period: gameState.period, phase: gameState.phase, conversationDurationMinutes: gameState.conversationDurationMinutes, currentLocationId: gameState.currentLocationId, activeNpcId: gameState.activeNpcId, interactionMode: gameState.interactionMode, giftItemId: gameState.giftItemId, activeRules: gameState.activeRules, storyFlags: gameState.storyFlags, ending: gameState.ending }, null, 2)}</pre></article>
               <article><h2>物品所有权</h2><pre>{JSON.stringify(bootstrap.items.map((item) => ({ item: item.baseName, owner: gameState.itemOwners[item.id], concept: bootstrap.concepts.find((concept) => concept.id === item.carriedConceptId)?.label })), null, 2)}</pre></article>
               <article className="debug-wide"><h2>NPC 独立状态、位置与结构化记忆</h2><pre>{JSON.stringify(bootstrap.npcs.map((npc) => ({ name: npc.name, godView: npc.godView, locationId: gameState.npcStates[npc.id]?.currentLocationId ?? npc.initialLocationId, relationship: gameState.npcStates[npc.id]?.relationship ?? 0, memories: gameState.npcStates[npc.id]?.memories ?? [] })), null, 2)}</pre></article>
               <article><h2>AI Provider</h2><pre>{JSON.stringify(aiStatus ?? { configured: false }, null, 2)}</pre></article>
-              <article><h2>纱夜 Prompt 层级</h2><pre>{JSON.stringify(aiPromptStructure ?? { status: "loading" }, null, 2)}</pre></article>
+              <article><h2>全员对白结构</h2><pre>{JSON.stringify(aiPromptStructure ?? { status: "loading" }, null, 2)}</pre></article>
               <article className="debug-wide"><h2>AI 调试日志（不保存隐藏推理）</h2><pre>{JSON.stringify(aiLogs, null, 2)}</pre></article>
               <article className="debug-wide"><h2>事件日志</h2><pre>{JSON.stringify(gameState.eventLog, null, 2)}</pre></article>
             </div>

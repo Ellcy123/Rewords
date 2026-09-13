@@ -20,7 +20,7 @@ function context(count = 18, choices = 0, npcId = "npc_koharu"): CaseContext {
   return { state, npcId, mode: "talk", selectedOption: { id: "reply", text: "别勉强自己。", intent: "体谅" }, giftItem: null, effect: "" };
 }
 const body = (extra = {}) => ({ line: "谢谢。今天先说这些，我去扫扫神社门口。", stage_direction: "伸手去拿扫帚。",
-  emotion: "平静", continuations: [], options: [], used_fact_ids: [], accept_action: false, closing_reason: "回到神社杂务", ...extra });
+  emotion: "平静", continuations: [], options: [], used_fact_ids: [], disclosed_fact_ids: [], progress: { type: "transition", summary: "结束会面并回到神社杂务" }, accept_action: false, closing_reason: "回到神社杂务", ...extra });
 const response = (value: unknown) => new Response(JSON.stringify({ choices: [{ finish_reason: "stop", message: { content: JSON.stringify(value) } }] }));
 async function readAll(g: GameService) {
   let s = g.getState();

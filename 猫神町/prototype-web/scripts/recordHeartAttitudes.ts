@@ -5,7 +5,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { CaseDialogueProvider } from "../server/src/caseProvider.ts";
 import { GameService } from "../server/src/gameService.ts";
 import { MemoryGameStore } from "../server/src/persistence.ts";
-import { heartKinds, heartCatalog } from "../packages/shared/src/index.ts";
+import { legacyHeartKinds, heartCatalog } from "../packages/shared/src/index.ts";
 
 dotenv.config({ path: fileURLToPath(new URL("../server/.env.local", import.meta.url)), quiet: true });
 const real = new CaseDialogueProvider();
@@ -15,9 +15,10 @@ async function drain(game: GameService) {
   let s = game.getState();
   while (s.currentDialogue && !dialoguePlaybackFinished(s)) { await game.nextDialogueBeat(s.revision); s = game.getState(); }
 }
-for (const kind of heartKinds) {
+for (const kind of legacyHeartKinds) {
   const store = new MemoryGameStore(), setup = new GameService(store, new CaseDialogueProvider({ apiKey: "" }));
   setup.travel("loc_shrine"); setup.startEncounter("npc_koharu"); await setup.startHeartEncounter(setup.getState().revision);
+  await drain(setup); // The opening pickup exists only after its NPC speech is shown.
   if (kind !== "fear") { await setup.useHeart(setup.getState().heartCards[0].id, setup.getState().revision); await drain(setup); }
   if (kind === "affection") await setup.useHeart(setup.getState().heartCards.find(c => c.kind === "sympathy")!.id, setup.getState().revision);
   await drain(setup);

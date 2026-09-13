@@ -13,7 +13,7 @@ function draft(c:CaseContext) {
     options:[
       {text:"看看车票",intent:"请求查看票面",angle:"核对",anchor:"看看车票",action_id:"show:E01"},
       {text:"票不能说明一切。",intent:"质疑车票能证明死亡性质",angle:"质疑",anchor:"车票",action_id:null}
-    ],used_fact_ids:["F02"],accept_action:false};
+    ],used_fact_ids:["F02"],disclosed_fact_ids:["F02"],progress:{type:"reveal",summary:"小春说明两张离开车票的用途"},accept_action:false};
 }
 describe("new case natural dialogue provider",()=>{
   it.each(demoBootstrap.npcs.map(n=>n.id))("scopes private knowledge for %s",npcId=>{

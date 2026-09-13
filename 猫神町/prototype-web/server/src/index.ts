@@ -49,6 +49,19 @@ app.get("/api/ai/prompt-structure", async () => ({
 app.get("/api/bootstrap", async () => DemoBootstrapSchema.parse(demoBootstrap));
 
 app.get("/api/game/state", async () => gameService.getState());
+app.post("/api/game/archive/sync", async (request, reply) => runGameAction(() =>
+  gameService.syncInvestigationArchive(parseBody(z.object({ revision: z.number().int().nonnegative() }), request.body).revision), reply));
+app.get("/api/game/hearts/observations", async () => gameService.getHeartObservations());
+// Suggestions are read-only and must not hold up the gameplay action queue.
+app.post("/api/game/hearts/director", async (request, reply) => {
+  try {
+    const body = parseBody(z.object({ revision: z.number().int().nonnegative() }), request.body);
+    return await gameService.recommendHearts(body.revision);
+  } catch (error) {
+    if (error instanceof GameRuleError) return reply.status(409).send({ error: "game_rule_error", message: error.message });
+    throw error;
+  }
+});
 
 app.post("/api/game/reset", async (_request, reply) =>
   runGameAction(() => gameService.reset(), reply)
@@ -94,9 +107,13 @@ app.post("/api/game/next-beat", async (request, reply) => runGameAction(() =>
   gameService.nextDialogueBeat(parseBody(z.object({ revision: z.number().int().nonnegative().optional() }), request.body).revision), reply));
 app.post("/api/game/hearts/start", async (request, reply) => runGameAction(() =>
   gameService.startHeartEncounter(parseBody(z.object({ revision: z.number().int().nonnegative() }), request.body).revision), reply));
+app.post("/api/game/hearts/preview", async (request, reply) => runGameAction(() => {
+  const b = parseBody(z.object({ cardId: z.string().min(1), revision: z.number().int().nonnegative() }), request.body);
+  return gameService.previewHeart(b.cardId, b.revision);
+}, reply));
 app.post("/api/game/hearts/use", async (request, reply) => runGameAction(() => {
   const b = parseBody(HeartActionRequestSchema, request.body);
-  return gameService.useHeart(b.cardId, b.revision);
+  return gameService.useHeart(b.cardId, b.revision, b.previewId);
 }, reply));
 app.post("/api/game/hearts/activity", async (request, reply) => runGameAction(() =>
   gameService.completeHeartActivity(parseBody(z.object({ revision: z.number().int().nonnegative() }), request.body).revision), reply));
@@ -123,7 +140,9 @@ app.post("/api/game/wait-until-night", async (_request, reply) =>
 app.post("/api/game/interaction-mode", async (request, reply) =>
   runGameAction(() => {
     const body = parseBody(InteractionModeRequestSchema, request.body);
-    return gameService.selectInteractionMode(body.mode);
+    if (body.revision !== undefined && body.revision !== gameService.getState().revision) throw new GameRuleError("人物选择或进度已变化，请重新选择互动。");
+    // Backward-compatible wire name, one player-facing dialogue flow.
+    return body.mode === "talk" ? gameService.startHeartEncounter(gameService.getState().revision) : gameService.selectInteractionMode("gift");
   }, reply)
 );
 

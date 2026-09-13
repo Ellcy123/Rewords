@@ -47,12 +47,15 @@ describe("NPC meeting plans", () => {
     game.wait(120); expect(plan(game)).toBeNull();
     expect(game.getState().npcStates.npc_koharu.currentLocationId).toBe("loc_shrine");
   });
-  it("moves on time, waits, and completes only when the player starts meeting", async () => {
+  it("moves on time, waits, and completes only after the player chooses a real interaction", async () => {
     const { game } = await setup(); await playInvite(game); await game.completeEncounter();
     game.wait(30); expect(game.getState().npcStates.npc_koharu.currentLocationId).toBe("loc_shrine");
     game.leaveLocation(); game.travel("loc_home");
     expect(plan(game)?.status).toBe("waiting"); expect(game.getState().npcStates.npc_koharu.currentLocationId).toBe("loc_home");
-    game.startEncounter("npc_koharu"); expect(plan(game)?.status).toBe("completed");
+    game.startEncounter("npc_koharu"); expect(plan(game)?.status).toBe("waiting");
+    // The legacy direct-talk service route remains a compatibility regression path;
+    // production UI chooses 拾绪 instead. Either real interaction is what completes the appointment.
+    await game.selectInteractionMode("talk"); expect(plan(game)?.status).toBe("completed");
     expect(game.getState().npcStates.npc_koharu.memories.some(m => m.summary.includes("按约"))).toBe(true);
   });
   it("a large time jump executes arrival then expiry, with no invented return trip", async () => {
@@ -143,7 +146,7 @@ describe("NPC meeting plans", () => {
     const c: HeartContext = { state, npcId: "npc_koharu", mode: "talk", heartIntent: "opening", selectedOption: null, giftItem: null, effect: "" };
     expect(JSON.parse(buildHeartPrompt(c, buildCasePrompt(c).user).user).action_plan.id).toBe("plan_test");
     const raw = { beats: [{ speaker: "npc", line: "你来了。", emotion: "平静" }, { speaker: "player", line: proposal().quote, emotion: "平静" }],
-      action_plan: proposal(), choice_point: null, can_continue: true, closing_reason: "", used_fact_ids: [], pickup: null };
+      action_plan: proposal(), choice_point: null, can_continue: true, closing_reason: "", used_fact_ids: [], disclosed_fact_ids: [], progress: { type: "request", summary: "提出一项具体会面安排" }, pickup: null };
     expect(() => validateHeartDraft(raw, c, [])).toThrow("invalid_action_plan");
   });
 });

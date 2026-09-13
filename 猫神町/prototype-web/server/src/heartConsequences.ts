@@ -2,6 +2,15 @@ import { type GameState, type HeartConsequence, type ActionPlanProposal } from "
 import { availableActions } from "./caseData.ts";
 import { validMeetingPlan } from "./actionPlans.ts";
 
+export function heartMeetingWindow(state: GameState, npcId: string): ActionPlanProposal | null {
+  const now = (state.day - 1) * 1440 + state.currentMinute;
+  let arriveAt = now + 60;
+  if (arriveAt % 1440 + 60 > 1080) arriveAt = (Math.floor(now / 1440) + 1) * 1440 + 540;
+  const proposal: ActionPlanProposal = { type: "meet", targetNpcId: "player", locationId: state.currentLocationId!,
+    arriveAt, waitUntil: arriveAt + 60, reason: "继续当面交谈", quote: "", beatIndex: 1 };
+  return validMeetingPlan(proposal, state, npcId) ? proposal : null;
+}
+
 // Executable capabilities, not a table that maps a card to a predetermined reward.
 export function heartCapabilities(state: GameState, npcId: string) {
   const npc = state.npcStates[npcId];
@@ -12,7 +21,9 @@ export function heartCapabilities(state: GameState, npcId: string) {
     sorting_offer: npcId === "npc_koharu" && npc.sortingHelp === "available" && state.currentMinute + 30 <= 1080 && materials.some(a => a.id.startsWith("show:")),
     sorting_cancel: npcId === "npc_koharu" && npc.sortingHelp === "offered",
     sorting_state: npc.sortingHelp,
-    meeting: true,
+    case_actions: availableActions(state, npcId).filter(a => ["retract", "write", "protect", "supplement"].includes(a.id) &&
+      !(a.id === "protect" && state.pendingNpcMove?.npcId === npcId)),
+    meeting: !!heartMeetingWindow(state, npcId),
     pause: true,
     pause_minutes: 60,
     now: (state.day - 1) * 1440 + state.currentMinute
@@ -21,9 +32,10 @@ export function heartCapabilities(state: GameState, npcId: string) {
 
 export function validHeartConsequence(effect: HeartConsequence, state: GameState, npcId: string, plan: ActionPlanProposal | null): boolean {
   const cap = heartCapabilities(state, npcId);
-  if (effect.type !== "material" && effect.actionId !== null) return false;
+  if (!["material", "case_action"].includes(effect.type) && effect.actionId !== null) return false;
   switch (effect.type) {
     case "material": return cap.materials.some(a => a.id === effect.actionId);
+    case "case_action": return cap.case_actions.some(a => a.id === effect.actionId);
     case "sorting_offer": return cap.sorting_offer;
     case "sorting_cancel": return cap.sorting_cancel;
     case "pause": return state.npcStates[npcId].unavailableUntil <= cap.now;

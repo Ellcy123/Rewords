@@ -5,13 +5,16 @@ import {
   AiProviderStatusSchema,
   GameActionResponseSchema,
   GameStateSchema,
+  HeartPreviewSchema,
+  HeartDirectorResultSchema,
+  HeartObservationSchema,
+  type HeartPreview,
   type DemoBootstrap,
   type AiLogEntry,
   type AiPromptStructure,
   type AiProviderStatus,
   type GameActionResponse,
   type GameState,
-  type InteractionMode,
   type RuleSlotId
 } from "../../packages/shared/src/index.ts";
 
@@ -47,6 +50,7 @@ async function request<T>(path: string, schema: { parse: (input: unknown) => T }
 export const gameApi = {
   bootstrap: (): Promise<DemoBootstrap> => request("/api/bootstrap", DemoBootstrapSchema),
   state: (): Promise<GameState> => request("/api/game/state", GameStateSchema),
+  syncArchive: (revision: number): Promise<GameActionResponse> => request("/api/game/archive/sync", GameActionResponseSchema, { revision }),
   aiStatus: (): Promise<AiProviderStatus> => request("/api/ai/status", AiProviderStatusSchema),
   aiLogs: (): Promise<AiLogEntry[]> => request("/api/ai/logs", AiLogEntrySchema.array()),
   aiPromptStructure: (): Promise<AiPromptStructure> =>
@@ -58,7 +62,10 @@ export const gameApi = {
     request("/api/game/start-encounter", GameActionResponseSchema, { npcId }),
   nextBeat: (revision?: number): Promise<GameActionResponse> => request("/api/game/next-beat", GameActionResponseSchema, { revision }),
   startHearts: (revision: number): Promise<GameActionResponse> => request("/api/game/hearts/start", GameActionResponseSchema, { revision }),
-  useHeart: (cardId: string | null, revision: number): Promise<GameActionResponse> => request("/api/game/hearts/use", GameActionResponseSchema, { cardId, revision }),
+  previewHeart: (cardId: string, revision: number): Promise<HeartPreview> => request("/api/game/hearts/preview", HeartPreviewSchema, { cardId, revision }),
+  heartDirector: (revision: number) => request("/api/game/hearts/director", HeartDirectorResultSchema, { revision }),
+  heartObservations: () => request("/api/game/hearts/observations", HeartObservationSchema.array()),
+  useHeart: (cardId: string | null, revision: number, previewId?: string): Promise<GameActionResponse> => request("/api/game/hearts/use", GameActionResponseSchema, { cardId, revision, previewId }),
   completeHeartActivity: (revision: number): Promise<GameActionResponse> => request("/api/game/hearts/activity", GameActionResponseSchema, { revision }),
   inspect: (itemId: string, take = false): Promise<GameActionResponse> => request("/api/game/inspect", GameActionResponseSchema, { itemId, take }),
   present: (itemId: string): Promise<GameActionResponse> => request("/api/game/present", GameActionResponseSchema, { itemId }),
@@ -69,8 +76,8 @@ export const gameApi = {
     request("/api/game/leave-location", GameActionResponseSchema, {}),
   waitUntilNight: (): Promise<GameActionResponse> =>
     request("/api/game/wait-until-night", GameActionResponseSchema, {}),
-  selectMode: (mode: InteractionMode): Promise<GameActionResponse> =>
-    request("/api/game/interaction-mode", GameActionResponseSchema, { mode }),
+  selectMode: (mode: "gift", revision: number): Promise<GameActionResponse> =>
+    request("/api/game/interaction-mode", GameActionResponseSchema, { mode, revision }),
   cancelMode: (): Promise<GameActionResponse> =>
     request("/api/game/cancel-interaction-mode", GameActionResponseSchema, {}),
   chooseTalk: (optionId: string): Promise<GameActionResponse> =>

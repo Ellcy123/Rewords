@@ -1,16 +1,20 @@
 import {
-  GameActionResponseSchema, GameStateSchema, DialogueResultSchema, demoBootstrap, heartCatalog, heartKinds,
+  GameActionResponseSchema, GameStateSchema, DialogueResultSchema, demoBootstrap, heartCatalog, legacyHeartKinds,
+  HeartDirectorResultSchema, HeartObservationSchema,
   narrationSentences, separateDialogueText, dialoguePlaybackFinished,
-  type GameActionResponse, type GameState, type GameEvent, type DialogueOption, type InteractionMode, type RuleSlotId
+  type GameActionResponse, type GameState, type GameEvent, type DialogueOption, type InteractionMode, type RuleSlotId,
+  type DialogueResult, type HeartPreview, type HeartDirectorResult, type HeartObservation
 } from "../../packages/shared/src/index.ts";
-import { availableActions, characters, evidence, initialLocations, locationAliases } from "./caseData.ts";
+import { availableActions, characters, evidence, facts, initialLocations, locationAliases } from "./caseData.ts";
 import { CaseDialogueProvider, DialogueGenerationError, fallbackDialogue, type CaseProvider, type PlanIntent } from "./caseProvider.ts";
 import { encounterPacing } from "./dialoguePacing.ts";
 import type { GameStore } from "./persistence.ts";
 import type { HeartContext } from "./heartDialogue.ts";
 import { randomUUID } from "node:crypto";
 import { validMeetingPlan, gameTimeLabel } from "./actionPlans.ts";
-import { validHeartConsequence, validConsequenceBeats } from "./heartConsequences.ts";
+import { heartCapabilities, validHeartConsequence, validConsequenceBeats } from "./heartConsequences.ts";
+import { buildHeartDirectorInput, offlineHeartRecommendations, unavailableHeartDirector, validateHeartRecommendations } from "./heartDirector.ts";
+import { ARCHIVE_AGENT_VERSION, mergeArchivePatch } from "./archiveAgent.ts";
 
 export class GameRuleError extends Error { constructor(message: string) { super(message); this.name = "GameRuleError"; } }
 export function createInitialState(): GameState {
@@ -20,7 +24,7 @@ export function createInitialState(): GameState {
     currentLocationId: null, activeNpcId: null, interactionMode: null, currentDialogue: null,
     lastPlayerChoice: null, giftItemId: null, activeRules: { faith: null, beauty: null },
     itemOwners: Object.fromEntries(demoBootstrap.items.map(i => [i.id, i.initialOwnerId])),
-    discoveredLocationIds: initialLocations, evidenceJournal: [], dialogueBeatIndex: 0,
+    discoveredLocationIds: initialLocations, evidenceJournal: [], playerKnownFactIds: ["F01"], dialogueBeatIndex: 0,
     npcStates: Object.fromEntries(demoBootstrap.npcs.map(n => [n.id, {
       npcId: n.id, currentLocationId: n.initialLocationId, relationship: 0, lifeState: "alive",
       knownFactIds: characters[n.id].known, memories: [], reflection: "尚未与朝雾遥相处。",
@@ -32,14 +36,28 @@ export function createInitialState(): GameState {
 export class GameService {
   private state: GameState;
   private heartBusy = false;
+  // Unplayed candidates never enter the save, memories or public game projection.
+  private heartPreviews = new Map<string, { preview: HeartPreview; result: DialogueResult; nodeId: string }>();
+  private heartDirectors = new Map<string, Promise<HeartDirectorResult>>();
+  private heartObservations = new Map<string, HeartObservation>();
   constructor(private store: GameStore, private provider: CaseProvider = new CaseDialogueProvider(), private options: { heartTestPack?: boolean } = {}) {
     const saved = store.load();
     this.state = saved ? GameStateSchema.parse(saved) : createInitialState();
+    // Additive migration: preserve old progress while reconstructing only facts
+    // that are certainly player-visible from the opening premise or read evidence.
+    const knowledgeBefore = this.state.playerKnownFactIds.length;
+    this.learnPlayerFacts(["F01", ...this.state.evidenceJournal.flatMap(entry => evidence[entry.id]?.facts ?? [])]);
+    // Older saves entered encounter just by clicking a person. Keep that selection,
+    // but unlock it when no mode/dialogue/gift has actually been chosen. Historical
+    // events and completed appointments are not rewritten retroactively.
+    const unlockedSelection = !!saved && this.state.phase === "encounter" && !this.state.interactionMode &&
+      !this.state.currentDialogue && !this.state.giftItemId;
+    if (unlockedSelection) this.state.phase = "location";
     if (!saved) {
       this.event("game_started", "player", null, "受托代管神社七天，整理真昼的遗物。");
     }
     const granted = this.options.heartTestPack && this.seedHeartTestPack();
-    if (!saved || granted) {
+    if (!saved || granted || unlockedSelection || this.state.playerKnownFactIds.length !== knowledgeBefore) {
       if (saved) this.state.revision++;
       this.store.save(GameStateSchema.parse(this.state));
     }
@@ -64,7 +82,7 @@ export class GameService {
           owner !== s.currentLocationId && !owner.startsWith("rule:")) s.itemOwners[id] = "unknown";
     }
     if (s.currentDialogue) s.currentDialogue.debug = {
-      provider: s.currentDialogue.debug.provider, decision: "角色对白", usedFacts: [],
+      provider: s.currentDialogue.debug.provider, decision: "角色对白", usedFacts: [], disclosedFacts: [],
       promptVersion: s.currentDialogue.debug.promptVersion
     };
     if (s.incident && s.phase !== "incident" && (s.incident.stage !== "resolved" || !s.eventLog.some(e => e.type === "incident" && e.details.text === s.incident?.resolvedText))) s.incident = null;
@@ -72,12 +90,12 @@ export class GameService {
     s.pendingNpcMove = null;
     return GameStateSchema.parse(s);
   }
-  reset() { this.state = createInitialState(); this.event("game_started", "player", null, "开始新的七日调查。旧章节数据库保留。"); if (this.options.heartTestPack) this.seedHeartTestPack(); return this.finish("新案件已重新开始。"); }
+  reset() { this.heartDirectors.clear(); this.heartObservations.clear(); this.state = createInitialState(); this.event("game_started", "player", null, "开始新的七日调查。旧章节数据库保留。"); if (this.options.heartTestPack) this.seedHeartTestPack(); return this.finish("新案件已重新开始。"); }
   private seedHeartTestPack(): boolean {
     const rewardId = "heart_test_pack_v1";
     if (this.state.phase === "ending" || this.state.claimedRewardIds.includes(rewardId)) return false;
     const e = this.event("heart_test_pack", "system", "player", "测试补给：恐惧、同情、爱意各 3 张。每个存档仅发放一次。");
-    for (const kind of heartKinds) for (let i = 0; i < 3; i++) {
+    for (const kind of legacyHeartKinds) for (let i = 0; i < 3; i++) {
       this.state.heartCards.push({ id: `${rewardId}_${kind}_${i}`, kind, sourceType: "test",
         sourceNpcId: "system_test", sourceEventId: e.id, sourceText: "测试用初始心绪牌，不来自人物，也不代表已发生的剧情。",
         day: this.state.day, locationId: null });
@@ -86,10 +104,18 @@ export class GameService {
     return true;
   }
   private finish(notice: string | null = null, acquiredItemId: string | null = null): GameActionResponse {
+    this.heartPreviews.clear();
     this.state.revision++;
     this.state = GameStateSchema.parse(this.state);
     this.store.save(this.state);
     return GameActionResponseSchema.parse({ state: this.getState(), notice, acquiredItemId });
+  }
+  private saveAuxiliary(notice: string | null = null): GameActionResponse {
+    // Read-model helpers such as the archive must not consume a gameplay
+    // revision or invalidate an already generated heart preview.
+    this.state = GameStateSchema.parse(this.state);
+    this.store.save(this.state);
+    return GameActionResponseSchema.parse({ state: this.getState(), notice, acquiredItemId: null });
   }
   private assert(ok: unknown, text: string): asserts ok { if (!ok) throw new GameRuleError(text); }
   private flag(id: string) { if (!this.state.storyFlags.includes(id)) this.state.storyFlags.push(id); }
@@ -110,6 +136,9 @@ export class GameService {
     const e = this.event("information_delivered", actor, npcId, text, actor === "player" ? ["player", npcId] : [actor, npcId]);
     this.memory(npcId, text, e);
   }
+  private learnPlayerFacts(ids: string[]) {
+    for (const id of ids) if (facts[id] && !this.state.playerKnownFactIds.includes(id)) this.state.playerKnownFactIds.push(id);
+  }
   private discover(text: string) {
     for (const [id, names] of Object.entries(locationAliases)) if (!this.state.discoveredLocationIds.includes(id) && names.some(n => text.includes(n))) {
       this.state.discoveredLocationIds.push(id);
@@ -128,6 +157,9 @@ export class GameService {
     return n && n.lifeState === "alive" && n.currentLocationId === this.state.currentLocationId && n.unavailableUntil <= this.abs();
   }
   private advance(target: number, observer: string | null): boolean {
+    // Browsing a person's interaction menu must never pin them in place. Any
+    // actual time advance drops that tentative selection and runs their schedule.
+    if (this.state.phase === "location" && !this.state.interactionMode && this.state.activeNpcId) this.clearEncounter();
     // Chronological stepping prevents a two-hour action from skipping a visible attack.
     while (true) {
       const incident = this.state.incident;
@@ -253,30 +285,40 @@ export class GameService {
       if (["contact","threat","attack"].includes(incident.stage)) this.interrupt(target);
       if (incident.stage === "resolved") this.event("incident", "player", null, incident.resolvedText);
     }
-    return this.finish(this.getState().phase === "incident" ? this.incidentDescription() : "已抵达。选择人物后才开始会面。");
+    return this.finish(this.getState().phase === "incident" ? this.incidentDescription() : "已抵达。点击人物查看互动，选择拾绪或送礼才开始会面。");
   }
   startEncounter(npcId?: string) {
     this.assert(this.state.phase === "location", "请先进入场景。");
     const present = demoBootstrap.npcs.filter(n => this.canTalk(n.id));
     const target = npcId ?? (present.length === 1 ? present[0].id : "");
     this.assert(target && this.canTalk(target), "请选择在场且能交谈的人物。");
-    this.state.activeNpcId = target; this.state.phase = "encounter";
+    this.clearEncounter();
+    this.state.activeNpcId = target;
+    return this.finish("尚未开始对白，可以换人、收起选择或离开。选择拾绪或送礼后才锁定会面。");
+  }
+  private beginEncounter(mode: InteractionMode) {
+    this.assert((this.state.phase === "location" || this.state.phase === "encounter") && !this.state.interactionMode && this.state.activeNpcId,
+      "请先选择在场人物；当前互动尚未结束时不能另开对白。");
+    const target = this.state.activeNpcId;
+    this.assert(this.canTalk(target), "人物目前无法交谈。");
+    this.state.phase = "encounter"; this.state.interactionMode = mode;
     const meeting = this.state.npcStates[target].actionPlan;
     if (meeting?.status === "waiting" && meeting.locationId === this.state.currentLocationId && this.abs() < meeting.waitUntil) {
       meeting.status = "completed";
       this.planEvent(target, "遥按约与" + demoBootstrap.npcs.find(n => n.id === target)!.name + "见面，约定已完成。", ["player", target]);
     }
     this.event("encounter_started", "player", target, "开始与" + demoBootstrap.npcs.find(n => n.id === target)!.name + "会面。", ["player", target]);
-    return this.finish("先选择交谈或赠礼。");
   }
   leaveLocation() {
     this.assert(this.state.phase === "location", "当前不能直接离开。");
+    this.clearEncounter();
     this.event("location_left", "player", null, "离开场景。");
     this.state.currentLocationId = null; this.state.phase = this.state.currentMinute >= 1080 ? "night" : "action";
     return this.finish();
   }
   waitUntilNight() {
     this.assert(["action","location"].includes(this.state.phase), "请先结束会面或处理眼前事件。");
+    this.clearEncounter();
     const target = (this.state.day - 1) * 1440 + 1080;
     if (!this.advance(target, this.state.currentLocationId)) return this.finish(this.incidentDescription());
     this.state.phase = "night"; this.state.currentLocationId = null;
@@ -285,21 +327,26 @@ export class GameService {
   wait(minutes = 30) {
     this.assert(this.state.phase === "location" || this.state.phase === "action", "请先处理眼前会面。");
     this.assert(Number.isInteger(minutes) && minutes > 0 && minutes <= 120 && this.state.currentMinute + minutes <= 1080, "等待时间无效。");
+    this.clearEncounter();
     if (!this.advance(this.abs() + minutes, this.state.currentLocationId)) return this.finish(this.incidentDescription());
     return this.finish("时间过去了" + minutes + "分钟。");
   }
   async selectInteractionMode(mode: InteractionMode) {
-    this.assert(this.state.phase === "encounter" && !this.state.interactionMode, "已经选择会面方式。");
+    // Ordinary dialogue remains for legacy saves/internal scenario fixtures. The
+    // public HTTP talk alias now starts the same heart flow as the 拾绪 button.
+    this.assert((this.state.phase === "location" || this.state.phase === "encounter") && this.state.activeNpcId && !this.state.interactionMode, "请先选择人物，或结束已经选择的会面方式。");
     this.assert(this.canTalk(this.state.activeNpcId!), "人物目前无法交谈。");
     this.assert(this.state.currentMinute + 120 <= 1080, "今天剩余时间不足两小时。");
-    this.state.interactionMode = mode;
+    this.beginEncounter(mode);
     if (mode === "gift") return this.finish("选择礼物，确认前不计时。");
     if (!this.advance(this.abs() + 120, this.state.currentLocationId)) return this.finish(this.incidentDescription());
     await this.generate(null, ""); return this.finish();
   }
   cancelInteractionMode() {
     this.assert(this.state.phase === "encounter" && this.state.interactionMode === "gift" && !this.state.giftItemId, "礼物已经送出，不能撤销。");
-    this.state.interactionMode = null; return this.finish();
+    this.event("encounter_completed", "player", this.state.activeNpcId, "取消尚未交出的礼物，返回互动选择。未计时、未赠送、未发生对白。", ["player", this.state.activeNpcId!]);
+    this.state.interactionMode = null; this.state.phase = "location";
+    return this.finish("已取消送礼，当前不再锁定人物。可以换人、离开或重新选择互动。");
   }
   async confirmGift(itemId: string) {
     this.assert(this.state.phase === "encounter" && this.state.interactionMode === "gift" && !this.state.giftItemId, "请先选择赠礼。");
@@ -315,6 +362,102 @@ export class GameService {
     return this.finish("已赠送" + this.itemName(itemId) + "，物品离开背包。");
   }
   private itemName(id: string) { return demoBootstrap.items.find(i => i.id === id)?.baseName ?? id; }
+  private heartChoiceObservation(): HeartObservation {
+    const s = this.getState();
+    this.assert(s.phase === "encounter" && s.heartSession && s.currentDialogue?.heart?.canContinue &&
+      s.currentDialogue.heart.choicePoint && dialoguePlaybackFinished(s), "请在已看完对白的心绪选择处查看推荐。");
+    const authority = this.heartBusy ? this.store.load() ?? this.state : this.state;
+    const input = buildHeartDirectorInput(s, heartCapabilities(authority, s.activeNpcId!));
+    let observation = this.heartObservations.get(input.nodeId);
+    if (!observation) {
+      observation = { nodeId: input.nodeId, npcName: input.npc.name, input, director: null, attempts: [], selected: null, actualEvents: [] };
+      this.heartObservations.set(input.nodeId, observation);
+      // This is a session observation buffer, not another world-state authority.
+      if (this.heartObservations.size > 30) {
+        const oldest = this.heartObservations.keys().next().value!;
+        this.heartObservations.delete(oldest); this.heartDirectors.delete(oldest);
+      }
+    }
+    return observation;
+  }
+  async recommendHearts(revision: number): Promise<HeartDirectorResult> {
+    this.assert(revision === this.getState().revision, "进度已变化，本次推荐不再适用。");
+    const observation = this.heartChoiceObservation(), input = observation.input!;
+    let pending = this.heartDirectors.get(input.nodeId);
+    if (!pending) {
+      pending = (async () => {
+        try {
+          const result = HeartDirectorResultSchema.parse(this.provider.directHearts
+            ? await this.provider.directHearts(structuredClone(input))
+            : this.provider.getStatus().configured ? unavailableHeartDirector(input) : offlineHeartRecommendations(input));
+          this.assert(result.nodeId === input.nodeId && result.revision === input.revision, "导演返回了其他节点的建议。");
+          if (result.status !== "unavailable") validateHeartRecommendations(result, input);
+          else result.recommendations = [];
+          observation.director = result;
+        } catch { observation.director = unavailableHeartDirector(input); }
+        return observation.director!;
+      })();
+      this.heartDirectors.set(input.nodeId, pending);
+    }
+    const result = await pending;
+    this.assert(this.getState().revision === revision && this.heartObservations.get(input.nodeId) === observation,
+      "进度已变化，旧推荐已丢弃。");
+    return structuredClone({ ...result, revision });
+  }
+  getHeartObservations(): HeartObservation[] {
+    const state = this.getState();
+    const observations = structuredClone([...this.heartObservations.values()]);
+    const spends = state.eventLog.filter(e => e.type === "heart_spent").slice(-30);
+    for (const spend of spends) {
+      const nodeId = spend.details.nodeId ?? "recovered:" + spend.id;
+      let o = observations.find(o => o.nodeId === nodeId);
+      if (!o) {
+        o = { nodeId, npcName: demoBootstrap.npcs.find(n => n.id === spend.targetId)?.name ?? "对方", input: null,
+          director: null, attempts: [], selected: spend.details.text, actualEvents: [] };
+        observations.push(o);
+      }
+      const applied = state.eventLog.find(e => e.type === "heart_consequence" && e.details.spendEventId === spend.id);
+      const kind = spend.details.kind;
+      let attempt = o.attempts.find(a => a.cardId === spend.details.cardId);
+      if (!attempt && kind && Object.hasOwn(heartCatalog, kind)) {
+        attempt = { cardId: spend.details.cardId, kind: kind as keyof typeof heartCatalog, line: null,
+          status: "waiting_playback", detail: "出牌已确认；等待对方的决定播放。" };
+        o.attempts.push(attempt);
+      }
+      const noConsequence = spend.details.consequence === "none";
+      if (attempt) {
+        attempt.status = applied ? "applied" : noConsequence ? "continued" : "waiting_playback";
+        attempt.detail = applied?.details.text ?? (noConsequence ? "已确认并扣牌；本段没有独立事件后果，对话已向下一焦点推进。" : "已确认并扣牌，对方的决定尚未播放，后果未执行。");
+      }
+      o.selected = spend.details.text;
+      o.actualEvents = [spend, ...(applied ? [applied] : [])].map(e => ({ id: e.id, text: e.details.text }));
+    }
+    for (const o of observations) for (const a of o.attempts) if (a.status === "validated" &&
+      (this.heartPreviews.get(a.cardId)?.nodeId !== o.nodeId || this.heartPreviews.get(a.cardId)?.preview.revision !== state.revision)) {
+      a.status = "expired"; a.detail = "该候选未被确认，已失效；没有消耗卡牌或改变剧情。";
+    }
+    const sequences = new Map(state.eventLog.map(e => [e.id, e.sequence]));
+    const lastPlayed = state.eventLog.slice().reverse().find(e => ["dialogue_generated", "narration_generated"].includes(e.type) && e.targetId === state.activeNpcId);
+    const currentNodeId = state.heartSession && state.currentDialogue?.heart?.choicePoint && dialoguePlaybackFinished(state)
+      ? `${state.heartSession.id}:${lastPlayed?.id ?? "opening"}` : null;
+    const order = (o: HeartObservation) => o.nodeId === currentNodeId ? Number.MAX_SAFE_INTEGER : Math.max(sequences.get(o.input?.played.at(-1)?.eventId ?? "") ?? -1,
+      ...o.actualEvents.map(e => sequences.get(e.id) ?? -1));
+    return HeartObservationSchema.array().parse(observations.sort((a, b) => order(b) - order(a)).slice(0, 30));
+  }
+  async syncInvestigationArchive(revision: number) {
+    this.assert(revision === this.state.revision, "进度已变化，请重新整理档案。");
+    this.assert(this.provider.summarizeArchive, "当前服务尚未接入档案官AI。");
+    const snapshot = structuredClone(this.state);
+    const result = await this.provider.summarizeArchive(snapshot);
+    this.assert(revision === this.state.revision, "整理期间进度已变化，本次结果已丢弃。");
+    if (!result) {
+      this.state.investigationArchive.status = "unavailable";
+      this.state.investigationArchive.promptVersion = ARCHIVE_AGENT_VERSION;
+      return this.saveAuxiliary("档案官AI暂时不可用，未改动已有档案，之后可重试。");
+    }
+    mergeArchivePatch(this.state, result.patch, result.batch);
+    return this.saveAuxiliary(result.batch.input.events.length ? "档案官已整理最新见闻。" : "当前没有待整理的新见闻。");
+  }
   private assertHeartRevision(revision: number | undefined) {
     this.assert(!this.heartBusy, "这次心绪还在生成，请稍候。");
     this.assert(revision === this.state.revision, "进度已变化，请刷新后继续；不会重复消耗或拾取。");
@@ -335,16 +478,53 @@ export class GameService {
   }
   async startHeartEncounter(revision: number) {
     this.assertHeartRevision(revision);
-    this.assert(this.state.phase === "encounter" && !this.state.interactionMode && this.state.activeNpcId === "npc_koharu", "拾绪首日试玩请从小春的新会面进入。");
-    this.assert(this.canTalk("npc_koharu") && this.state.currentMinute + 120 <= 1080, "当前无法开始两小时交谈。");
+    this.assert((this.state.phase === "location" || this.state.phase === "encounter") && !this.state.interactionMode && this.state.activeNpcId, "请从人物的新会面进入拾绪。");
+    this.assert(this.canTalk(this.state.activeNpcId) && this.state.currentMinute + 120 <= 1080, "当前无法开始两小时交谈。");
     return this.heartTurn(async () => {
-      this.state.interactionMode = "talk";
+      this.beginEncounter("talk");
       if (!this.advance(this.abs() + 120, this.state.currentLocationId)) return;
       this.state.heartSession = { id: "hearts_" + randomUUID(), claimedKinds: [] };
       await this.generateHeartDialogue("opening");
     });
   }
-  async useHeart(cardId: string | null, revision: number) {
+  async previewHeart(cardId: string, revision: number): Promise<HeartPreview> {
+    this.assertHeartRevision(revision);
+    this.assert(this.state.phase === "encounter" && this.state.heartSession &&
+      this.state.currentDialogue?.heart?.canContinue && this.state.currentDialogue.heart.choicePoint &&
+      dialoguePlaybackFinished(this.state), "请在看完对白后的心绪选择处预览。");
+    const card = this.state.heartCards.find(c => c.id === cardId);
+    this.assert(card, "这张心绪牌已经用过或不在手中。");
+    const cached = this.heartPreviews.get(cardId);
+    if (cached?.preview.revision === revision) return structuredClone(cached.preview);
+    const observation = this.heartChoiceObservation();
+    const attempt: HeartObservation["attempts"][number] = { cardId, kind: card.kind, line: null, status: "candidate", detail: "正在生成候选，尚未确认，也未改变剧情。" };
+    observation.attempts = [...observation.attempts.filter(a => a.cardId !== cardId), attempt];
+    this.heartBusy = true;
+    try {
+      const candidateState = structuredClone(this.state);
+      const sequence = candidateState.eventLog.length;
+      // Count the prospective choice exactly as confirmation will, including the final-choice budget.
+      candidateState.eventLog.push({ id: "event_" + sequence, sequence, day: candidateState.day,
+        minute: candidateState.currentMinute, period: candidateState.period, type: "dialogue_choice",
+        actorId: "player", targetId: candidateState.activeNpcId, itemId: null, locationId: candidateState.currentLocationId,
+        audience: ["player", candidateState.activeNpcId!], details: { text: "以「" + heartCatalog[card.kind].name + "」接话",
+          intent: heartCatalog[card.kind].expression, missed: "[]" } });
+      const result = await this.prepareHeartDialogue(card.kind, candidateState);
+      this.assert(this.state.revision === revision, "进度已变化，请重新选择心绪。");
+      const first = separateDialogueText(result.line, result.stageDirection, "朝雾遥");
+      // Normalize the same first beat for both preview and committed playback.
+      result.line = first.line; result.stageDirection = first.stageDirection;
+      const preview: HeartPreview = { id: randomUUID(), cardId, revision, line: first.line,
+        stageDirection: first.stageDirection, provider: result.debug.provider };
+      this.heartPreviews.set(cardId, { preview, result, nodeId: observation.nodeId });
+      attempt.line = preview.line; attempt.status = "validated"; attempt.detail = "候选通过当前服务启用的校验，尚未出牌。真实AI默认含内容审校；离线演示只做结构与动作校验。";
+      return structuredClone(preview);
+    } catch (error) {
+      attempt.status = "rejected"; attempt.detail = "候选生成或校验失败，未写入剧情，卡牌与进度保留。";
+      throw new GameRuleError(error instanceof GameRuleError ? error.message : "这句回复暂时没想好，请重试。没有消耗心绪或推进剧情。");
+    } finally { this.heartBusy = false; }
+  }
+  async useHeart(cardId: string | null, revision: number, previewId?: string) {
     this.assertHeartRevision(revision);
     const d = this.state.currentDialogue;
     this.assert(this.state.phase === "encounter" && this.state.heartSession && d?.heart?.canContinue, "当前不在可出牌的拾绪节点。");
@@ -352,53 +532,68 @@ export class GameService {
     this.assert(cardId === null || d.heart.choicePoint, "当前正在自然交谈，还没到需要选择心绪的时刻。");
     const card = cardId === null ? null : this.state.heartCards.find(c => c.id === cardId);
     this.assert(cardId === null || card, "这张心绪牌已经用过或不在手中。");
-    return this.heartTurn(async () => {
+    const cached = cardId ? this.heartPreviews.get(cardId) : undefined;
+    this.assert(!previewId || (card && cached?.preview.id === previewId && cached.preview.revision === revision),
+      "这句预览已失效，请重新选择心绪。没有消耗卡牌。");
+    const observation = d.heart.choicePoint ? this.heartChoiceObservation() : null;
+    const response = await this.heartTurn(async () => {
       const choice = this.event(card || d.heart!.choicePoint ? "dialogue_choice" : "dialogue_continued", "player", this.state.activeNpcId,
         card ? "以「" + heartCatalog[card.kind].name + "」接话" : "顺着聊下去", ["player", this.state.activeNpcId!]);
       choice.details.intent = card ? heartCatalog[card.kind].expression : "交给遥自然回应，双方顺着当前情境交流";
       choice.details.missed = "[]";
-      await this.generateHeartDialogue(card ? card.kind : "listen");
+      if (observation) choice.details.nodeId = observation.nodeId;
+      if (previewId && cached) this.installHeartDialogue(structuredClone(cached.result));
+      else await this.generateHeartDialogue(card ? card.kind : "listen");
       // The first player expression (visible action or speech) commits with the spend.
       if (card) {
         this.state.heartCards = this.state.heartCards.filter(c => c.id !== card.id);
         const e = this.event("heart_spent", "player", this.state.activeNpcId, "使用了一张「" + heartCatalog[card.kind].name + "」。");
         e.details.cardId = card.id; e.details.kind = card.kind;
+        e.details.consequence = this.state.currentDialogue!.heart!.consequence ? "pending" : "none";
+        if (observation) e.details.nodeId = observation.nodeId;
         this.state.currentDialogue!.heart!.spendEventId = e.id;
       }
     });
+    if (observation) observation.selected = card ? "使用「" + heartCatalog[card.kind].name + "」" : "未出牌，顺着聊下去";
+    return response;
   }
   private async generateHeartDialogue(heartIntent: HeartContext["heartIntent"]) {
+    this.installHeartDialogue(await this.prepareHeartDialogue(heartIntent));
+  }
+  private async prepareHeartDialogue(heartIntent: HeartContext["heartIntent"], state = this.state, selectedOption: DialogueOption | null = null): Promise<DialogueResult> {
     this.assert(this.provider.generateHearts, "当前对白服务尚未支持拾绪。");
     const result = DialogueResultSchema.parse(await this.provider.generateHearts({
-      state: structuredClone(this.state), npcId: this.state.activeNpcId!, mode: "talk",
-      selectedOption: null, giftItem: null, effect: "", heartIntent
+      state: structuredClone(state), npcId: state.activeNpcId!, mode: "talk",
+      selectedOption, giftItem: null, effect: "", heartIntent
     }));
     const beats = [result, ...result.continuations];
     const play = heartIntent !== "opening" && heartIntent !== "listen";
-    const pacing = encounterPacing(this.state, false);
+    const pacing = encounterPacing(state, false);
     this.assert(result.heart && !result.options.length && beats.length <= pacing.maxGeneratedLines &&
       (!pacing.mustClose || !result.heart.canContinue), "心绪对白结构不符合会面规则。");
-    this.assert(beats.every(b => b.speakerId === "player" || b.speakerId === this.state.activeNpcId) &&
-      (!play || result.speakerId === "player" && beats.some(b => b.speakerId === this.state.activeNpcId)) &&
-      (heartIntent !== "opening" || result.speakerId === this.state.activeNpcId), "心绪对白的说话者不符合本次操作。");
+    this.assert(beats.every(b => b.speakerId === "player" || b.speakerId === state.activeNpcId) &&
+      (!play || result.speakerId === "player" && beats.some(b => b.speakerId === state.activeNpcId)) &&
+      (heartIntent !== "opening" || result.speakerId === state.activeNpcId), "心绪对白的说话者不符合本次操作。");
     const point = result.heart.choicePoint, last = beats.at(-1)!;
     const plan = result.heart.actionPlan;
     const effect = result.heart.consequence;
-    this.assert(!play || effect, "这次出牌没有产生可执行事件。卡牌与原节点保留，请重试。");
-    this.assert(!effect || (validHeartConsequence(effect, this.state, this.state.activeNpcId!, plan) &&
-      validConsequenceBeats(effect, beats, this.state.activeNpcId!, result.heart.canContinue, plan)), "这次出牌的事件条件或来源无效，未消耗卡牌。");
-    if (effect?.type === "material") this.assert(!beats[effect.beatIndex].stageDirection?.trim(), "材料应在决定台词播放时交付，不能提前展示。");
+    this.assert(!effect || (validHeartConsequence(effect, state, state.activeNpcId!, plan) &&
+      validConsequenceBeats(effect, beats, state.activeNpcId!, result.heart.canContinue, plan)), "这次出牌的事件条件或来源无效，未消耗卡牌。");
+    if (effect && ["material", "case_action"].includes(effect.type)) this.assert(!beats[effect.beatIndex].stageDirection?.trim(), "材料或案件行动应在决定台词播放时执行，不能提前展示。");
     // Model/provider output must never claim a transaction was already settled.
     result.heart.spendEventId = null; result.heart.consequenceApplied = false;
-    if (plan) this.assert(beats[plan.beatIndex]?.speakerId === this.state.activeNpcId && beats[plan.beatIndex].line.includes(plan.quote) &&
-      validMeetingPlan(plan, this.state, this.state.activeNpcId!), "会面计划的地点、时间或对白来源无效。");
-    this.assert(!point || result.heart.canContinue && last.speakerId === this.state.activeNpcId && last.line.includes(point.quote), "心绪选择没有对应的末句对白。");
-    this.assert(result.heart.canContinue || last.speakerId === this.state.activeNpcId, "告别应由对方完成。");
+    if (plan) this.assert(beats[plan.beatIndex]?.speakerId === state.activeNpcId && beats[plan.beatIndex].line.includes(plan.quote) &&
+      validMeetingPlan(plan, state, state.activeNpcId!), "会面计划的地点、时间或对白来源无效。");
+    this.assert(!point || result.heart.canContinue && last.speakerId === state.activeNpcId && last.line.includes(point.quote), "心绪选择没有对应的末句对白。");
+    this.assert(result.heart.canContinue || last.speakerId === state.activeNpcId, "告别应由对方完成。");
     for (const pickup of result.heart.pickups) {
       const b = beats[pickup.beatIndex];
-      this.assert(b?.speakerId === this.state.activeNpcId && (b.line.includes(pickup.quote) || b.stageDirection?.includes(pickup.quote)), "拾绪没有对应的可见情绪。");
+      this.assert(b?.speakerId === state.activeNpcId && (b.line.includes(pickup.quote) || b.stageDirection?.includes(pickup.quote)), "拾绪没有对应的可见情绪。");
     }
     result.debug.npcActionId = "none";
+    return result;
+  }
+  private installHeartDialogue(result: DialogueResult) {
     this.state.currentDialogue = result; this.state.lastPlayerChoice = null; this.state.dialogueBeatIndex = 0;
     this.beginVisibleBeat();
   }
@@ -491,12 +686,14 @@ export class GameService {
       gathered.details.cardId = cardId; gathered.details.kind = pickup.kind; gathered.details.sourceEventId = e.id;
     }
     if (!narration) this.applyHeartConsequence(e.id);
+    if (!narration && dialoguePlaybackFinished(this.state)) this.learnPlayerFacts(this.state.currentDialogue?.debug.disclosedFacts ?? []);
   }
 
   private applyHeartConsequence(sourceEventId: string) {
     const heart = this.state.currentDialogue?.heart, effect = heart?.consequence;
     if (!heart || !effect || heart.consequenceApplied || effect.beatIndex !== this.state.dialogueBeatIndex) return;
     const npcId = this.state.activeNpcId!, npc = this.state.npcStates[npcId];
+    const name = demoBootstrap.npcs.find(n => n.id === npcId)!.name;
     let text: string;
     switch (effect.type) {
       case "material": {
@@ -504,8 +701,14 @@ export class GameService {
         this.assert(this.state.itemOwners[id] === npcId && evidence[id], "材料归属已变化，不能重复交付。");
         this.readEvidence(id);
         if (verb === "take") this.transfer(id, "player");
-        text = verb === "take" ? `小春将${this.itemName(id)}交给遥，实物已进入背包。` : `小春出示${this.itemName(id)}，内容已记入手记。`;
+        text = verb === "take" ? `${name}将${this.itemName(id)}交给遥，实物已进入背包。` : `${name}出示${this.itemName(id)}，内容已记入手记。`;
         break;
+      }
+      case "case_action": {
+        this.assert(availableActions(this.state, npcId).some(a => a.id === effect.actionId), "案件行动条件已变化，不能执行。");
+        const outcome = this.executeCaseAction(effect.actionId!, npcId);
+        this.assert(outcome, "案件行动没有可执行的结果。");
+        text = outcome.text; break;
       }
       case "sorting_offer":
         npc.sortingHelp = "offered"; text = "小春邀请遥一起整理遗物。可以选择花30分钟共同整理。"; break;
@@ -513,7 +716,7 @@ export class GameService {
         npc.sortingHelp = "cancelled"; text = "小春收回了整理遗物的邀请，这次帮忙的入口已关闭。"; break;
       case "pause":
         npc.unavailableUntil = this.abs() + 60;
-        text = `小春中止这次交流，${gameTimeLabel(npc.unavailableUntil)}前不再接待。`; break;
+        text = `${name}中止这次交流，${gameTimeLabel(npc.unavailableUntil)}前不再接待。`; break;
       case "meeting":
         // The action-plan block above has already persisted the NPC's decision.
         this.assert(npc.actionPlan?.sourceEventId === sourceEventId, "会面计划尚未落地。");
@@ -588,6 +791,9 @@ export class GameService {
       if (verb === "take") this.transfer(id, "player");
       return { text: (verb === "take" ? "获得" : "已查看") + this.itemName(id) + "。内容已记入手记。", item: verb === "take" ? id : null };
     }
+    return this.executeCaseAction(action, npcId);
+  }
+  private executeCaseAction(action: string, npcId: string): { text: string; item: string | null } | null {
     if (npcId === "npc_chiyo" && action === "retract" && !this.state.storyFlags.includes("chiyo_retracted")) {
       this.flag("chiyo_retracted");
       this.deliver("npc_chiyo", ["R01"], "我已向遥承认旧证词不实，决定纠正。", "npc_chiyo");
@@ -641,7 +847,18 @@ export class GameService {
   }
   async completeEncounter() {
     this.assert(!this.heartBusy, "当前心绪正在生成，请稍候。");
+    if (this.state.phase === "location" && this.state.activeNpcId && !this.state.interactionMode) {
+      this.clearEncounter(); return this.finish("已收起互动选择。没有开始或结束任何对白。");
+    }
     this.assert(this.state.phase === "encounter", "当前不在会面中。");
+    if (!this.state.currentDialogue && !this.state.giftItemId) {
+      // Backing out of an unopened/unsent interaction cannot trigger reflections,
+      // witness decisions or any other post-dialogue NPC action.
+      if (this.state.interactionMode) this.event("encounter_completed", "player", this.state.activeNpcId,
+        "取消尚未开始的对白，返回场景。未计时、未赠送。", ["player", this.state.activeNpcId!]);
+      this.clearEncounter(); this.state.phase = "location";
+      return this.finish("已返回场景。");
+    }
     this.assert(!this.hasPendingHeartConsequence(), "这张牌的后果尚未播放，请先看完对方的决定再结束会面。");
     if (dialoguePlaybackFinished(this.state)) await this.applyDialogueAction();
     const id = this.state.activeNpcId!;
@@ -675,6 +892,7 @@ export class GameService {
   }
   private readEvidence(id: string) {
     const data = evidence[id]; if (!data) return;
+    this.learnPlayerFacts(data.facts);
     if (!this.state.evidenceJournal.some(e => e.id === id)) {
       this.state.evidenceJournal.push({ id, name: this.itemName(id), text: data.text, source: data.source, day: this.state.day });
       this.event("evidence_read", "player", null, this.itemName(id) + "：" + data.text, ["player"], id);
@@ -692,28 +910,43 @@ export class GameService {
   }
   async presentEvidence(itemId: string) {
     this.assert(this.state.phase === "encounter" && this.state.interactionMode === "talk" && this.state.currentDialogue, "请先开始交谈。");
-    this.assert(this.state.currentDialogue.options.length, "本次会面已经结束，请返回场景。");
+    this.assert(this.state.currentDialogue.options.length || this.state.currentDialogue.heart?.canContinue, "本次会面已经结束，请返回场景。");
     this.assert(dialoguePlaybackFinished(this.state), "请先听完眼前这段话。");
     this.assert(this.state.itemOwners[itemId] === "player" && evidence[itemId], "只有持有的材料才能当面出示。记得内容不等于持有原件。");
     const npc = this.state.activeNpcId!;
+    const choice = { id: "present", text: "看看这个。", playerLine: "看看这份" + this.itemName(itemId) + "。", intent: "出示实物请对方回应，不赠送" };
+    if (this.state.heartSession) return this.continueHeartWithInformation(choice, () => {
+      this.readEvidence(itemId); this.deliver(npc, evidence[itemId].facts, "遥出示了" + this.itemName(itemId) + "：" + evidence[itemId].text);
+    });
     this.readEvidence(itemId); this.deliver(npc, evidence[itemId].facts, "遥出示了" + this.itemName(itemId) + "：" + evidence[itemId].text);
     await this.maybePlan();
-    const choice = { id: "present", text: "看看这个。", playerLine: "看看这份" + this.itemName(itemId) + "。", intent: "出示实物请对方回应，不赠送" };
     this.recordBranch(choice);
     await this.generate(choice, "");
     return this.finish("已出示，物品仍在背包。");
   }
   async tellRetraction() {
     this.assert(this.state.phase === "encounter" && this.state.interactionMode === "talk" && this.state.storyFlags.includes("chiyo_retracted"), "你还没有听到千代改口，或尚未开始交谈。");
-    this.assert(this.state.currentDialogue?.options.length, "本次会面已经结束，请返回场景。");
+    this.assert(this.state.currentDialogue?.options.length || this.state.currentDialogue?.heart?.canContinue, "本次会面已经结束，请返回场景。");
     this.assert(dialoguePlaybackFinished(this.state), "请先听完这段话。");
     const npc = this.state.activeNpcId!;
+    const choice = { id: "tell_retraction", text: "千代改口了。", playerLine: "千代改口了。她说你们可以去问她本人。", intent: "转述已知证词，不宣称亲眼见过案发" };
+    if (this.state.heartSession) return this.continueHeartWithInformation(choice, () => {
+      this.deliver(npc, ["R01"], "遥转告：千代已承认律整晚在旅馆的证词不实，准备纠正。");
+    });
     this.deliver(npc, ["R01"], "遥转告：千代已承认律整晚在旅馆的证词不实，准备纠正。");
     await this.maybePlan();
-    const choice = { id: "tell_retraction", text: "千代改口了。", playerLine: "千代改口了。她说你们可以去问她本人。", intent: "转述已知证词，不宣称亲眼见过案发" };
     this.recordBranch(choice);
     await this.generate(choice, "");
     return this.finish("消息已实际送达。");
+  }
+  private async continueHeartWithInformation(choice: DialogueOption, deliver: () => void) {
+    this.assertHeartRevision(this.state.revision);
+    this.assert(!this.hasPendingHeartConsequence(), "请先看完出牌后的决定。");
+    return this.heartTurn(async () => {
+      deliver(); await this.maybePlan();
+      this.recordBranch(choice);
+      this.installHeartDialogue(await this.prepareHeartDialogue("listen", this.state, choice));
+    });
   }
   private async maybePlan() {
     if (!this.state.npcStates.npc_ritsu.knownFactIds.includes("R01") || this.state.incident) return;

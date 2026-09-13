@@ -45,8 +45,11 @@ try {
   const arrival = game.getState();
   if (arrival.npcStates.npc_koharu.currentLocationId !== plan.locationId) throw new Error("未按约抵达");
   game.startEncounter("npc_koharu");
+  if (game.getState().npcStates.npc_koharu.actionPlan?.status !== "waiting") throw new Error("仅点击人物不应完成赴约");
+  // Selecting gift locks the encounter without an extra AI request or item transfer.
+  await game.selectInteractionMode("gift");
   if (game.getState().npcStates.npc_koharu.actionPlan?.status !== "completed") throw new Error("赴约没有完成");
-  record.push("", "## 执行结果", "", "按时抵达→等待→玩家发起会面→completed，全部通过。", "",
+  record.push("", "## 执行结果", "", "按时抵达→等待→点击人物仍waiting→选择送礼锁定会面→completed，全部通过；未实际交出礼物，不增加模型请求。", "",
     ...store.load()!.eventLog.filter(e => ["npc_moved", "action_plan_updated"].includes(e.type)).map(e => `${e.day}天 ${e.minute}分：${e.details.text}`));
 } catch (e) { record.push("", "## 未通过", String(e)); process.exitCode = 1; }
 finally {

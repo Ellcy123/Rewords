@@ -17,7 +17,7 @@ function response(data: unknown) {
 function draft(stageDirections: string[]) {
   return { action_plan: null, beats: stageDirections.map((stage_direction, i) => ({
     speaker: i === 0 ? "npc" : "player", line: i === 0 ? "我有点害怕，先坐一会儿吧。" : "好，我在这里。", stage_direction, emotion: "平静"
-  })), can_continue: true, choice_point: null, closing_reason: "", used_fact_ids: [], pickup: null };
+  })), can_continue: true, choice_point: null, closing_reason: "", used_fact_ids: [], disclosed_fact_ids: [], progress: { type: "request", summary: "小春要求遥留在眼前回应" }, pickup: null };
 }
 
 function implicitPickupDraft(stageDirections: string[], pickup: "fear" | "sympathy" | "affection" | null) {

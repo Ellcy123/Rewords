@@ -7,7 +7,7 @@ import { MemoryGameStore } from "../server/src/persistence.ts";
 const choice = (text: string, angle: string, action_id: string | null = null) => ({ text, angle, intent: text, action_id });
 const draft = (line: string, options = [choice("你们吵什么？", "追问"), choice("你不是故意的。", "安慰")], accept_action = false) => ({
   line, stage_direction: "把手里的票放回口袋。", emotion: "认真", continuations: [],
-  options, used_fact_ids: ["F02", "F09"], accept_action
+  options, used_fact_ids: ["F02", "F09"], disclosed_fact_ids: [], progress: { type: "transition", summary: "将当前话题转向姐妹争执" }, accept_action
 });
 const response = (body: unknown) => new Response(JSON.stringify({ choices: [{ finish_reason: "stop", message: { content: JSON.stringify(body) } }] }));
 function context(): CaseContext {

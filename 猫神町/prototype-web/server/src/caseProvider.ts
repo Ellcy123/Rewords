@@ -5,8 +5,11 @@ import { demoBootstrap, DialogueResultSchema, EndingResultSchema, type AiLogEntr
 import { availableActions, characters, evidence, facts } from "./caseData.ts";
 import { buildHeartPrompt, validateHeartDraft, heartResult, mockHeartDialogue, type HeartContext } from "./heartDialogue.ts";
 import { SPARSE_NARRATION_GUIDANCE } from "./narrationPrompt.ts";
+import { HEART_DIRECTOR_SYSTEM, HEART_DIRECTOR_VERSION, offlineHeartRecommendations, unavailableHeartDirector, validateHeartRecommendations } from "./heartDirector.ts";
+import { heartCatalog, type HeartDirectorInput, type HeartDirectorResult } from "../../packages/shared/src/index.ts";
+import { ARCHIVE_AGENT_SYSTEM, ARCHIVE_AGENT_VERSION, buildArchiveBatch, validateArchivePatch, type ArchivePatch } from "./archiveAgent.ts";
 
-export const CASE_PROMPT_VERSION = "sunset-v7-named-major-actions";
+export const CASE_PROMPT_VERSION = "sunset-v9-information-pressure";
 export class DialogueGenerationError extends Error {
   constructor() { super("这次回复没能生成成功，会面还没结束。原选项和进度已保留，请重试刚才的选择。"); }
 }
@@ -14,6 +17,8 @@ export const CASE_PROMPT_STRUCTURE = ["角色行为和自然中文示例", "仅�
 export type CaseContext = { state: GameState; npcId: string; mode: "talk" | "gift"; selectedOption: DialogueOption | null; giftItem: Item | null; effect: string };
 export type PlanIntent = "approach" | "threaten" | "attack" | "withdraw";
 export interface CaseProvider {
+  summarizeArchive?(state: GameState): Promise<{ patch: ArchivePatch; batch: ReturnType<typeof buildArchiveBatch> } | null>;
+  directHearts?(input: HeartDirectorInput): Promise<HeartDirectorResult>;
   generateHearts?(context: HeartContext): Promise<DialogueResult>;
   generate(context: CaseContext): Promise<DialogueResult>;
   plan(state: GameState, npcId: "npc_ritsu"): Promise<PlanIntent>;
@@ -35,6 +40,11 @@ const Draft = z.object({
     action_id: z.string().nullable()
   })).max(3).refine(o => o.length === 0 || o.length >= 2),
   used_fact_ids: z.array(z.string()).max(12),
+  disclosed_fact_ids: z.array(z.string()).max(12),
+  progress: z.object({
+    type: z.enum(["reveal", "contradiction", "request", "deal", "decision", "threat", "action", "transition"]),
+    summary: z.string().trim().min(4).max(160)
+  }),
   accept_action: z.boolean(),
   closing_reason: z.string().max(120).default("")
 });
@@ -99,6 +109,9 @@ export function buildCasePrompt(c: CaseContext) {
       "conversation_pacing.stage=developing时，优先让眼前问题得到充分回应，不因为一句安慰或暂时不知道答案就突然告别。winding_down时先收拢当前话题，仍让玩家回应一次。closing时才回应最后的选择、接住情绪并自然告别，动作不是必需，通常2至4个节拍（以剩余额度为准），不要一句‘去干活’替代玩家正在等的回答。",
       "player_just_said为空时是开场，所有节拍只能由NPC说话，绝不能替尚未选择的玩家发问、选材料或回答。首次见面先自然介绍自己并确认遥的来意，不当作已聊了一半。",
       "别编造玩家以前见过谁、是谁让玩家来的。主角后续台词只能用刚听到的信息和player_read_materials里的信息，不可使用NPC私下知道的秘密。",
+      "protagonist只是主角的语气与性格，不是案情知识来源。player_known_facts才是本段开始前遥与玩家共同知道的案情信息。NPC首次说出player_known_facts之外的事时，遥必须表现为刚听说：可以追问、惊讶、怀疑或暂时记下，不得说‘我早就知道’、‘果然’、‘我就是为这个来的’，也不得直接补出对方没说的细节。一个新事实在本段的NPC台词中已经明确说出后，后续player节拍才可当作刚刚得知来回应。",
+      "这是信息驱动的疑案剧，不是情绪陪聊。每一段必须完成一个可复述的剧情推进：揭露新事实、指出矛盾、提出具体要求、交换条件、作出决定、发出威胁、执行动作或将调查引向下一个明确对象。不得把‘我理解’‘你也不容易’‘我会听着’‘这件事让人难受’当作本段的主要进展。",
+      "优先从undisclosed_to_player中选择1至2个与当前问题最相关的事实，由NPC直接说出、否认、部分承认或用条件交换。不能透露时，也必须用role.dramaticMoves把场面推向具体的人、物、地点、时限或行动；不要只换个比喻继续谈同一种感受。dramaticMoves是角色可采用的压力方向，根据当前状态选择或变形，不是逐条背台词。",
       "不知道车票购买时间、目的地、吵架后具体行为时就说不清楚，不能为了接话补出新公司、工作安排、电话、星期或案发前几天等经历。不替角色讲出未知道的真相。知道事实不等于愿意坦白，可以撒谎或回避，但不得编造新证物、死亡方式、地点、人物或既成行为。",
       "撒谎只能否认自身行为、隐瞒或推责，不得额外编造新的来信、目击经过和案发时间。唯一完整信件收件人是千代，不是律。",
       "名字被实际说出来就会发现地点。按角色知道的关系自然指路，不要以钥匙/许可/封锁阻止进场。其他人物不在这里，不能突然插话。",
@@ -111,7 +124,7 @@ export function buildCasePrompt(c: CaseContext) {
       "任何看/拿材料的选项，都要求NPC本段或上一段实际说过该材料的名称；不能只自我介绍就冒出委托单、车票等玩家没听过的东西。",
       "accept_action控制是否同意本次具体请求。无请求则false。未同意不能声称已经展示、交付或签字；同意则围绕请求说话，正式物品内容和状态由系统落实。",
       "收到show:请求就是玩家请求查看；take:请求是索要实物。如果说看吧、把材料摊开/递到玩家面前，就是同意，必须accept_action:true。拒绝请明确说暂时不给看，不要一边递出一边false。材料归属以held_materials为准，不能把自己持有的副本说成只有别人那里才有。",
-      'JSON结构：{"line":"NPC首句","stage_direction":"","emotion":"情绪","continuations":[{"speaker":"npc或player","line":"台词","stage_direction":"","emotion":"情绪"}],"options":[{"text":"短接话","intent":"玩家本次具体意图","angle":"角度","action_id":null}],"used_fact_ids":["本轮使用事实ID"],"accept_action":false}'
+      'disclosed_fact_ids只填本段NPC台词真正向遥明说的事实ID；仅用来塑造NPC说谎、回避或情绪的私密事实只进used_fact_ids，不得进disclosed_fact_ids。progress必须如实说明本段到底推进了什么，不能写‘深化情绪’或‘继续交流’。JSON结构：{"line":"NPC首句","stage_direction":"","emotion":"情绪","continuations":[{"speaker":"npc或player","line":"台词","stage_direction":"","emotion":"情绪"}],"options":[{"text":"短接话","intent":"玩家本次具体意图","angle":"角度","action_id":null}],"used_fact_ids":["本轮使用事实ID"],"disclosed_fact_ids":["本段NPC明说的事实ID"],"progress":{"type":"reveal|contradiction|request|deal|decision|threat|action|transition","summary":"本段的具体推进"},"accept_action":false}'
     ].join("\n"),
     user: JSON.stringify({
       role: { name: demoBootstrap.npcs.find(n => n.id === c.npcId)!.name, ...core, known: undefined,
@@ -129,7 +142,12 @@ export function buildCasePrompt(c: CaseContext) {
       beat_format: c.selectedOption ? "NPC回应本句选择，再写至多4个平铺的后续节拍，不能嵌套continuations。后续允许主角接话；mustClose时最后由NPC告别，否则可留下回应空间。" :
         "这是玩家尚未表态的开场：line及continuations每一句全由NPC说，speaker必须全为npc。continuations平铺，不允许嵌套。不要替玩家自我介绍或表示哀悼。",
       timeline_guard: "案发距游戏第一天约三周；车票日期是案发次日，不是游戏中的明天。具体发车时刻没有设定，不要编造六点四十等时刻。信中‘明天’是当时写信的说法。",
-      protagonist: demoBootstrap.player, recent_spoken_lines: recent, retrieved_memories: memories,
+      protagonist: { name: demoBootstrap.player.name, publicRole: demoBootstrap.player.publicRole,
+        occupation: demoBootstrap.player.occupation, publicBackground: demoBootstrap.player.publicBackground,
+        fixedTraits: demoBootstrap.player.fixedTraits, vulnerability: demoBootstrap.player.vulnerability },
+      player_known_facts: Object.fromEntries(c.state.playerKnownFactIds.filter(id => facts[id]).map(id => [id, facts[id]])),
+      undisclosed_to_player: Object.fromEntries(known.filter(id => !c.state.playerKnownFactIds.includes(id)).map(id => [id, facts[id]])),
+      recent_spoken_lines: recent, retrieved_memories: memories,
       reflection: runtime.reflection, open_loops: runtime.openLoops,
       conversation_path: path,
       closed_action_requests: closedActions,
@@ -147,7 +165,7 @@ export function buildCasePrompt(c: CaseContext) {
       output_example: {
         line: c.selectedOption ? "请在这里直接回应玩家本句请求，不要照抄此占位文字" : "请用角色口气自我介绍后引出lead里的具体事情，不要照抄此占位文字",
         stage_direction: "", emotion: "平静", continuations: [],
-        options: [], used_fact_ids: [], accept_action: false, closing_reason: ""
+        options: [], used_fact_ids: [], disclosed_fact_ids: [], progress: { type: "transition", summary: "将调查引向一个具体对象" }, accept_action: false, closing_reason: ""
       },
       requested_material: /^(show:|take:)/.test(c.effect) ? evidence[c.effect.split(":")[1]]?.text : undefined,
       action_catalog: options.map(o => ({ id: o.id, description: o.intent, material: demoBootstrap.items.find(i => i.id === o.id.split(":")[1])?.baseName }))
@@ -242,13 +260,13 @@ export class CaseDialogueProvider implements CaseProvider {
     let attempt = 0;
     let failureCode = "transport_failure";
     let repairHint = "";
-    const maxAttempts = mode === "review" ? 1 : this.options.maxAttempts;
+    const maxAttempts = ["review", "heart_director"].includes(mode) ? 1 : this.options.maxAttempts;
     for (; attempt < maxAttempts; attempt++) {
       try {
         const r = await this.options.fetchImpl(this.options.baseUrl.replace(/\/$/, "") + "/chat/completions", {
           method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + this.options.apiKey },
           signal: AbortSignal.timeout(this.options.timeoutMs),
-          body: JSON.stringify({ model: this.options.model, temperature: mode === "review" ? 0 : 0.65, max_tokens: mode === "ending" ? 2400 : 1800,
+          body: JSON.stringify({ model: this.options.model, temperature: mode === "review" ? 0 : mode === "archive" ? 0.2 : 0.65, max_tokens: mode === "ending" ? 2400 : mode === "archive" ? 2600 : 1800,
             thinking: { type: "disabled" }, response_format: { type: "json_object" },
             messages: [{ role: "system", content: system }, { role: "user", content: user + (attempt ? "\n上次失败代码：" + failureCode + (repairHint ? "；具体问题：" + repairHint : "") + (retryInstruction ?? "。修正：开场只能NPC说话；options生成2至3个承接本段末尾NPC原话的短选项（或自然结束为空）；不能返回已选/错过话题，不利用未说出口的私密事实出选项；action_id只能用合法动作或null；使用给定事实ID；出示/递出所请求材料必须accept_action=true。") : "") }] })
         });
@@ -259,9 +277,9 @@ export class CaseDialogueProvider implements CaseProvider {
         this.log(npcId, mode, started, attempt + 1, true); return result;
       } catch (error) {
         repairHint = error instanceof DialogueValidationError ? error.repairHint.slice(0, 300) : "";
-        const safe = ["unselected_player_speech", "unknown_fact", "invalid_choice", "unintroduced_material", "legacy_case", "incomplete", "action_mismatch", "timeline_mismatch", "new_case_fact", "player_intent", "ownership", "review_unavailable", "branch_rewind", "off_topic", "option_intent", "conversation_closing", "dialogue_length"];
+        const safe = ["unselected_player_speech", "unknown_fact", "invalid_choice", "unintroduced_material", "legacy_case", "incomplete", "action_mismatch", "timeline_mismatch", "new_case_fact", "player_intent", "ownership", "review_unavailable", "branch_rewind", "off_topic", "option_intent", "conversation_closing", "dialogue_length", "turn_order", "archive_unknown_source", "archive_unknown_character", "archive_invalid_link"];
         if (error instanceof z.ZodError) { failureCode = "schema_validation"; repairHint = error.issues.map(i => i.path.join(".") + ": " + i.message).slice(0, 3).join("; ").slice(0, 300); }
-        else if (error instanceof Error && [...safe, "invalid_pickup", "decision_point", "invalid_action_plan", "invalid_consequence"].includes(error.message)) failureCode = error.message;
+        else if (error instanceof Error && [...safe, "invalid_pickup", "decision_point", "invalid_action_plan", "invalid_consequence", "invalid_recommendation"].includes(error.message)) failureCode = error.message;
         else if (error instanceof SyntaxError) failureCode = "invalid_json";
       }
     }
@@ -269,7 +287,7 @@ export class CaseDialogueProvider implements CaseProvider {
   }
   private log(npcId: string, mode: AiLogEntry["mode"], start: number, attempts: number, success: boolean, errorCode = "generation_failure") {
     this.logs.push({ id: "ai_" + Date.now() + "_" + this.logs.length, timestamp: new Date().toISOString(), npcId, mode, provider: success ? "deepseek" : "mock_fallback", model: this.options.model,
-      promptVersion: CASE_PROMPT_VERSION, latencyMs: Date.now() - start, attemptCount: attempts, success, usedFacts: [], errorCode: success ? null : errorCode });
+      promptVersion: mode === "heart_director" ? HEART_DIRECTOR_VERSION : mode === "archive" ? ARCHIVE_AGENT_VERSION : CASE_PROMPT_VERSION, latencyMs: Date.now() - start, attemptCount: attempts, success, usedFacts: [], errorCode: success ? null : errorCode });
     this.logs = this.logs.slice(-100);
   }
   async generate(c: CaseContext): Promise<DialogueResult> {
@@ -281,6 +299,8 @@ export class CaseDialogueProvider implements CaseProvider {
       if (!d.options.length && d.continuations.at(-1)?.speaker === "player") throw new DialogueValidationError("conversation_closing", "会面末句必须由NPC说完告别，不能停在主角的问题上。");
       if (!c.selectedOption && d.continuations.some(b => b.speaker === "player")) throw new Error("unselected_player_speech");
       if (d.used_fact_ids.some(id => !p.known.includes(id))) throw new Error("unknown_fact");
+      if (d.disclosed_fact_ids.some(id => !d.used_fact_ids.includes(id) || !p.known.includes(id))) throw new Error("unknown_fact");
+      if (d.progress.type === "reveal" && !d.disclosed_fact_ids.length) throw new DialogueValidationError("off_topic", "progress声称揭露新信息，但disclosed_fact_ids为空。请明确说出信息，或改为真实的推进类型。");
       const normalize = (text: string) => text.replace(/[\s\p{P}\p{S}]/gu, "");
       if (new Set(d.options.map(o => normalize(o.text))).size !== d.options.length ||
           new Set(d.options.map(o => o.angle)).size !== d.options.length ||
@@ -309,7 +329,7 @@ export class CaseDialogueProvider implements CaseProvider {
       if (/零号站台|17[:：]47|存在被抹除|第四副碗筷/.test(text)) throw new Error("legacy_case");
       if (this.options.review) {
         const review = await this.request(c.npcId, "review",
-          '你是严格的逐项剧情审校员，只检查，不续写。草稿来自另一个可能犯错的模型，不能因语句流畅就通过。选项在candidate全部对白节拍播放完后才显示：candidate里的NPC首句和continuations均已被玩家听到，不能仅以recent_lines判断。例如本段刚说吵架，选项“你们为什么吵”完全合法；“她生气了吗”是询问未知态度，不是宣称新事实，允许。先检查选项，再检查台词。1. 所有选项要接住NPC本段末尾的同一件事，态度/角度不同；不能退回其他话题。2. missed里的问题已经错过，同义改写也不能补发；closed_action_requests同一动作不得换文案再次索取；基于新信息深入追问允许。3. 选项不能泄露NPC还没说出的事实，如还没提吵架就问你们吵架了吗。4. 案件具体事实只能来自allowed_facts和presented_materials；recent_lines只帮助衔接，不是事实依据，不能洗白旧轮编造。尤其“出事是上周五”“案发前一周买的票”“等一组照片拍完再走”“她躲着人打电话”都不在设定里，必须拒绝。生活中的即时小动作、主观怀疑、否认、对既定吵架的情绪解释允许，不额外编造案件经历。5. action_id必须吻合选项请求，accept_action必须吻合当前请求的实际展示/交付/拒绝。6. 后续主角只能延续所选意图，不擅自承诺或定罪。7. conversation_pacing.mustClose时，或options为空时，检查NPC是否用符合人设和当前状态的理由结束交谈（工作、杂务、独处、休息等），没有继续提问或抛新线索；不合格用conversation_closing。返回JSON {"approved":true或false,"reason":"none|new_case_fact|player_intent|ownership|off_topic|branch_rewind|option_intent|conversation_closing","issue":"违规原句及原因，合法则为空"}。有一项违规就false，不替草稿辩解。',
+          '你是严格的逐项剧情审校员，只检查，不续写。草稿来自另一个可能犯错的模型，不能因语句流畅就通过。选项在candidate全部对白节拍播放完后才显示：candidate里的NPC首句和continuations均已被玩家听到，不能仅以recent_lines判断。例如本段刚说吵架，选项“你们为什么吵”完全合法；“她生气了吗”是询问未知态度，不是宣称新事实，允许。先检查选项，再检查台词。1. 所有选项要接住NPC本段末尾的同一件事，态度/角度不同；不能退回其他话题。2. missed里的问题已经错过，同义改写也不能补发；closed_action_requests同一动作不得换文案再次索取；基于新信息深入追问允许。3. 选项不能泄露NPC还没说出的事实，如还没提吵架就问你们吵架了吗。4. 案件具体事实只能来自allowed_facts和presented_materials；recent_lines只帮助衔接，不是事实依据，不能洗白旧轮编造。尤其“出事是上周五”“案发前一周买的票”“等一组照片拍完再走”“她躲着人打电话”都不在设定里，必须拒绝。生活中的即时小动作、主观怀疑、否认、对既定吵架的情绪解释允许，不额外编造案件经历。5. player_known_facts是本段开始前遥知道的事。NPC在candidate中首次说出新事时，遥只能当作刚得知，不得显得早已知情或补出尚未说的细节；disclosed_fact_ids只能标记NPC在candidate中实际明说的事实。6. action_id必须吻合选项请求，accept_action必须吻合当前请求的实际展示/交付/拒绝。7. 后续主角只能延续所选意图，不擅自承诺或定罪。8. conversation_pacing.mustClose时，或options为空时，检查NPC是否用符合人设和当前状态的理由结束交谈（工作、杂务、独处、休息等），没有继续提问或抛新线索；不合格用conversation_closing。返回JSON {"approved":true或false,"reason":"none|new_case_fact|player_intent|ownership|off_topic|branch_rewind|option_intent|conversation_closing","issue":"违规原句及原因，合法则为空"}。有一项违规就false，不替草稿辩解。',
           JSON.stringify({
             allowed_facts: Object.fromEntries(p.known.map(id => [id, facts[id]])),
             presented_materials: { read: c.state.evidenceJournal, requested: evidence[c.effect.split(":")[1]]?.text },
@@ -323,6 +343,8 @@ export class CaseDialogueProvider implements CaseProvider {
             held_materials: JSON.parse(p.user).held_materials,
             conversation_pacing: p.pacing,
             farewell_hint: characterFarewell(c.state, c.npcId),
+            player_known_facts: JSON.parse(p.user).player_known_facts,
+            progress_contract: "candidate.progress必须与台词中实际发生的信息、矛盾、要求、交易、决定、威胁、动作或转场一致；只有安慰、理解、比喻或继续交流属于off_topic。",
             candidate: d
           }),
           input => z.object({ approved: z.boolean(), reason: z.enum(["none","new_case_fact","player_intent","ownership","off_topic","branch_rewind","option_intent","conversation_closing"]), issue: z.string().max(1000).default("") }).parse(input));
@@ -333,12 +355,30 @@ export class CaseDialogueProvider implements CaseProvider {
         continuations: d.continuations.map(b => ({ speakerId: b.speaker === "player" ? "player" : c.npcId, line: b.line, stageDirection: b.stage_direction, emotion: b.emotion })),
         options: d.options.map(o => ({ id: "choice_" + randomUUID(), text: o.text, playerLine: o.text,
           intent: o.intent, anchor: o.anchor, angle: o.angle, actionId: o.action_id })),
-        debug: { provider: "deepseek", decision: "角色有限知情生成", usedFacts: d.used_fact_ids, promptVersion: CASE_PROMPT_VERSION,
+        debug: { provider: "deepseek", decision: "信息压力对白", usedFacts: d.used_fact_ids, disclosedFacts: d.disclosed_fact_ids, sceneGoal: `${d.progress.type}：${d.progress.summary}`, promptVersion: CASE_PROMPT_VERSION,
           npcActionId: d.accept_action && c.effect ? c.effect : "none" } });
     });
     // A technical failure is not an NPC's decision to leave. Keep the current node retryable.
     if (!result && this.options.apiKey && c.selectedOption && !p.pacing.mustClose) throw new DialogueGenerationError();
     return result ?? fallbackDialogue(c);
+  }
+  async directHearts(input: HeartDirectorInput): Promise<HeartDirectorResult> {
+    if (!this.options.apiKey) return offlineHeartRecommendations(input);
+    if (!input.held.length) return { nodeId: input.nodeId, revision: input.revision, status: "ai",
+      promptVersion: HEART_DIRECTOR_VERSION, recommendations: [], message: "手中没有心绪牌，无需调用导演。可以顺着聊下去。" };
+    const recommendations = await this.request(input.npc.id, "heart_director", HEART_DIRECTOR_SYSTEM,
+      JSON.stringify({ ...input, attitude_catalog: Object.fromEntries(input.held.map(h => [h.kind, heartCatalog[h.kind]])) }),
+      raw => validateHeartRecommendations(raw, input));
+    return recommendations ? { nodeId: input.nodeId, revision: input.revision, status: "ai", promptVersion: HEART_DIRECTOR_VERSION,
+      recommendations, message: "AI推荐的是交流方向，不是最佳答案，也不保证对方配合。所有手牌仍可选。" } : unavailableHeartDirector(input);
+  }
+  async summarizeArchive(state: GameState) {
+    const batch = buildArchiveBatch(state);
+    if (!batch.input.events.length) return { patch: { character_updates: [], event_updates: [] }, batch };
+    const patch = await this.request("archive_agent", "archive", ARCHIVE_AGENT_SYSTEM, JSON.stringify(batch.input),
+      raw => validateArchivePatch(raw, batch.input),
+      "。只根据events修正人物、事件、来源和关联；不得推断未公开真相。");
+    return patch ? { patch, batch } : null;
   }
   async generateHearts(c: HeartContext): Promise<DialogueResult> {
     if (!this.options.apiKey) return mockHeartDialogue(c);
@@ -351,16 +391,16 @@ export class CaseDialogueProvider implements CaseProvider {
         const { pending_choice: _pendingChoice, already_gathered: _alreadyGathered, ...reviewContext } = JSON.parse(p.user);
         const { choice_point: _choicePoint, pickup: _pickup, ...reviewCandidate } = d;
         const review = await this.request(c.npcId, "review",
-          '你只审查对白内容，不决定玩家何时选牌，不检查漏点或多余选择，不要求截停、补节点或重排对白。选牌时机和拾绪情绪分类、是否产牌均由生成对白的AI独立决定，不重判pickup，不因情绪轻微、含蓄、缺少情绪词而拒绝。未逐句让玩家选择、NPC情绪强烈、遥继续回应都不是拒绝理由。只返回JSON {"approved":true或false,"reason":"none|new_case_fact|player_intent|ownership|off_topic|conversation_closing","issue":"具体内容违规原句与规则，合法时为空"}。遥和NPC可自由来回接话；listen是顺着聊而非沉默。问句、反问、安慰、口头承诺、答应、转告已知消息、赠礼提议、指责和表达爱意均允许，允许有惊喜的人际发展。不检查‘我+害怕’句式，不因恐惧仅由动作或迟疑体现而拒绝，不要求出牌有效、帮助对方或获得新牌。只检查：1案件事实及人物过去经历来自allowed_facts及已知材料，不凭空补写往事；人物当下观点和指责不是正式定罪。2角色不得凭空知道未收到的秘密；口头承诺合法，但不能把物品转移、签写、移动等未执行状态写成完成。candidate.consequence是本次由程序执行的能力：material按指定show/take执行已有材料查看或交付，sorting_offer只开放整理邀请而不是已经完成，sorting_cancel撤销邀请，meeting约定而非瞬移，pause中止会面。这些操作在对应NPC决定台词播放时落地，不当作越权；只检查事实和表达是否符合声明操作，不重判该不该产生事件。3自然或强制收尾由NPC合理告别；尚在交流的NPC问题可以作为本段结尾，不要求遥必须在同段回答。player_intent只用于所选牌的表达态度明显不符，不得用来否决选牌时机、拾绪情绪分类或自然接话。不要沿用旧版禁止遥接话/禁止问句/禁止承诺的规则。',
+          '你只审查对白内容，不决定玩家何时选牌，不检查漏点或多余选择，不要求截停、补节点或重排对白。选牌时机和拾绪情绪分类、是否产牌均由生成对白的AI独立决定，不重判pickup，不因情绪轻微、含蓄、缺少情绪词而拒绝。未逐句让玩家选择、NPC情绪强烈、遥继续回应都不是拒绝理由。只返回JSON {"approved":true或false,"reason":"none|new_case_fact|player_intent|ownership|off_topic|conversation_closing","issue":"具体内容违规原句与规则，合法时为空"}。遥和NPC可自由来回接话；listen是顺着聊而非沉默。问句、反问、安慰、口头承诺、答应、转告已知消息、赠礼提议、指责和表达爱意均允许，允许有惊喜的人际发展。不检查‘我+害怕’句式，不因恐惧仅由动作或迟疑体现而拒绝，不要求出牌有效、帮助对方或获得新牌。只检查：1案件事实及人物过去经历来自allowed_facts及已知材料，不凭空补写往事；人物当下观点和指责不是正式定罪。2角色不得凭空知道未收到的秘密；口头承诺合法，但不能把物品转移、签写、移动等未执行状态写成完成。candidate.consequence是本次由程序执行的能力：material按指定show/take执行已有材料查看或交付，sorting_offer只开放整理邀请而不是已经完成，sorting_cancel撤销邀请，meeting约定而非瞬移，pause中止会面；case_action只按event_capabilities.case_actions执行合法的retract/write/supplement/protect，分别是纠正证词、签写纠正、签写补充核查、安排一小时后到旅馆保护，不能跳过条件，不等于立即到场或定罪。这些操作在对应NPC决定台词播放时落地，不当作越权；只检查事实和表达是否符合声明操作，不重判该不该产生事件。3遥只能使用player_known_facts或本段更早的NPC台词已明说的信息。NPC首次说出新事时，遥必须当作刚得知，不得显得早已知情或补出尚未说的细节；disclosed_fact_ids只能标记NPC在candidate里实际明说的事实。4自然或强制收尾由NPC合理告别；尚在交流的NPC问题可以作为本段结尾，不要求遥必须在同段回答。player_intent只用于所选牌的表达态度明显不符，不得用来否决选牌时机、拾绪情绪分类或自然接话。不要沿用旧版禁止遥接话/禁止问句/禁止承诺的规则。',
           JSON.stringify({ context: reviewContext, candidate: reviewCandidate,
-            extra_checks: "过去经历也需事实依据，不得编造姐姐怕黑、拍照回来开灯、临别行为等日常往事。材料操作必须与consequence中合法的actionId一致；不能增加新的案件事实或其他未声明的实物操作。事件类型由生成AI决定，不二次决定该给哪种后果，不要求情绪牌必定有利。" }),
+            extra_checks: "过去经历也需事实依据，不得编造姐姐怕黑、拍照回来开灯、临别行为等日常往事。材料操作必须与consequence中合法的actionId一致；不能增加新的案件事实或其他未声明的实物操作。事件类型由生成AI决定，不二次决定该给哪种后果，不要求情绪牌必定有利。candidate.progress必须是台词中真正发生的信息、质问、要求、交易、决定、威胁、动作或转向；如果只是安慰、感谢、理解或深化情绪，用off_topic拒绝。" }),
           input => z.object({ approved: z.boolean(), reason: z.enum(["none", "new_case_fact", "player_intent", "ownership", "off_topic", "conversation_closing", "invalid_pickup", "decision_point"]), issue: z.string().max(1000) }).parse(input));
         if (!review) throw new Error("review_unavailable");
         // Ignore legacy semantic vetoes; structural pickup validation already ran above.
         if (!["decision_point", "invalid_pickup"].includes(review.reason) && (!review.approved || review.reason !== "none")) throw new DialogueValidationError(review.reason === "none" ? "player_intent" : review.reason, review.issue);
       }
       return heartResult(d, c, "deepseek");
-    }, "。修正上述结构或内容问题，继续使用拾绪beats结构，最多5项且不超过maxGeneratedLines；出牌首句player，开场首句npc，随后双方可来回接话。listen也允许遥说话。问句、口头承诺和自然示好允许，不检查恐惧的固定句式。不生成options。选牌时机只由你根据语境决定，不服从内容审校对选牌时机的建议；若程序报告decision_point，只修复标记与NPC末句原文的对应、can_continue等结构矛盾，不按关键词决定是否需要表态。短段合法，不凑句数。若失败代码invalid_consequence，检查出牌必须非空consequence、其NPC原文索引、能力是否可用及不是既有状态重复；material只用材料能力原ID且对应stage_direction为空，meeting同步合法action_plan且不重复旧约定，pause须末句收尾且无计划。不能用null、好感变化或空话修复出牌后果。同步检查pickup索引；普通段落和结束时choice_point=null，已授权的pending_choice要回应而非重复提问。不编造案件往事或把未执行系统动作写成完成。");
+    }, "。修正上述结构或内容问题，继续使用拾绪beats结构，最多5项且不超过maxGeneratedLines；出牌首句player，开场首句npc，随后双方可来回接话。listen必须由上一拍的另一方开口：上一拍npc则beats[0]=player，上一拍player则beats[0]=npc，不能让同一角色跨段接着回应自己。问句、口头承诺和自然示好允许，不检查恐惧的固定句式。不生成options。选牌时机只由你根据语境决定，不服从内容审校对选牌时机的建议；若程序报告decision_point，只修复标记与NPC末句原文的对应、can_continue等结构矛盾，不按关键词决定是否需要表态。短段合法，不凑句数。若失败代码invalid_consequence，只修复已经填写的后果：检查其NPC原文索引、能力是否可用及不是既有状态重复；material只用材料能力原ID且对应stage_direction为空，meeting同步合法action_plan且不重复旧约定，pause须末句收尾且无计划。若现场没有自然合适的后果，可以改为consequence=null，但必须结束已经回答的问题，转向一个来自已知现场的具体新焦点，不能重复追问、互相确认或原地安慰。同步检查pickup索引；普通段落和结束时choice_point=null，已授权的pending_choice要回应而非重复提问。不编造案件往事或把未执行系统动作写成完成。");
     if (!result) throw new DialogueGenerationError();
     return result;
   }

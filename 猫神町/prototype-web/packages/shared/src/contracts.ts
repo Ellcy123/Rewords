@@ -153,7 +153,7 @@ export const DialogueOptionSchema = z.object({
 });
 export type DialogueOption = z.infer<typeof DialogueOptionSchema>;
 
-export const HeartKindSchema = z.enum(["fear", "sympathy", "affection"]);
+export const HeartKindSchema = z.enum(["fear", "sympathy", "affection", "sadness", "anger", "joy", "curiosity", "doubt", "contempt"]);
 export type HeartKind = z.infer<typeof HeartKindSchema>;
 export const HeartCardSchema = z.object({
   sourceType: z.enum(["npc", "test"]).optional(),
@@ -162,8 +162,52 @@ export const HeartCardSchema = z.object({
   day: z.number().int().min(1).max(7), locationId: z.string().nullable()
 });
 export const HeartActionRequestSchema = z.object({
-  revision: z.number().int().nonnegative(), cardId: z.string().min(1).nullable()
+  revision: z.number().int().nonnegative(), cardId: z.string().min(1).nullable(),
+  previewId: z.string().min(1).optional()
 });
+export const HeartPreviewSchema = z.object({
+  id: z.string().min(1), cardId: z.string().min(1), revision: z.number().int().nonnegative(),
+  line: z.string().min(1).max(240), stageDirection: z.string().max(240),
+  provider: z.enum(["mock", "deepseek", "mock_fallback"])
+});
+export type HeartPreview = z.infer<typeof HeartPreviewSchema>;
+
+// A deliberately public projection. No GameState, private role sheet or future beats.
+export const HeartDirectorInputSchema = z.object({
+  nodeId: z.string(), revision: z.number().int().nonnegative(),
+  npc: z.object({ id: z.string(), name: z.string(), occupation: z.string(), publicDescription: z.string() }),
+  location: z.string(), day: z.number().int(), minute: z.number().int(),
+  quote: z.string(),
+  played: z.array(z.object({ eventId: z.string(), speaker: z.string(), text: z.string() })),
+  knownMaterials: z.array(z.object({ name: z.string(), text: z.string() })),
+  held: z.array(z.object({ kind: HeartKindSchema, count: z.number().int().positive() })),
+  recentChoices: z.array(z.object({ npcName: z.string(), text: z.string() })),
+  actions: z.array(z.object({ id: z.string(), label: z.string() }))
+});
+export type HeartDirectorInput = z.infer<typeof HeartDirectorInputSchema>;
+export const HeartRecommendationSchema = z.object({
+  kind: HeartKindSchema, direction: z.enum(["support", "explore", "challenge"]),
+  angle: z.string().trim().min(1).max(50), reason: z.string().trim().min(1).max(160),
+  anchorEventId: z.string(), actionId: z.string().nullable()
+});
+export type HeartRecommendation = z.infer<typeof HeartRecommendationSchema>;
+export const HeartDirectorResultSchema = z.object({
+  nodeId: z.string(), revision: z.number().int().nonnegative(),
+  status: z.enum(["ai", "offline", "unavailable"]), promptVersion: z.string(),
+  recommendations: z.array(HeartRecommendationSchema).max(3), message: z.string()
+});
+export type HeartDirectorResult = z.infer<typeof HeartDirectorResultSchema>;
+export const HeartObservationSchema = z.object({
+  nodeId: z.string(), npcName: z.string(), input: HeartDirectorInputSchema.nullable(),
+  director: HeartDirectorResultSchema.nullable(),
+  attempts: z.array(z.object({
+    cardId: z.string(), kind: HeartKindSchema, line: z.string().nullable(),
+    status: z.enum(["candidate", "validated", "rejected", "expired", "waiting_playback", "applied", "continued"]),
+    detail: z.string()
+  })),
+  selected: z.string().nullable(), actualEvents: z.array(z.object({ id: z.string(), text: z.string() }))
+});
+export type HeartObservation = z.infer<typeof HeartObservationSchema>;
 
 export const DialogueContinuationSchema = z.object({
   speakerId: z.string().min(1).optional(),
@@ -203,7 +247,7 @@ export const NpcActionPlanSchema = ActionPlanProposalSchema.omit({ beatIndex: tr
 export type NpcActionPlan = z.infer<typeof NpcActionPlanSchema>;
 
 export const HeartConsequenceSchema = z.object({
-  type: z.enum(["material", "sorting_offer", "sorting_cancel", "meeting", "pause"]),
+  type: z.enum(["material", "sorting_offer", "sorting_cancel", "meeting", "pause", "case_action"]),
   actionId: z.string().min(1).nullable().default(null),
   beatIndex: z.number().int().min(0).max(4), quote: z.string().trim().min(1).max(120)
 });
@@ -229,6 +273,10 @@ export const DialogueResultSchema = z.object({
     provider: z.enum(["mock", "deepseek", "mock_fallback"]),
     decision: z.string().min(1),
     usedFacts: z.array(z.string()),
+    // Facts explicitly spoken to the player in this generated segment. Unlike
+    // usedFacts, private facts used only to shape an NPC's lie or hesitation do
+    // not belong here.
+    disclosedFacts: z.array(z.string()).default([]),
     promptVersion: z.string().min(1).optional(),
     model: z.string().min(1).optional(),
     latencyMs: z.number().int().nonnegative().optional(),
@@ -263,7 +311,7 @@ export const AiLogEntrySchema = z.object({
   id: z.string().min(1),
   timestamp: z.string().min(1),
   npcId: z.string().min(1),
-  mode: z.enum(["talk", "gift", "ending", "plan", "review"]),
+  mode: z.enum(["talk", "gift", "ending", "plan", "review", "heart_director", "archive"]),
   provider: z.enum(["deepseek", "mock_fallback"]),
   model: z.string().min(1),
   promptVersion: z.string().min(1),
@@ -403,14 +451,45 @@ export const IncidentSchema = z.object({
 export const EvidenceEntrySchema = z.object({
   id: z.string(), name: z.string(), text: z.string(), source: z.string(), day: z.number().int()
 });
+export const ArchiveClaimSchema = z.object({
+  id: z.string().min(1), text: z.string().min(1).max(360),
+  status: z.enum(["reported", "observed", "documented", "confirmed", "disputed"]),
+  sourceEventIds: z.array(z.string().min(1)).min(1).max(12),
+  learnedDay: z.number().int().min(1).max(7), learnedMinute: z.number().int().min(0).max(1440)
+});
+export const CharacterDossierSchema = z.object({
+  id: z.string().min(1), name: z.string().min(1).max(40), identity: z.string().min(1).max(120),
+  summary: z.string().min(1).max(360), unlockedAtEventId: z.string().min(1),
+  claims: z.array(ArchiveClaimSchema).max(80).default([]), relatedEventIds: z.array(z.string().min(1)).max(40).default([])
+});
+export const EventDossierSchema = z.object({
+  id: z.string().min(1), title: z.string().min(1).max(60), summary: z.string().min(1).max(480),
+  status: z.enum(["reported", "investigating", "confirmed", "resolved", "disputed"]),
+  unlockedAtEventId: z.string().min(1), participantIds: z.array(z.string().min(1)).max(30).default([]),
+  claims: z.array(ArchiveClaimSchema).max(100).default([])
+});
+export const InvestigationArchiveSchema = z.object({
+  cursorSequence: z.number().int().min(-1).default(-1),
+  status: z.enum(["idle", "ai", "unavailable"]).default("idle"),
+  promptVersion: z.string().default(""), pending: z.boolean().default(false),
+  characters: z.array(CharacterDossierSchema).max(100).default([]),
+  events: z.array(EventDossierSchema).max(100).default([])
+});
+export type InvestigationArchive = z.infer<typeof InvestigationArchiveSchema>;
 export const GameStateSchema = z.object({
   // Additive v3 extension: old saves start empty; no retrospective rewards or reset.
   heartCards: z.array(HeartCardSchema).default([]),
-  heartSession: z.object({ id: z.string().min(1), claimedKinds: z.array(HeartKindSchema).max(3) }).nullable().default(null),
+  heartSession: z.object({ id: z.string().min(1), claimedKinds: z.array(HeartKindSchema).max(9) }).nullable().default(null),
   saveVersion: z.literal(3),
   chapterId: z.literal("sunset-case-v1"),
   discoveredLocationIds: z.array(z.string()),
   evidenceJournal: z.array(EvidenceEntrySchema).default([]),
+  // Use a factory so every newly parsed/old save gets fresh archive arrays.
+  // Mutating one in-memory archive must never leak into another GameState.
+  investigationArchive: InvestigationArchiveSchema.default(() => ({ cursorSequence: -1, status: "idle" as const, promptVersion: "", pending: false, characters: [], events: [] })),
+  // Persistent player-facing knowledge. Character canon and NPC private
+  // knowledge must never be treated as facts the player has already learned.
+  playerKnownFactIds: z.array(z.string()).default([]),
   dialogueBeatIndex: z.number().int().min(0).default(0),
   // null = spoken line. Existing saves have already shown the stage direction: do not replay it.
   dialogueNarrationIndex: z.number().int().nonnegative().nullable().default(null),
@@ -456,7 +535,8 @@ export const TravelRequestSchema = z.object({
 });
 
 export const InteractionModeRequestSchema = z.object({
-  mode: InteractionModeSchema
+  mode: InteractionModeSchema,
+  revision: z.number().int().nonnegative().optional()
 });
 
 export const DialogueChoiceRequestSchema = z.object({

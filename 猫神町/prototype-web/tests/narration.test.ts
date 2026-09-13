@@ -95,15 +95,31 @@ describe("independent narration playback", () => {
       expect(parsed.eventLog).toEqual(game.getState().eventLog);
     } finally { store.close(); }
   });
-  it("new encounter inherits observed actions but never treats the old tail as unplayed content", async () => {
-    const { game, store } = await setup();
+  it("selection leaves observed actions untouched; a real new interaction starts a fresh playback boundary", async () => {
+    const { game, store, provider } = await setup();
     try {
       await game.completeEncounter(); game.startEncounter("npc_koharu");
-      const c = ctx(game, "opening"), p = buildHeartPrompt(c, buildCasePrompt(c).user), history = JSON.parse(p.user).dialogue_history;
-      expect(history.played_this_encounter).toEqual([]);
-      expect(history.continuation).toMatchObject({ boundary_resets_scene: false, last_played_beat: null, last_observed_before_encounter: { kind: "narration", text: "小春穿好拖鞋。" } });
-      expect(history.recent_observed_actions).toHaveLength(1);
-      expect(history.recent_observed_actions[0].text).toBe("小春穿好拖鞋。");
+      expect(game.getState().currentDialogue).toBeNull();
+      const selected = heartConversationHistory(ctx(game, "opening"));
+      const oldEventId = selected.played_this_encounter[0].event_id;
+      expect(selected.played_this_encounter).toHaveLength(1);
+      expect(selected.played_this_encounter[0]).toMatchObject({ kind: "narration", text: "小春穿好拖鞋。" });
+      expect(provider.calls).toBe(1);
+
+      // This fixture's anchored appointment is at 13:00. Rewind its synthetic
+      // clock before beginning the second interaction so that the test exercises
+      // a legal opening rather than an intentionally expired plan.
+      const raw = store.load()!;
+      raw.currentMinute = 600; raw.period = "morning";
+      store.save(raw);
+      const resumed = new GameService(store, provider);
+      await resumed.startHeartEncounter(resumed.getState().revision);
+      const c = ctx(resumed, "opening"), p = buildHeartPrompt(c, buildCasePrompt(c).user), history = JSON.parse(p.user).dialogue_history;
+      expect(history.played_this_encounter).toHaveLength(1);
+      expect(history.played_this_encounter[0].event_id).not.toBe(oldEventId);
+      expect(history.played_this_encounter[0].text).toBe("小春穿好拖鞋。");
+      expect(history.continuation).toMatchObject({ mode: "new_encounter", boundary_resets_scene: false, last_observed_before_encounter: { kind: "narration", text: "小春穿好拖鞋。" } });
+      expect(history.recent_observed_actions.some((action: { text: string }) => action.text === "小春穿好拖鞋。")).toBe(true);
       expect(p.system).toContain("已经穿好拖鞋不能再拿起同一双准备穿");
       c.state.currentLocationId = "loc_home";
       expect(heartConversationHistory(c).recent_observed_actions).toEqual([]);
@@ -123,7 +139,7 @@ describe("clean speech and continuity input", () => {
   it("normalizes generated speech before quote checks, retaining the generator's choice", () => {
     const c: HeartContext = { state: createInitialState(), npcId: "npc_koharu", mode: "talk", selectedOption: null, giftItem: null, effect: "", heartIntent: "opening" };
     const d = validateHeartDraft({ beats: [{ speaker: "npc", line: "雨宫小春放慢脚步。雨宫小春：你会留下吗？", stage_direction: "停下。", emotion: "不安" }],
-      can_continue: true, choice_point: { quote: "你会留下吗？", reason: "期待陪伴" }, closing_reason: "", used_fact_ids: [], pickup: null }, c, []);
+      can_continue: true, choice_point: { quote: "你会留下吗？", reason: "期待陪伴" }, closing_reason: "", used_fact_ids: [], disclosed_fact_ids: [], progress: { type: "request", summary: "小春提出留下陪伴的请求" }, pickup: null }, c, []);
     expect(d.beats[0].line).toBe("你会留下吗？"); expect(d.beats[0].stage_direction).toBe("雨宫小春放慢脚步。");
     expect(d.choice_point?.quote).toBe(d.beats[0].line);
   });
