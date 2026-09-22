@@ -2328,3 +2328,9 @@ button:disabled {
 .narration-beat p { margin: 0; font-size: 20px; line-height: 1.9; letter-spacing: .06em; color: #655b4b; }
 @keyframes narration-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
 @media (prefers-reduced-motion: reduce) { .narration-beat { animation: none; } }
+
+.rule-echoes { margin-top: 24px; padding: 20px; border: 1px solid var(--line, #d5cbbd); border-radius: 16px; }
+.rule-echoes > p { line-height: 1.7; }
+.rule-echoes ul { list-style: none; padding: 0; margin: 16px 0 0; display: grid; gap: 12px; }
+.rule-echoes li { padding: 14px; background: rgba(128, 110, 88, .07); border-radius: 10px; overflow-wrap: anywhere; }
+.rule-echoes li p { margin: 8px 0 0; line-height: 1.7; }

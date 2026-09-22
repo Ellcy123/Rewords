@@ -17,7 +17,7 @@ class MeetingProvider extends CaseDialogueProvider {
     const d = mockHeartDialogue(c);
     d.speakerId = "npc_koharu"; d.line = "有些话我想换个地方说。";
     d.continuations = [{ speakerId: "npc_koharu", line: proposal().quote, emotion: "期待" }];
-    d.heart = { canContinue: true, choicePoint: null, pickups: [], actionPlan: { ...proposal(), locationId: this.invalid ? "invented" : "loc_home" } };
+    d.heart = { canContinue: true, choicePoint: { quote: proposal().quote, reason: "小春等待遥决定是否接受这个约定。" }, pickups: [], actionPlan: { ...proposal(), locationId: this.invalid ? "invented" : "loc_home" } };
     return d;
   }
 }

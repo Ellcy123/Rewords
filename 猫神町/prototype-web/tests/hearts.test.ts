@@ -1,6 +1,6 @@
 import { showSpeech, nextSpeech, drainPlayback } from "./playback.ts";
 import { describe, expect, it } from "vitest";
-import { GameStateSchema, legacyHeartKinds, type GameState } from "../packages/shared/src/index.ts";
+import { DialogueResultSchema, GameStateSchema, legacyHeartKinds, type GameState } from "../packages/shared/src/index.ts";
 import { CaseDialogueProvider, DialogueGenerationError, buildCasePrompt } from "../server/src/caseProvider.ts";
 import { buildHeartPrompt, heartResult, mockHeartDialogue, validateHeartDraft, type HeartContext } from "../server/src/heartDialogue.ts";
 import { GameService, createInitialState } from "../server/src/gameService.ts";
@@ -21,7 +21,7 @@ function draft(intent: "opening" | "fear" = "opening") {
   return { beats: [
     ...(intent === "fear" ? [{ speaker: "player", line: "我有点不安。", stage_direction: "", emotion: "不安" }] : []),
     { speaker: "npc", line: "我怕自己整理不好。", stage_direction: "", emotion: "恐惧" }
-  ], can_continue: true, choice_point: null as { quote: string; reason: string } | null, closing_reason: "", used_fact_ids: [], disclosed_fact_ids: [],
+  ], can_continue: true, choice_point: { quote: "我怕自己整理不好。", reason: "小春想知道遥会怎样回应。" }, closing_reason: "", used_fact_ids: [], disclosed_fact_ids: [],
   progress: intent === "fear" ? { type: "action" as const, summary: "小春决定出示手中的车票" } : { type: "request" as const, summary: "小春要求遥回应她的担忧" },
   // Most fixed fixtures still exercise an executable NPC decision. E01 is initially held by 小春.
   consequence: intent === "fear" ? { type: "material" as const, actionId: "show:E01", beatIndex: 1, quote: "我怕自己整理不好" } : null,
@@ -138,8 +138,13 @@ describe("拾绪首日服务闭环", () => {
     }
     const s = game.getState(); expect(s.currentDialogue?.heart?.canContinue).toBe(false);
     expect(s.eventLog.filter(e => e.type === "dialogue_generated" && e.actorId === "player").length).toBeGreaterThan(0);
-    expect(s.eventLog.filter(e => e.type === "dialogue_choice")).toHaveLength(1);
-    expect(s.eventLog.filter(e => e.type === "dialogue_continued").length).toBeGreaterThan(0);
+    const choices = s.eventLog.filter(e => e.type === "dialogue_choice");
+    expect(choices.length).toBeGreaterThan(1);
+    expect(choices.length).toBeLessThanOrEqual(5);
+    expect(s.eventLog.filter(e => e.type === "dialogue_generated" && e.actorId === "player")).toHaveLength(choices.length);
+    // A natural response is still generated from the current decision point;
+    // it is not a second, choice-less AI segment.
+    expect(s.eventLog.filter(e => e.type === "dialogue_continued")).toHaveLength(0);
     expect(s.eventLog.filter(e => e.type === "dialogue_generated").length).toBeLessThanOrEqual(24);
     expect(s.heartCards.map(c => c.kind)).toEqual(["fear", "affection"]);
     await expect(game.useHeart(null, s.revision)).rejects.toThrow("可出牌");
@@ -186,7 +191,9 @@ describe("拾绪可执行后果", () => {
         { speaker: "player", line: "我愿意听你把这件事说完。", stage_direction: "", emotion: "认真" },
         { speaker: "npc", line, stage_direction: "", emotion: "平静" }
       ],
-      can_continue: consequence.type !== "pause", choice_point: null, closing_reason: consequence.type === "pause" ? "小春需要独处" : "",
+      can_continue: consequence.type !== "pause",
+      choice_point: consequence.type === "pause" ? null : { quote: line, reason: "小春等待遥对眼前决定的回应。" },
+      closing_reason: consequence.type === "pause" ? "小春需要独处" : "",
       used_fact_ids: [], disclosed_fact_ids: [], progress: { type: "action", summary: "小春作出明确的现场决定" }, pickup: null
     };
   }
@@ -211,11 +218,13 @@ describe("拾绪可执行后果", () => {
     return { game, store };
   }
 
-  it("allows a non-action turn without an event consequence, but rejects an action that omits its consequence", () => {
+  it("allows a non-action turn and repairs an action label without an event consequence", () => {
     const c = context("fear");
     const nonAction = { ...draft("fear"), consequence: null, progress: { type: "request" as const, summary: "小春要求遥明确回应她的担忧" } };
     expect(validateHeartDraft(nonAction, c, []).consequence).toBeNull();
-    expect(() => validateHeartDraft({ ...draft("fear"), consequence: null }, c, [])).toThrow("invalid_consequence");
+    const repaired = validateHeartDraft({ ...draft("fear"), consequence: null }, c, []);
+    expect(repaired.consequence).toBeNull();
+    expect(repaired.progress.type).toBe("decision");
     expect(validateHeartDraft({ ...draft(), consequence: undefined }, context(), []).consequence).toBeNull();
     const legacy = GameStateSchema.parse(createInitialState());
     expect(legacy.npcStates.npc_koharu.sortingHelp).toBe("available");
@@ -228,6 +237,7 @@ describe("拾绪可执行后果", () => {
     expect(validateHeartDraft(empty, c, []).consequence).toBeNull();
     c.state.npcStates.npc_koharu.actionPlan = { ...samePlan, id: "existing", sourceEventId: "old", status: "planned" };
     const repeated = { ...draft("fear"), action_plan: samePlan, beats: [draft("fear").beats[0], { speaker: "npc", line: samePlan.quote, stage_direction: "", emotion: "平静" }],
+      choice_point: { quote: samePlan.quote, reason: "小春等待遥对约定的回应。" },
       consequence: { type: "meeting", actionId: null, beatIndex: 1, quote: samePlan.quote } };
     expect(() => validateHeartDraft(repeated, c, [])).toThrow("invalid_consequence");
   });
@@ -431,9 +441,12 @@ describe("拾绪模型契约", () => {
     const question = "要是那天我没吼她，她是不是就不会走那条路？";
     const missed = { ...draft(), pickup: null, beats: [
       { speaker: "npc", line: question, stage_direction: "低下头。", emotion: "自责" },
-      { speaker: "player", line: "那不是你的错。", stage_direction: "", emotion: "温柔" }
+      { speaker: "player", line: "那不是你的错。", stage_direction: "", emotion: "温柔" },
+      { speaker: "npc", line: "……今天先说到这儿吧。", stage_direction: "", emotion: "克制" }
     ] };
-    const generated = hasPoint ? { ...missed, beats: missed.beats.slice(0, 1), choice_point: { quote: question, reason: "她在自责中寻求遥的回应，不同态度会改变交流" } } : missed;
+    const generated = hasPoint
+      ? { ...missed, beats: missed.beats.slice(0, 1), can_continue: true, choice_point: { quote: question, reason: "她在自责中寻求遥的回应，不同态度会改变交流" } }
+      : { ...missed, can_continue: false, choice_point: null, closing_reason: "小春今天先收住这段谈话。" };
     const replies = [generated, { approved: false, reason: "decision_point", issue: "审校越权建议改变选牌位置" }];
     const prompts: string[] = [];
     const p = new CaseDialogueProvider({ apiKey: "test", fetchImpl: async (_url, init) => {
@@ -482,7 +495,7 @@ describe("拾绪模型契约", () => {
     const playerReplies = { ...draft(), pickup: null, beats: [
       { speaker: "player", line: "那我换个你接得住的说法。", stage_direction: "", emotion: "轻松" },
       { speaker: "npc", line: "你先说说看。", stage_direction: "", emotion: "好奇" }
-    ] };
+    ], choice_point: { quote: "你先说说看。", reason: "小春等待遥继续说明。" } };
     expect(() => validateHeartDraft(playerReplies, c, [])).not.toThrow();
     c.state.eventLog.at(-1)!.actorId = "player";
     expect(() => validateHeartDraft({ ...draft(), pickup: null }, c, [])).not.toThrow();
@@ -504,7 +517,7 @@ describe("拾绪模型契约", () => {
     const corrected = { ...draft(), pickup: null, beats: [
       { speaker: "player", line: "那我先把话说慢一点。", stage_direction: "", emotion: "耐心" },
       { speaker: "npc", line: "好，我听着。", stage_direction: "", emotion: "平静" }
-    ] };
+    ], choice_point: { quote: "好，我听着。", reason: "小春等待遥继续说明。" } };
     const requests: string[] = [];
     const p = new CaseDialogueProvider({ apiKey: "test", maxAttempts: 2, fetchImpl: async (_url, init) => {
       requests.push(String(init?.body));
@@ -520,10 +533,10 @@ describe("拾绪模型契约", () => {
   it("configured AI also decides the opening and whether it needs a choice", async () => {
     let calls = 0;
     const p = new CaseDialogueProvider({ apiKey: "test", fetchImpl: async () => response(++calls === 1 ? draft() : { approved: true, reason: "none", issue: "" }) });
-    const d = await p.generateHearts(context()); expect(calls).toBe(2); expect(d.debug.provider).toBe("deepseek"); expect(d.heart?.choicePoint).toBeNull();
+    const d = await p.generateHearts(context()); expect(calls).toBe(2); expect(d.debug.provider).toBe("deepseek"); expect(d.heart?.choicePoint).not.toBeNull();
   });
   it("semantic authority accepts an implicit sympathy pickup, while the prompt keeps pure self-blame as a boundary", () => {
-    const d = draft(); d.beats[0].line = "可那天，我冲她吼了那样的话。";
+    const d = draft(); d.beats[0].line = "可那天，我冲她吼了那样的话。"; d.choice_point!.quote = d.beats[0].line;
     d.pickup = { beat_index: 0, kind: "sympathy", quote: d.beats[0].line };
     // Classification is generator authority: provenance, NPC ownership and quota are all valid here.
     expect(validateHeartDraft(d, context(), []).pickup).toEqual(d.pickup);
@@ -537,7 +550,8 @@ describe("拾绪模型契约", () => {
   });
   it("questions and implicit fear are no longer rejected by word or punctuation matching", () => {
     for (const line of ["我陪你待一会儿，好吗？", "是不是还没整理好?", "为什么不坐下来慢慢聊？", "怎么回事，你的手这么凉？", "先别走。让我缓一缓。", "你看起来很害怕。"]) {
-      const d = draft("fear"); d.beats[0].line = line;
+      const d = draft("fear"); d.beats[1].line = line; d.choice_point!.quote = line;
+      d.consequence = null; d.pickup = null; d.progress = { type: "request", summary: "小春要求遥回应眼前的担忧" };
       expect(() => validateHeartDraft(d, context("fear"), [])).not.toThrow();
     }
   });
@@ -553,20 +567,57 @@ describe("拾绪模型契约", () => {
   it("player and NPC may alternate after a card, during opening, and during continuation", () => {
     const d = draft("fear"); d.beats.push({ speaker: "player", line: "好，我答应你，陪你一起整理。", stage_direction: "坐在她身边。", emotion: "关爱" });
     d.beats.push({ speaker: "npc", line: "那就先陪我坐坐吧。", stage_direction: "让开一点位置。", emotion: "柔和" });
+    d.choice_point = { quote: d.beats.at(-1)!.line, reason: "小春等待遥回应眼前的陪伴。" };
     expect(validateHeartDraft(d, context("fear"), []).beats).toHaveLength(4);
     expect(validateHeartDraft(d, context("listen"), []).beats).toHaveLength(4);
     const opening = { ...d, beats: d.beats.slice(1), pickup: null, consequence: null,
       progress: { type: "request" as const, summary: "小春要求遥回应眼前的担忧" } };
+    opening.choice_point = { quote: opening.beats.at(-1)!.line, reason: "小春等待遥回应眼前的陪伴。" };
     expect(() => validateHeartDraft(opening, context("opening"), [])).not.toThrow();
   });
   it("a choice must stop on its cited NPC line; ordinary questions need not trigger", () => {
-    const d = draft(); d.choice_point = { quote: d.beats[0].line, reason: "小春希望知道遥如何看待自己" };
+    const d = draft(); d.choice_point = { quote: d.beats.at(-1)!.line, reason: "小春希望知道遥如何看待自己" };
     expect(() => validateHeartDraft(d, context(), [])).not.toThrow();
     expect(() => validateHeartDraft({ ...d, can_continue: false }, context(), [])).toThrow("decision_point");
     expect(() => validateHeartDraft({ ...d, choice_point: { quote: "不存在", reason: "测试" } }, context(), [])).toThrow("decision_point");
     const answered = { ...d, beats: [...d.beats, { speaker: "player", line: "不会的。", stage_direction: "", emotion: "温柔" }] };
     expect(() => validateHeartDraft(answered, context(), [])).toThrow("decision_point");
-    expect(() => validateHeartDraft({ ...answered, choice_point: null }, context(), [])).not.toThrow();
+    expect(() => validateHeartDraft({ ...answered, choice_point: null }, context(), [])).toThrow("decision_point");
+  });
+  it("only accepts a real choice point or an NPC-led closing, with at most twelve beats", () => {
+    const open = draft();
+    expect(() => validateHeartDraft({ ...open, choice_point: null }, context(), [])).toThrow("decision_point");
+
+    const closed = {
+      ...open,
+      pickup: null,
+      can_continue: false,
+      choice_point: null,
+      closing_reason: "小春需要独处，今天先把话收住。",
+      progress: { type: "transition" as const, summary: "小春收起当前话题并结束会面" }
+    };
+    expect(validateHeartDraft(closed, context(), []).can_continue).toBe(false);
+
+    const tooLong = {
+      ...open,
+      beats: Array.from({ length: 13 }, (_, index) => ({
+        speaker: index % 2 ? "npc" : "player",
+        line: `第${index + 1}句继续说下去。`,
+        stage_direction: "",
+        emotion: "平静"
+      }))
+    };
+    expect(() => validateHeartDraft(tooLong, context(), [])).toThrow();
+  });
+  it("rejects a generated continuation that has no choice point", () => {
+    expect(() => validateHeartDraft({ ...draft(), can_continue: true, choice_point: null }, context(), [])).toThrow("decision_point");
+  });
+  it("rejects a disclosure anchored to a player beat", () => {
+    const d = draft("fear");
+    d.used_fact_ids = ["F02"];
+    d.disclosed_fact_ids = ["F02"];
+    d.disclosures = [{ fact_id: "F02", beat_index: 0 }];
+    expect(() => validateHeartDraft(d, context("fear"), ["F02"])).toThrow("unknown_fact");
   });
   it("the AI prompt and reviewer explicitly allow questions, promises and free back-and-forth", async () => {
     const prompts: string[] = [];
@@ -582,14 +633,50 @@ describe("拾绪模型契约", () => {
 });
 
 describe("AI-selected decision-point service", () => {
-  it("doesn't allow spending between choice points and preserves the point on reload", async () => {
+  it("plays all twelve generated beats without regenerating on nextBeat", async () => {
+    class TwelveBeatProvider extends CaseDialogueProvider {
+      calls = 0;
+      async generateHearts(c: HeartContext) {
+        this.calls++;
+        const beats = Array.from({ length: 12 }, (_, index) => ({
+          speakerId: index === 11 || index % 2 === 0 ? c.npcId : "player",
+          line: `第${index + 1}拍，我们把眼前的话继续说清楚。`,
+          emotion: "平静"
+        }));
+        return DialogueResultSchema.parse({
+          speakerId: beats[0].speakerId,
+          line: beats[0].line,
+          emotion: beats[0].emotion,
+          continuations: beats.slice(1),
+          options: [],
+          heart: { canContinue: false, choicePoint: null, actionPlan: null, consequence: null, pickups: [] },
+          debug: { provider: "mock", decision: "测试十二拍自然收尾", usedFacts: [], disclosedFacts: [], disclosures: [] }
+        });
+      }
+    }
+    const provider = new TwelveBeatProvider({ apiKey: "" }), { game } = setup(provider);
+    await game.startHeartEncounter(game.getState().revision);
+    expect(provider.calls).toBe(1);
+    expect(game.getState().currentDialogue?.continuations).toHaveLength(11);
+    for (let beatIndex = 1; beatIndex < 12; beatIndex++) {
+      const revision = game.getState().revision;
+      await game.nextDialogueBeat(revision);
+      expect(provider.calls).toBe(1);
+      expect(game.getState().dialogueBeatIndex).toBe(beatIndex);
+    }
+    expect(game.getState().eventLog.filter(e => e.type === "dialogue_generated")).toHaveLength(12);
+  });
+
+  it("natural continuation reaches the next choice point and preserves it on reload", async () => {
     const { game, store, provider } = setup(); await game.startHeartEncounter(game.getState().revision); await showSpeech(game);
     expect(game.getState().currentDialogue?.heart?.choicePoint).not.toBeNull();
     await game.useHeart(null, game.getState().revision); await drain(game);
-    const s = game.getState(); expect(s.currentDialogue?.heart?.choicePoint).toBeNull();
-    await expect(game.useHeart(s.heartCards[0].id, s.revision)).rejects.toThrow("还没到需要选择");
+    const s = game.getState();
+    expect(s.currentDialogue?.heart?.canContinue).toBe(true);
+    expect(s.currentDialogue?.heart?.choicePoint).not.toBeNull();
     expect(new GameService(store, provider).getState()).toEqual(s);
-    await game.useHeart(null, s.revision); expect(game.getState().heartCards).toEqual(s.heartCards);
+    await game.useHeart(s.heartCards[0].id, s.revision);
+    expect(game.getState().heartCards).toHaveLength(s.heartCards.length - 1);
   });
   it("a generated decision point becomes usable only after its last NPC beat", async () => {
     class Conversation extends CaseDialogueProvider {

@@ -19,7 +19,7 @@ export function HeartObserver({ revision, refreshKey = 0, initiallyOpen = false 
   return <details className="heart-observer" open={open} onToggle={e => setOpen(e.currentTarget.open)}>
     <summary>开发观察 · 推荐为什么出现，事情有没有发生</summary>
     {open && <div>
-      <p>对白生成 → 心绪导演推荐 → 玩家预览并确认 → NPC回应逐句播放 → 有合法后果时由程序执行</p>
+      <p>本段对白生成 → 阅读期间准备末尾各个回应 → 抵达选择节点后展示可用选项 → 玩家确认 → NPC回应逐句播放 → 有合法后果时执行</p>
       <p>导演不读秘密、不代选、不保证收益。下方只显示输入摘要和已发生事件；未播放的 NPC 回应不会提前展示。</p>
       <button type="button" onClick={() => setRefresh(n => n + 1)}>刷新观察记录</button>
       {error && <p role="alert">观察记录暂时无法读取，不影响正常游戏。</p>}

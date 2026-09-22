@@ -3,18 +3,20 @@ import {
   HeartDirectorResultSchema, HeartObservationSchema,
   narrationSentences, separateDialogueText, dialoguePlaybackFinished,
   type GameActionResponse, type GameState, type GameEvent, type DialogueOption, type InteractionMode, type RuleSlotId,
-  type DialogueResult, type HeartPreview, type HeartDirectorResult, type HeartObservation
+  type DialogueResult, type HeartPreview, type HeartOptions, type HeartDirectorResult, type HeartObservation
 } from "../../packages/shared/src/index.ts";
 import { availableActions, characters, evidence, facts, initialLocations, locationAliases } from "./caseData.ts";
 import { CaseDialogueProvider, DialogueGenerationError, fallbackDialogue, type CaseProvider, type PlanIntent } from "./caseProvider.ts";
 import { encounterPacing } from "./dialoguePacing.ts";
-import type { GameStore } from "./persistence.ts";
+import { MemoryGameStore, type GameStore } from "./persistence.ts";
 import type { HeartContext } from "./heartDialogue.ts";
 import { randomUUID } from "node:crypto";
 import { validMeetingPlan, gameTimeLabel } from "./actionPlans.ts";
 import { heartCapabilities, validHeartConsequence, validConsequenceBeats } from "./heartConsequences.ts";
 import { buildHeartDirectorInput, offlineHeartRecommendations, unavailableHeartDirector, validateHeartRecommendations } from "./heartDirector.ts";
 import { ARCHIVE_AGENT_VERSION, mergeArchivePatch } from "./archiveAgent.ts";
+
+import { ruleContext, validRuleReactions } from "./ruleReactions.ts";
 
 export class GameRuleError extends Error { constructor(message: string) { super(message); this.name = "GameRuleError"; } }
 export function createInitialState(): GameState {
@@ -33,14 +35,23 @@ export function createInitialState(): GameState {
     storyFlags: [], ruleChangedThisNight: false, claimedRewardIds: [], eventLog: [], ending: null
   });
 }
+const LISTEN_PREVIEW_KEY = "__listen__";
+type HeartOptionBatch = {
+  revision: number;
+  snapshot: GameState;
+  observation: HeartObservation;
+  entries: Map<string, "pending" | "ready" | "failed">;
+};
 export class GameService {
   private state: GameState;
   private heartBusy = false;
   // Unplayed candidates never enter the save, memories or public game projection.
   private heartPreviews = new Map<string, { preview: HeartPreview; result: DialogueResult; nodeId: string }>();
+  private heartOptionBatch: HeartOptionBatch | null = null;
+  private heartPreviewJobs = new Map<string, Promise<HeartPreview>>();
   private heartDirectors = new Map<string, Promise<HeartDirectorResult>>();
   private heartObservations = new Map<string, HeartObservation>();
-  constructor(private store: GameStore, private provider: CaseProvider = new CaseDialogueProvider(), private options: { heartTestPack?: boolean } = {}) {
+  constructor(private store: GameStore, private provider: CaseProvider = new CaseDialogueProvider(), private options: { heartTestPack?: boolean; preloadHeartOptions?: boolean } = {}) {
     const saved = store.load();
     this.state = saved ? GameStateSchema.parse(saved) : createInitialState();
     // Additive migration: preserve old progress while reconstructing only facts
@@ -61,6 +72,7 @@ export class GameService {
       if (saved) this.state.revision++;
       this.store.save(GameStateSchema.parse(this.state));
     }
+    if (this.options.preloadHeartOptions) this.preloadHeartOptions();
   }
   // HTTP only gets this projection. Plans and other people's private knowledge never leave the server.
   getState(): GameState {
@@ -82,7 +94,7 @@ export class GameService {
           owner !== s.currentLocationId && !owner.startsWith("rule:")) s.itemOwners[id] = "unknown";
     }
     if (s.currentDialogue) s.currentDialogue.debug = {
-      provider: s.currentDialogue.debug.provider, decision: "角色对白", usedFacts: [], disclosedFacts: [],
+      provider: s.currentDialogue.debug.provider, decision: "角色对白", usedFacts: [], disclosedFacts: [], disclosures: [],
       promptVersion: s.currentDialogue.debug.promptVersion
     };
     if (s.incident && s.phase !== "incident" && (s.incident.stage !== "resolved" || !s.eventLog.some(e => e.type === "incident" && e.details.text === s.incident?.resolvedText))) s.incident = null;
@@ -103,12 +115,24 @@ export class GameService {
     this.state.claimedRewardIds.push(rewardId);
     return true;
   }
-  private finish(notice: string | null = null, acquiredItemId: string | null = null): GameActionResponse {
-    this.heartPreviews.clear();
+  private finish(notice: string | null = null, acquiredItemId: string | null = null, playbackOnly = false): GameActionResponse {
+    if (!playbackOnly) this.clearHeartOptions();
     this.state.revision++;
     this.state = GameStateSchema.parse(this.state);
     this.store.save(this.state);
+    // Reading a fixed beat changes the public revision, not the prepared branch.
+    // Every other gameplay action invalidates that branch before starting another.
+    if (this.heartOptionBatch) {
+      this.heartOptionBatch.revision = this.state.revision;
+      for (const cached of this.heartPreviews.values()) cached.preview.revision = this.state.revision;
+      if (dialoguePlaybackFinished(this.state) && !this.matchesPreparedChoice(this.heartOptionBatch)) this.clearHeartOptions();
+    }
+    if (this.options.preloadHeartOptions) this.preloadHeartOptions();
     return GameActionResponseSchema.parse({ state: this.getState(), notice, acquiredItemId });
+  }
+  private clearHeartOptions() {
+    this.heartPreviews.clear();
+    this.heartOptionBatch = null;
   }
   private saveAuxiliary(notice: string | null = null): GameActionResponse {
     // Read-model helpers such as the archive must not consume a gameplay
@@ -124,7 +148,7 @@ export class GameService {
       minute: this.state.currentMinute, period: this.state.period, type, actorId, targetId, itemId, locationId, details: { text }, audience };
     this.state.eventLog.push(e); return e;
   }
-  private memory(npcId: string, text: string, event: GameEvent, kind: "observation" | "dialogue" | "gift" | "player_choice" = "observation") {
+  private memory(npcId: string, text: string, event: GameEvent, kind: "observation" | "dialogue" | "gift" | "player_choice" | "rule_callback" = "observation") {
     const n = this.state.npcStates[npcId];
     n.memories.push({ id: "memory_" + event.id + "_" + npcId, npcId, kind, summary: text, interpretation: "实际参与的见闻，不等于事实已被证实。",
       sourceEventId: event.id, createdDay: this.state.day, confidence: "certain", importance: kind === "dialogue" ? 5 : 8, tags: [] });
@@ -370,7 +394,11 @@ export class GameService {
     const input = buildHeartDirectorInput(s, heartCapabilities(authority, s.activeNpcId!));
     let observation = this.heartObservations.get(input.nodeId);
     if (!observation) {
-      observation = { nodeId: input.nodeId, npcName: input.npc.name, input, director: null, attempts: [], selected: null, actualEvents: [] };
+      // A projected observation stays private until the real playback reaches it.
+      observation = this.heartOptionBatch?.observation.nodeId === input.nodeId && this.matchesPreparedChoice(this.heartOptionBatch)
+        ? this.heartOptionBatch.observation
+        : { nodeId: input.nodeId, npcName: input.npc.name, input, director: null, attempts: [], selected: null, actualEvents: [] };
+      observation.input = input;
       this.heartObservations.set(input.nodeId, observation);
       // This is a session observation buffer, not another world-state authority.
       if (this.heartObservations.size > 30) {
@@ -472,7 +500,7 @@ export class GameService {
     } catch (error) {
       this.state = before;
       throw new GameRuleError(error instanceof DialogueGenerationError
-        ? "这次心绪对白没有生成成功。卡牌、时间和进度已保留，可以重试。"
+        ? `${error.message}卡牌、时间和进度已保留，可以重试。`
         : error instanceof GameRuleError ? error.message : "心绪对白暂时不可用。卡牌与进度已保留，请重试。");
     } finally { this.heartBusy = false; }
   }
@@ -487,42 +515,129 @@ export class GameService {
       await this.generateHeartDialogue("opening");
     });
   }
+  private matchesPreparedChoice(batch: HeartOptionBatch) {
+    // Auxiliary archive updates do not change dialogue eligibility. Everything
+    // else must match the projection before any candidate becomes selectable.
+    const signature = (state: GameState) => JSON.stringify({ ...state, revision: 0, investigationArchive: null });
+    return signature(this.state) === signature(batch.snapshot);
+  }
+  private projectHeartChoiceState(): GameState {
+    if (dialoguePlaybackFinished(this.state)) return structuredClone(this.state);
+    const store = new MemoryGameStore();
+    store.save(this.state);
+    // A separate authority reuses the actual playback rules without touching
+    // the player's world, store, observations or provider. It never preloads.
+    const projection = new GameService(store, this.provider);
+    while (!dialoguePlaybackFinished(projection.state)) projection.advanceDialoguePlayback();
+    projection.applyDialogueAction();
+    // Normalize new events/cards/plans just as finish() does on real playback.
+    return GameStateSchema.parse(projection.state);
+  }
+  private startHeartOptionBatch(snapshot: GameState, observation?: HeartObservation) {
+    const input = buildHeartDirectorInput(snapshot, heartCapabilities(snapshot, snapshot.activeNpcId!));
+    const uniqueCards = [...new Map(snapshot.heartCards.map(card => [card.kind, card])).values()];
+    const batch: HeartOptionBatch = {
+      revision: this.state.revision, snapshot,
+      observation: observation ?? { nodeId: input.nodeId, npcName: input.npc.name, input, director: null, attempts: [], selected: null, actualEvents: [] },
+      entries: new Map([LISTEN_PREVIEW_KEY, ...uniqueCards.map(card => card.id)].map(key => [key, "pending" as const]))
+    };
+    this.heartOptionBatch = batch;
+    this.runHeartOptionBatch(batch);
+    return batch;
+  }
+  private preloadHeartOptions() {
+    if (this.heartOptionBatch || this.state.phase !== "encounter" || !this.state.heartSession ||
+      !this.state.currentDialogue?.heart?.canContinue || !this.state.currentDialogue.heart.choicePoint) return;
+    try {
+      this.startHeartOptionBatch(this.projectHeartChoiceState(), dialoguePlaybackFinished(this.state) ? this.heartChoiceObservation() : undefined);
+    } catch {
+      // A projection failure must never roll back a committed beat. At the real
+      // choice, preparation can still use the actual state via the normal API.
+      this.clearHeartOptions();
+    }
+  }
+  prepareHeartOptions(revision: number, retryFailed = false): HeartOptions {
+    this.assertHeartRevision(revision);
+    // The endpoint remains closed while the player is reading; preloading is a
+    // server lifecycle task, not permission to reveal future options or facts.
+    const observation = this.heartChoiceObservation();
+    if (this.heartOptionBatch && !this.matchesPreparedChoice(this.heartOptionBatch)) this.clearHeartOptions();
+    const batch = this.heartOptionBatch ?? this.startHeartOptionBatch(structuredClone(this.state), observation);
+    if (retryFailed && ![...batch.entries.values()].includes("pending")) {
+      for (const [key, status] of batch.entries) if (status === "failed") batch.entries.set(key, "pending");
+      this.runHeartOptionBatch(batch);
+    }
+    const pending = [...batch.entries.values()].filter(status => status === "pending").length;
+    const options: HeartOptions["options"] = [];
+    for (const [key, status] of batch.entries) {
+      const cached = this.heartPreviews.get(key);
+      if (status === "ready" && cached?.preview.revision === revision) options.push({ ...cached.preview, cardId: key === LISTEN_PREVIEW_KEY ? null : key });
+    }
+    return structuredClone({ revision, pending, complete: pending === 0, options });
+  }
+  private runHeartOptionBatch(batch: HeartOptionBatch) {
+    const queue = [...batch.entries].filter(([, status]) => status === "pending").map(([key]) => key);
+    const current = () => this.heartOptionBatch === batch;
+    const worker = async () => {
+      while (queue.length && current()) {
+        const key = queue.shift()!;
+        try {
+          await this.generateHeartPreview(key === LISTEN_PREVIEW_KEY ? null : key, batch.snapshot, batch.observation, batch);
+          if (current()) batch.entries.set(key, "ready");
+        } catch { if (current()) batch.entries.set(key, "failed"); }
+      }
+    };
+    // Background work touches only candidate caches, never the world/store.
+    void worker(); void worker();
+  }
   async previewHeart(cardId: string, revision: number): Promise<HeartPreview> {
     this.assertHeartRevision(revision);
-    this.assert(this.state.phase === "encounter" && this.state.heartSession &&
-      this.state.currentDialogue?.heart?.canContinue && this.state.currentDialogue.heart.choicePoint &&
-      dialoguePlaybackFinished(this.state), "请在看完对白后的心绪选择处预览。");
-    const card = this.state.heartCards.find(c => c.id === cardId);
-    this.assert(card, "这张心绪牌已经用过或不在手中。");
-    const cached = this.heartPreviews.get(cardId);
-    if (cached?.preview.revision === revision) return structuredClone(cached.preview);
+    this.assert(this.state.phase === "encounter" && this.state.heartSession && this.state.currentDialogue?.heart?.choicePoint && dialoguePlaybackFinished(this.state), "请在看完对白后的心绪选择处预览。");
     const observation = this.heartChoiceObservation();
-    const attempt: HeartObservation["attempts"][number] = { cardId, kind: card.kind, line: null, status: "candidate", detail: "正在生成候选，尚未确认，也未改变剧情。" };
-    observation.attempts = [...observation.attempts.filter(a => a.cardId !== cardId), attempt];
     this.heartBusy = true;
     try {
-      const candidateState = structuredClone(this.state);
-      const sequence = candidateState.eventLog.length;
-      // Count the prospective choice exactly as confirmation will, including the final-choice budget.
-      candidateState.eventLog.push({ id: "event_" + sequence, sequence, day: candidateState.day,
-        minute: candidateState.currentMinute, period: candidateState.period, type: "dialogue_choice",
-        actorId: "player", targetId: candidateState.activeNpcId, itemId: null, locationId: candidateState.currentLocationId,
-        audience: ["player", candidateState.activeNpcId!], details: { text: "以「" + heartCatalog[card.kind].name + "」接话",
-          intent: heartCatalog[card.kind].expression, missed: "[]" } });
-      const result = await this.prepareHeartDialogue(card.kind, candidateState);
-      this.assert(this.state.revision === revision, "进度已变化，请重新选择心绪。");
-      const first = separateDialogueText(result.line, result.stageDirection, "朝雾遥");
-      // Normalize the same first beat for both preview and committed playback.
-      result.line = first.line; result.stageDirection = first.stageDirection;
-      const preview: HeartPreview = { id: randomUUID(), cardId, revision, line: first.line,
-        stageDirection: first.stageDirection, provider: result.debug.provider };
-      this.heartPreviews.set(cardId, { preview, result, nodeId: observation.nodeId });
-      attempt.line = preview.line; attempt.status = "validated"; attempt.detail = "候选通过当前服务启用的校验，尚未出牌。真实AI默认含内容审校；离线演示只做结构与动作校验。";
-      return structuredClone(preview);
-    } catch (error) {
-      attempt.status = "rejected"; attempt.detail = "候选生成或校验失败，未写入剧情，卡牌与进度保留。";
-      throw new GameRuleError(error instanceof GameRuleError ? error.message : "这句回复暂时没想好，请重试。没有消耗心绪或推进剧情。");
-    } finally { this.heartBusy = false; }
+      const batch = this.heartOptionBatch;
+      return await this.generateHeartPreview(cardId, batch?.snapshot ?? structuredClone(this.state), observation, batch ?? undefined);
+    }
+    finally { this.heartBusy = false; }
+  }
+  private generateHeartPreview(cardId: string | null, snapshot: GameState, observation: HeartObservation, batch?: HeartOptionBatch): Promise<HeartPreview> {
+    const revision = snapshot.revision, key = cardId ?? LISTEN_PREVIEW_KEY;
+    const cached = this.heartPreviews.get(key);
+    if (cached?.preview.revision === this.state.revision && cached.nodeId === observation.nodeId) return Promise.resolve(structuredClone(cached.preview));
+    const jobKey = `${observation.nodeId}:${revision}:${key}`;
+    const existing = this.heartPreviewJobs.get(jobKey);
+    if (existing) return existing.then(preview => structuredClone(preview));
+    const card = cardId === null ? null : snapshot.heartCards.find(c => c.id === cardId);
+    this.assert(cardId === null || card, "这张心绪牌已经用过或不在手中。");
+    const attempt: HeartObservation["attempts"][number] | null = card ? { cardId: card.id, kind: card.kind, line: null,
+      status: "candidate", detail: "正在提前准备回应；尚未选牌，也未改变剧情。" } : null;
+    if (attempt) observation.attempts = [...observation.attempts.filter(a => a.cardId !== cardId), attempt];
+    const job = (async () => {
+      try {
+        const candidateState = structuredClone(snapshot), sequence = candidateState.eventLog.length;
+        candidateState.eventLog.push({ id: "event_" + sequence, sequence, day: candidateState.day,
+          minute: candidateState.currentMinute, period: candidateState.period, type: "dialogue_choice",
+          actorId: "player", targetId: candidateState.activeNpcId, itemId: null, locationId: candidateState.currentLocationId,
+          audience: ["player", candidateState.activeNpcId!], details: { text: card ? "以「" + heartCatalog[card.kind].name + "」接话" : "顺着聊下去",
+            intent: card ? heartCatalog[card.kind].expression : "交给遥自然回应，双方顺着当前情境交流", missed: "[]" } });
+        const result = await this.prepareHeartDialogue(card ? card.kind : "listen", candidateState);
+        this.assert((batch ? this.heartOptionBatch === batch : this.state.revision === revision && this.heartObservations.get(observation.nodeId) === observation) &&
+          this.state.heartSession?.id === snapshot.heartSession?.id && this.state.activeNpcId === snapshot.activeNpcId, "进度已变化，旧回应已丢弃。");
+        const first = separateDialogueText(result.line, result.stageDirection, "朝雾遥");
+        result.line = first.line; result.stageDirection = first.stageDirection;
+        const preview: HeartPreview = { id: randomUUID(), cardId: key, revision: this.state.revision, line: first.line,
+          stageDirection: first.stageDirection, provider: result.debug.provider };
+        this.heartPreviews.set(key, { preview, result, nodeId: observation.nodeId });
+        if (attempt) { attempt.line = preview.line; attempt.status = "validated"; attempt.detail = "回应已准备好；确认后直接播放，实际后果仍随对应台词执行。"; }
+        return structuredClone(preview);
+      } catch (error) {
+        if (attempt) { attempt.status = "rejected"; attempt.detail = error instanceof Error ? error.message : "候选暂不可用。"; }
+        throw new GameRuleError((error instanceof GameRuleError || error instanceof DialogueGenerationError ? error.message : "这条回应暂不可用。") + "没有消耗心绪或推进剧情。");
+      } finally { this.heartPreviewJobs.delete(jobKey); }
+    })();
+    this.heartPreviewJobs.set(jobKey, job);
+    return job;
   }
   async useHeart(cardId: string | null, revision: number, previewId?: string) {
     this.assertHeartRevision(revision);
@@ -532,8 +647,8 @@ export class GameService {
     this.assert(cardId === null || d.heart.choicePoint, "当前正在自然交谈，还没到需要选择心绪的时刻。");
     const card = cardId === null ? null : this.state.heartCards.find(c => c.id === cardId);
     this.assert(cardId === null || card, "这张心绪牌已经用过或不在手中。");
-    const cached = cardId ? this.heartPreviews.get(cardId) : undefined;
-    this.assert(!previewId || (card && cached?.preview.id === previewId && cached.preview.revision === revision),
+    const cached = this.heartPreviews.get(cardId ?? LISTEN_PREVIEW_KEY);
+    this.assert(!previewId || ((cardId === null || card) && cached?.preview.id === previewId && cached.preview.revision === revision),
       "这句预览已失效，请重新选择心绪。没有消耗卡牌。");
     const observation = d.heart.choicePoint ? this.heartChoiceObservation() : null;
     const response = await this.heartTurn(async () => {
@@ -585,6 +700,7 @@ export class GameService {
     if (plan) this.assert(beats[plan.beatIndex]?.speakerId === state.activeNpcId && beats[plan.beatIndex].line.includes(plan.quote) &&
       validMeetingPlan(plan, state, state.activeNpcId!), "会面计划的地点、时间或对白来源无效。");
     this.assert(!point || result.heart.canContinue && last.speakerId === state.activeNpcId && last.line.includes(point.quote), "心绪选择没有对应的末句对白。");
+    this.assert(result.heart.canContinue === Boolean(point), "对白必须抵达下一次心绪选择，或自然结束本次会面。");
     this.assert(result.heart.canContinue || last.speakerId === state.activeNpcId, "告别应由对方完成。");
     for (const pickup of result.heart.pickups) {
       const b = beats[pickup.beatIndex];
@@ -685,8 +801,33 @@ export class GameService {
       const gathered = this.event("heart_gathered", npc, "player", "你拾得了一缕「" + heartCatalog[pickup.kind].name + "」。");
       gathered.details.cardId = cardId; gathered.details.kind = pickup.kind; gathered.details.sourceEventId = e.id;
     }
-    if (!narration) this.applyHeartConsequence(e.id);
-    if (!narration && dialoguePlaybackFinished(this.state)) this.learnPlayerFacts(this.state.currentDialogue?.debug.disclosedFacts ?? []);
+    if (!narration) {
+      this.applyHeartConsequence(e.id);
+      this.recordRuleReaction(e.id);
+      const disclosures = this.state.currentDialogue?.debug.disclosures ?? [];
+      this.learnPlayerFacts(disclosures.filter(x => x.beatIndex === this.state.dialogueBeatIndex).map(x => x.factId));
+      // Ordinary dialogue and old saves do not have per-beat anchors. Preserve
+      // their conservative behavior by committing remaining facts at the end.
+      if (dialoguePlaybackFinished(this.state)) this.learnPlayerFacts(this.state.currentDialogue?.debug.disclosedFacts ?? []);
+    }
+  }
+
+  private recordRuleReaction(sourceEventId: string) {
+    const dialogue = this.state.currentDialogue, npcId = this.state.activeNpcId;
+    if (!dialogue || !npcId) return;
+    const index = this.state.dialogueBeatIndex - Number(Boolean(this.state.lastPlayerChoice));
+    const beats = [{ speakerId: dialogue.speakerId, line: dialogue.line },
+      ...dialogue.continuations.map(beat => ({ speakerId: beat.speakerId ?? dialogue.speakerId, line: beat.line }))];
+    for (const reaction of dialogue.debug.ruleReactions ?? []) {
+      if (reaction.beatIndex !== index || !validRuleReactions([reaction], this.state, npcId, beats)) continue;
+      if (this.state.eventLog.some(e => e.type === "rule_callback" && e.actorId === npcId && e.details.sourceEventId === sourceEventId && e.details.ruleId === reaction.ruleId)) continue;
+      const name = demoBootstrap.npcs.find(n => n.id === npcId)!.name;
+      const rule = ruleContext(this.state, npcId).active.find(rule => rule.id === reaction.ruleId)!;
+      const event = this.event("rule_callback", npcId, "player", `${name}关于「${rule.rule}」表态：${reaction.quote}`, ["player", npcId]);
+      Object.assign(event.details, { ruleId: reaction.ruleId, ruleText: rule.rule, stance: reaction.stance, demand: reaction.demand,
+        quote: reaction.quote, sourceEventId });
+      this.memory(npcId, event.details.text, event, "rule_callback");
+    }
   }
 
   private applyHeartConsequence(sourceEventId: string) {
@@ -766,6 +907,14 @@ export class GameService {
     if (this.state.heartSession || revision !== undefined) this.assertHeartRevision(revision);
     this.assert(this.state.phase === "encounter" && this.state.currentDialogue, "当前没有对白。");
     this.assert(!dialoguePlaybackFinished(this.state), "已经到最后一句。");
+    this.advanceDialoguePlayback();
+    if (dialoguePlaybackFinished(this.state)) {
+      const notice = this.applyDialogueAction();
+      return this.finish(notice?.text ?? null, notice?.item ?? null, true);
+    }
+    return this.finish(null, null, true);
+  }
+  private advanceDialoguePlayback() {
     if (this.state.dialogueNarrationIndex !== null) {
       const count = narrationSentences(this.beats()[this.state.dialogueBeatIndex].stageDirection).length;
       this.state.dialogueNarrationIndex = this.state.dialogueNarrationIndex + 1 < count ? this.state.dialogueNarrationIndex + 1 : null;
@@ -773,13 +922,8 @@ export class GameService {
     } else {
       this.state.dialogueBeatIndex++; this.beginVisibleBeat();
     }
-    if (dialoguePlaybackFinished(this.state)) {
-      const notice = await this.applyDialogueAction();
-      return this.finish(notice?.text ?? null, notice?.item ?? null);
-    }
-    return this.finish();
   }
-  private async applyDialogueAction(): Promise<{ text: string; item: string | null } | null> {
+  private applyDialogueAction(): { text: string; item: string | null } | null {
     const d = this.state.currentDialogue!;
     const action = d.debug.npcActionId ?? "none";
     d.debug.npcActionId = "none"; // Consumed exactly once, before any asynchronous planning.
@@ -987,8 +1131,9 @@ export class GameService {
     this.state.activeRules[slotId] = { slotId, carrierItemId: itemId, conceptId: concept.id, displayText: concept.slotText[slotId], activatedDay: this.state.day };
     this.state.ruleChangedThisNight = true;
     const e = this.event("rule_changed", "player", null, concept.slotText[slotId], ["player", ...demoBootstrap.npcs.map(n => n.id)]);
+    Object.assign(e.details, { slotId, conceptId: concept.id, carrierItemId: itemId });
     for (const n of Object.values(this.state.npcStates)) if (n.lifeState !== "dead") this.memory(n.npcId, "全镇公共规则改为：" + concept.slotText[slotId] + "。历史事实不变。", e);
-    return this.finish("全镇规则已改变：" + concept.slotText[slotId]);
+    return this.finish("全镇规则已改变：" + concept.slotText[slotId] + "。下次会面时，留意每个人因此提出的要求与决定。");
   }
   async endDay() {
     this.assert(this.state.phase === "night", "请先等到入夜。");

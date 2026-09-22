@@ -23,7 +23,7 @@ const app = Fastify({ logger: true });
 // Opt-in isolated UI QA: deterministic, memory-only and a separate local port.
 const heartPreview = process.env.CAT_HEART_PREVIEW === "1";
 const dialogueProvider = heartPreview && process.env.CAT_MEETING_PREVIEW === "1" ? new MeetingPreviewProvider() : new CaseDialogueProvider(heartPreview ? { apiKey: "" } : {});
-const gameService = new GameService(heartPreview ? new MemoryGameStore() : new SqliteGameStore(), dialogueProvider, { heartTestPack: true });
+const gameService = new GameService(heartPreview ? new MemoryGameStore() : new SqliteGameStore(), dialogueProvider, { heartTestPack: true, preloadHeartOptions: true });
 let gameActionQueue: Promise<void> = Promise.resolve();
 
 await app.register(cors, {
@@ -107,6 +107,10 @@ app.post("/api/game/next-beat", async (request, reply) => runGameAction(() =>
   gameService.nextDialogueBeat(parseBody(z.object({ revision: z.number().int().nonnegative().optional() }), request.body).revision), reply));
 app.post("/api/game/hearts/start", async (request, reply) => runGameAction(() =>
   gameService.startHeartEncounter(parseBody(z.object({ revision: z.number().int().nonnegative() }), request.body).revision), reply));
+app.post("/api/game/hearts/options", async (request, reply) => runGameAction(() => {
+  const b = parseBody(z.object({ revision: z.number().int().nonnegative(), retryFailed: z.boolean().optional() }), request.body);
+  return gameService.prepareHeartOptions(b.revision, b.retryFailed);
+}, reply));
 app.post("/api/game/hearts/preview", async (request, reply) => runGameAction(() => {
   const b = parseBody(z.object({ cardId: z.string().min(1), revision: z.number().int().nonnegative() }), request.body);
   return gameService.previewHeart(b.cardId, b.revision);

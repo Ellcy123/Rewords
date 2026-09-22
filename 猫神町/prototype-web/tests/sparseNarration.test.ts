@@ -16,13 +16,14 @@ function response(data: unknown) {
 }
 function draft(stageDirections: string[]) {
   return { action_plan: null, beats: stageDirections.map((stage_direction, i) => ({
-    speaker: i === 0 ? "npc" : "player", line: i === 0 ? "我有点害怕，先坐一会儿吧。" : "好，我在这里。", stage_direction, emotion: "平静"
-  })), can_continue: true, choice_point: null, closing_reason: "", used_fact_ids: [], disclosed_fact_ids: [], progress: { type: "request", summary: "小春要求遥留在眼前回应" }, pickup: null };
+    speaker: i === 0 || i === stageDirections.length - 1 ? "npc" : "player", line: i === 0 ? "我有点害怕，先坐一会儿吧。" : "好，我在这里。", stage_direction, emotion: "平静"
+  })), can_continue: true, choice_point: { quote: stageDirections.length === 1 ? "我有点害怕，先坐一会儿吧。" : "好，我在这里。", reason: "小春等待遥对眼前的话作出回应。" }, closing_reason: "", used_fact_ids: [], disclosed_fact_ids: [], progress: { type: "request", summary: "小春要求遥留在眼前回应" }, pickup: null };
 }
 
 function implicitPickupDraft(stageDirections: string[], pickup: "fear" | "sympathy" | "affection" | null) {
   const value = draft(stageDirections);
   value.beats[0] = { speaker: "npc", line: "你来了，屋里就没那么空了。", stage_direction: stageDirections[0] ?? "", emotion: "轻声" };
+  value.choice_point!.quote = value.beats.at(-1)!.line;
   return { ...value, pickup: pickup ? { beat_index: 0, kind: pickup, quote: "屋里就没那么空了" } : null };
 }
 
@@ -78,6 +79,7 @@ describe("稀疏旁白契约", () => {
         async generateHearts(c: HeartContext) {
           const value = implicitPickupDraft([""], kind);
           value.beats[0].line = line;
+          value.choice_point!.quote = line;
           value.pickup!.quote = line.slice(0, 8);
           return heartResult(validateHeartDraft(value, c, []), c, "mock");
         }
@@ -106,6 +108,7 @@ describe("稀疏旁白契约", () => {
     class NullProvider extends CaseDialogueProvider {
       async generateHearts(c: HeartContext) {
         const value = draft([""]); value.beats[0].line = "我很害怕，也很喜欢你。";
+        value.choice_point!.quote = value.beats[0].line;
         return heartResult(validateHeartDraft(value, c, []), c, "mock");
       }
     }

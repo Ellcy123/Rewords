@@ -24,7 +24,7 @@ export type ArchivePatch = z.infer<typeof ArchivePatchSchema>;
 
 const ARCHIVABLE = new Set<GameEvent["type"]>([
   "dialogue_generated", "narration_generated", "evidence_read", "information_delivered", "incident", "story_beat",
-  "heart_consequence", "heart_activity", "npc_action", "action_plan_updated", "npc_moved", "rule_changed"
+  "heart_consequence", "heart_activity", "npc_action", "action_plan_updated", "npc_moved", "rule_changed", "rule_callback"
 ]);
 
 export const ARCHIVE_AGENT_SYSTEM = [

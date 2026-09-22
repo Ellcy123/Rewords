@@ -68,19 +68,23 @@ describe("information-pressure dialogue contract", () => {
     expect((await accepted.generate(caseContext())).debug.sceneGoal).toBe("reveal：小春说明两张车票原本是姐妹共同离开的安排");
   });
 
-  it("requires progress for heart drafts and rejects action progress without a consequence", () => {
+  it("defaults missing progress and repairs an action label without a consequence", () => {
     const raw = {
       action_plan: null, consequence: null,
       beats: [
         { speaker: "player", line: "我也怕把话说错。", stage_direction: "", emotion: "迟疑" },
         { speaker: "npc", line: "那就先别替我下结论。", stage_direction: "", emotion: "认真" }
       ],
-      can_continue: true, choice_point: null, closing_reason: "", used_fact_ids: [], disclosed_fact_ids: [],
+      can_continue: true, choice_point: { quote: "那就先别替我下结论。", reason: "小春等待遥回应这个边界。" }, closing_reason: "", used_fact_ids: [], disclosed_fact_ids: [],
       progress: { type: "action", summary: "小春作出一项具体现场决定" }, pickup: null
     };
     const missing = { ...raw } as Record<string, unknown>;
     delete missing.progress;
-    expect(() => HeartDraft.parse(missing)).toThrow();
-    expect(() => validateHeartDraft(raw, heartContext(), [])).toThrow("invalid_consequence");
+    expect(HeartDraft.parse(missing).progress).toEqual({ type: "transition", summary: "回应眼前交流" });
+    expect(validateHeartDraft(missing, heartContext(), []).progress.type).toBe("transition");
+
+    const repaired = validateHeartDraft(raw, heartContext(), []);
+    expect(repaired.consequence).toBeNull();
+    expect(repaired.progress.type).toBe("decision");
   });
 });

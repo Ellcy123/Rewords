@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rapper Coach - 说唱创作教练</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        rap: {
+                            dark: '#0a0a0f',
+                            panel: '#12121a',
+                            accent: '#f59e0b',
+                            accentHover: '#d97706',
+                            success: '#10b981',
+                            danger: '#ef4444',
+                            warning: '#f59e0b',
+                            text: '#e5e7eb',
+                            muted: '#9ca3af'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap');
+        body { font-family: 'Noto Sans SC', sans-serif; }
+        .beat-grid { font-family: 'Courier New', monospace; letter-spacing: 0.15em; }
+        .gradient-text {
+            background: linear-gradient(135deg, #f59e0b, #ef4444);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .score-ring {
+            background: conic-gradient(#f59e0b var(--score), #1f2937 0);
+        }
+        .mic-pulse {
+            animation: micPulse 1.5s ease-in-out infinite;
+        }
+        @keyframes micPulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+            50% { transform: scale(1.05); box-shadow: 0 0 0 12px rgba(245, 158, 11, 0); }
+        }
+        .bar-line {
+            border-left: 3px solid #f59e0b;
+            padding-left: 1rem;
+            margin: 0.5rem 0;
+        }
+        .rhyme-exact { color: #10b981; font-weight: 700; }
+        .rhyme-family { color: #f59e0b; font-weight: 600; }
+        .rhyme-slant { color: #9ca3af; }
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .voice-wave {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            height: 24px;
+        }
+        .voice-wave span {
+            width: 3px;
+            background: #f59e0b;
+            border-radius: 2px;
+            animation: voiceWave 0.5s ease-in-out infinite alternate;
+        }
+        .voice-wave span:nth-child(1) { height: 8px; animation-delay: 0s; }
+        .voice-wave span:nth-child(2) { height: 16px; animation-delay: 0.1s; }
+        .voice-wave span:nth-child(3) { height: 12px; animation-delay: 0.2s; }
+        .voice-wave span:nth-child(4) { height: 20px; animation-delay: 0.15s; }
+        .voice-wave span:nth-child(5) { height: 10px; animation-delay: 0.05s; }
+        @keyframes voiceWave {
+            from { transform: scaleY(0.5); }
+            to { transform: scaleY(1); }
+        }
+    </style>
+</head>
+<body class="bg-rap-dark text-rap-text min-h-screen">
+    <!-- Header -->
+    <header class="border-b border-gray-800 bg-rap-panel/50 backdrop-blur-sm sticky top-0 z-50">
+        <div class="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-amber-500 to-red-500 rounded-lg flex items-center justify-center text-white font-bold text-lg">
+                    RC
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold gradient-text">Rapper Coach</h1>
+                    <p class="text-xs text-rap-muted">说唱创作教练 v2.0</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-4 text-sm">
+                <a href="#" onclick="showApiSettings()" class="text-rap-muted hover:text-rap-accent transition-colors">
+                    API 设置
+                </a>
+                <a href="https://github.com/jwj911/rapper-coach" target="_blank" class="text-rap-muted hover:text-rap-accent transition-colors">
+                    GitHub
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto px-4 py-8">
+        <!-- Hero -->
+        <div class="text-center mb-10">
+            <h2 class="text-3xl md:text-4xl font-black mb-3">分析你的说唱歌词</h2>
+            <p class="text-rap-muted max-w-xl mx-auto">
+                支持语音输入 · 韵脚检测 · Flow 分析 · Punchline 挖掘
+            </p>
+        </div>
+
+        <!-- Voice Input Section -->
+        <div class="bg-rap-panel rounded-2xl border border-gray-800 p-6 mb-6">
+            <div class="flex items-center justify-between mb-4">
+                <label class="text-sm font-semibold text-rap-accent">输入歌词</label>
+                <div class="flex gap-2">
+                    <button onclick="loadExample()" class="text-xs px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors text-rap-muted">
+                        加载示例
+                    </button>
+                    <button onclick="clearInput()" class="text-xs px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors text-rap-muted">
+                        清空
+                    </button>
+                </div>
+            </div>
+            
+            <textarea 
+                id="lyricsInput" 
+                class="w-full h-48 bg-rap-dark border border-gray-800 rounded-xl p-4 text-sm leading-relaxed resize-y focus:outline-none focus:border-rap-accent focus:ring-1 focus:ring-rap-accent transition-all placeholder-gray-600"
+                placeholder="在这里粘贴你的说唱歌词，或点击下方的麦克风按钮直接口述...
+支持 Verse/Hook/Bridge 标签自动分段"
+            ></textarea>
+            
+            <!-- Voice Controls -->
+            <div class="flex items-center justify-between mt-4">
+                <div class="flex items-center gap-3">
+                    <!-- Mic Button -->
+                    <button 
+                        id="micBtn"
+                        onclick="toggleVoiceInput()" 
+                        class="flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 transition-all border border-gray-700"
+                        title="点击开始语音输入"
+                    >
+                        <svg id="micIcon" class="w-5 h-5 text-rap-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+                        </svg>
+                        <span id="micText" class="text-sm text-rap-text">语音输入</span>
+                    </button>
+                    
+                    <!-- Voice Status -->
+                    <div id="voiceStatus" class="hidden items-center gap-2">
+                        <div class="voice-wave">
+                            <span></span><span></span><span></span><span></span><span></span>
+                        </div>
+                        <span class="text-xs text-rap-accent">正在聆听...</span>
+                    </div>
+                    
+                    <span id="voiceError" class="hidden text-xs text-red-400"></span>
+                </div>
+                
+                <button 
+                    onclick="analyzeLyrics()" 
+                    id="analyzeBtn"
+                    class="px-6 py-2.5 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-semibold rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-lg shadow-amber-500/20"
+                >
+                    开始分析
+                </button>
+            </div>
+            
+            <!-- Voice Transcript Preview -->
+            <div id="transcriptPreview" class="hidden mt-3 p-3 rounded-lg bg-rap-dark/50 border border-gray-800/50">
+                <div class="text-xs text-rap-muted mb-1">语音转录:</div>
+                <div id="transcriptText" class="text-sm text-rap-text"></div>
+            </div>
+        </div>
+
+        <!-- Loading -->
+        <div id="loading" class="hidden text-center py-12">
+            <div class="inline-block w-12 h-12 border-4 border-rap-accent border-t-transparent rounded-full animate-spin mb-4"></div>
+            <p class="text-rap-muted">正在分析韵脚、Flow 和 Punchline...</p>
+        </div>
+
+        <!-- Results -->
+        <div id="results" class="hidden space-y-6">
+            <!-- Overall Score -->
+            <div class="bg-rap-panel rounded-2xl border border-gray-800 p-6">
+                <div class="flex items-center gap-6 flex-wrap">
+                    <div class="relative w-24 h-24">
+                        <div id="scoreRing" class="w-full h-full rounded-full score-ring flex items-center justify-center" style="--score: 0%;">
+                            <div class="w-20 h-20 rounded-full bg-rap-panel flex items-center justify-center">
+                                <span id="overallScore" class="text-2xl font-black text-rap-accent">0</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="text-lg font-bold mb-1">综合评分</h3>
+                        <p id="scoreDesc" class="text-sm text-rap-muted">等待分析...</p>
+                        <div class="flex gap-4 mt-3">
+                            <div class="text-center">
+                                <div id="rhymeScore" class="text-lg font-bold text-emerald-400">-</div>
+                                <div class="text-xs text-rap-muted">韵脚</div>
+                            </div>
+                            <div class="text-center">
+                                <div id="flowScore" class="text-lg font-bold text-amber-400">-</div>
+                                <div class="text-xs text-rap-muted">Flow</div>
+                            </div>
+                            <div class="text-center">
+                                <div id="punchlineCount" class="text-lg font-bold text-red-400">-</div>
+                                <div class="text-xs text-rap-muted">Punchline</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sections -->
+            <div id="sectionsContainer" class="space-y-6"></div>
+
+            <!-- Suggestions -->
+            <div id="suggestionsBox" class="bg-rap-panel rounded-2xl border border-gray-800 p-6 hidden">
+                <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                    <span class="text-rap-accent">💡</span> 改进建议
+                </h3>
+                <ul id="suggestionsList" class="space-y-2"></ul>
+            </div>
+            
+            <!-- Voice Feedback -->
+            <div id="voiceFeedback" class="hidden bg-rap-panel rounded-2xl border border-gray-800 p-6">
+                <h3 class="text-lg font-bold mb-3 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-rap-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
+                    </svg>
+                    语音反馈
+                </h3>
+                <p class="text-sm text-rap-muted mb-3">点击播放按钮，让 Rapper Coach 用语音给你反馈</p>
+                <button onclick="speakFeedback()" id="speakBtn" class="flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 transition-colors text-rap-accent border border-gray-700">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <span>播放反馈</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- API Settings Modal -->
+        <div id="apiModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div class="bg-rap-panel rounded-2xl border border-gray-800 p-6 max-w-md w-full">
+                <h3 class="text-lg font-bold mb-4">API 设置</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs text-rap-muted mb-1">后端地址</label>
+                        <input 
+                            type="text" 
+                            id="apiEndpoint" 
+                            value="http://localhost:8765" 
+                            class="w-full bg-rap-dark border border-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-rap-accent"
+                        >
+                    </div>
+                    <div class="text-xs text-rap-muted">
+                        默认使用本地服务。如需修改，请确保后端已启动。
+                    </div>
+                </div>
+                <div class="flex justify-end gap-2 mt-6">
+                    <button onclick="hideApiSettings()" class="px-4 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-sm transition-colors">
+                        取消
+                    </button>
+                    <button onclick="saveApiSettings()" class="px-4 py-2 rounded-lg bg-rap-accent hover:bg-rap-accentHover text-black font-semibold text-sm transition-colors">
+                        保存
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-gray-800 mt-12 py-6 text-center text-xs text-rap-muted">
+        <p>Rapper Coach v2.0 · 开源说唱创作分析工具</p>
+    </footer>
+
+    <script>
+        // Config
+        let API_BASE = localStorage.getItem('rapperCoachApi');
+        if (!API_BASE) {
+            API_BASE = window.location.origin;
+        }
+
+        // Speech Recognition
+        let recognition = null;
+        let isRecording = false;
+        let finalTranscript = '';
+        let currentFeedbackText = '';
+
+        // Initialize speech recognition
+        function initSpeechRecognition() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                document.getElementById('voiceError').textContent = '当前浏览器不支持语音识别，请使用 Chrome/Edge';
+                document.getElementById('voiceError').classList.remove('hidden');
+                document.getElementById('micBtn').classList.add('opacity-50', 'cursor-not-allowed');
+                return null;
+            }
+            
+            const rec = new SpeechRecognition();
+            rec.continuous = true;
+            rec.interimResults = true;
+            rec.lang = 'zh-CN';
+            
+            rec.onstart = () => {
+                isRecording = true;
+                finalTranscript = '';
+                updateMicUI(true);
+                document.getElementById('voiceError').classList.add('hidden');
+            };
+            
+            rec.onresult = (event) => {
+                let interim = '';
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const transcript = event.results[i][0].transcript;
+                    if (event.results[i].isFinal) {
+                        finalTranscript += transcript;
+                    } else {
+                        interim += transcript;
+                    }
+                }
+                
+                const preview = document.getElementById('transcriptPreview');
+                const textEl = document.getElementById('transcriptText');
+                preview.classList.remove('hidden');
+                textEl.textContent = finalTranscript + interim;
+            };
+            
+            rec.onerror = (event) => {
+                console.error('Speech recognition error:', event.error);
+                if (event.error === 'not-allowed') {
+                    document.getElementById('voiceError').textContent = '请允许麦克风权限';
+                    document.getElementById('voiceError').classList.remove('hidden');
+                }
+                stopRecording();
+            };
+            
+            rec.onend = () => {
+                if (isRecording && finalTranscript) {
+                    // Auto-fill and analyze
+                    document.getElementById('lyricsInput').value = finalTranscript;
+                    document.getElementById('transcriptPreview').classList.add('hidden');
+                    stopRecording();
+                    analyzeLyrics();
+                } else {
+                    stopRecording();
+                }
+            };
+            
+            return rec;
+        }
+
+        function toggleVoiceInput() {
+            if (!recognition) {
+                recognition = initSpeechRecognition();
+                if (!recognition) return;
+            }
+            
+            if (isRecording) {
+                recognition.stop();
+            } else {
+                finalTranscript = '';
+                document.getElementById('lyricsInput').value = '';
+                document.getElementById('transcriptPreview').classList.add('hidden');
+                recognition.start();
+            }
+        }
+
+        function stopRecording() {
+            isRecording = false;
+            updateMicUI(false);
+        }
+
+        function updateMicUI(recording) {
+            const btn = document.getElementById('micBtn');
+            const icon = document.getElementById('micIcon');
+            const text = document.getElementById('micText');
+            const status = document.getElementById('voiceStatus');
+            
+            if (recording) {
+                btn.classList.add('mic-pulse', 'border-rap-accent');
+                icon.classList.add('text-red-400');
+                icon.classList.remove('text-rap-accent');
+                text.textContent = '停止录音';
+                status.classList.remove('hidden');
+                status.classList.add('flex');
+            } else {
+                btn.classList.remove('mic-pulse', 'border-rap-accent');
+                icon.classList.remove('text-red-400');
+                icon.classList.add('text-rap-accent');
+                text.textContent = '语音输入';
+                status.classList.add('hidden');
+                status.classList.remove('flex');
+            }
+        }
+
+        // Text to Speech feedback
+        function speakFeedback() {
+            if (!currentFeedbackText) return;
+            
+            const utterance = new SpeechSynthesisUtterance(currentFeedbackText);
+            utterance.lang = 'zh-CN';
+            utterance.rate = 1.1;
+            utterance.pitch = 1.0;
+            
+            // Try to find a Chinese voice
+            const voices = window.speechSynthesis.getVoices();
+            const zhVoice = voices.find(v => v.lang.startsWith('zh'));
+            if (zhVoice) utterance.voice = zhVoice;
+            
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // Ensure voices are loaded
+        window.speechSynthesis.onvoiceschanged = () => {};
+
+        // Example lyrics
+        const EXAMPLE_LYRICS = `[Verse]
+我站在高处俯瞰这座城市
+灯光闪烁像是我未来的样子
+风吹过街道带走我的故事
+这片土地见证我的坚持
+
+[Hook]
+从不回头 不管路多漫长
+把梦想写在每个节拍上
+就算全世界都不懂我的方向
+麦克风在手 我就是自己的王`;
+
+        function loadExample() {
+            document.getElementById('lyricsInput').value = EXAMPLE_LYRICS;
+            document.getElementById('transcriptPreview').classList.add('hidden');
+        }
+
+        function clearInput() {
+            document.getElementById('lyricsInput').value = '';
+            document.getElementById('results').classList.add('hidden');
+            document.getElementById('transcriptPreview').classList.add('hidden');
+        }
+
+        function showApiSettings() {
+            document.getElementById('apiEndpoint').value = API_BASE;
+            document.getElementById('apiModal').classList.remove('hidden');
+        }
+
+        function hideApiSettings() {
+            document.getElementById('apiModal').classList.add('hidden');
+        }
+
+        function saveApiSettings() {
+            API_BASE = document.getElementById('apiEndpoint').value.trim();
+            localStorage.setItem('rapperCoachApi', API_BASE);
+            hideApiSettings();
+        }
+
+        async function analyzeLyrics() {
+            const lyrics = document.getElementById('lyricsInput').value.trim();
+            if (!lyrics) {
+                alert('请先输入歌词');
+                return;
+            }
+
+            const btn = document.getElementById('analyzeBtn');
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
+
+            btn.disabled = true;
+            btn.textContent = '分析中...';
+            loading.classList.remove('hidden');
+            results.classList.add('hidden');
+
+            try {
+                const response = await fetch(`${API_BASE}/analyze`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: lyrics })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+                }
+
+                const data = await response.json();
+                displayResults(data);
+            } catch (error) {
+                console.error('Analysis failed:', error);
+                alert('分析失败：' + error.message + '\n\n请确认后端服务已启动：\ncd scripts && python server.py --port 8765');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '开始分析';
+                loading.classList.add('hidden');
+            }
+        }
+
+        function displayResults(data) {
+            const results = document.getElementById('results');
+            results.classList.remove('hidden');
+            results.classList.add('fade-in');
+
+            // Overall score
+            const score = data.overall_score || 0;
+            document.getElementById('overallScore').textContent = score;
+            document.getElementById('scoreRing').style.setProperty('--score', `${score * 10}%`);
+            
+            let desc = '';
+            if (score >= 8) desc = '非常专业！韵脚、Flow 和表达都很出色';
+            else if (score >= 6) desc = '不错的基础，还有一些提升空间';
+            else if (score >= 4) desc = '有潜力，建议在韵脚和 Flow 上多下功夫';
+            else desc = '起步阶段，参考改进建议继续打磨';
+            document.getElementById('scoreDesc').textContent = desc;
+
+            // Aggregate scores
+            let rhymeScores = [], flowScores = [], punchlines = [];
+            (data.sections || []).forEach(sec => {
+                if (sec.rhyme) rhymeScores.push(sec.rhyme.score || 0);
+                if (sec.flow) flowScores.push(sec.flow.overall_score || 0);
+                if (sec.punchlines) punchlines.push(...sec.punchlines);
+            });
+
+            document.getElementById('rhymeScore').textContent = 
+                rhymeScores.length ? (rhymeScores.reduce((a,b)=>a+b,0)/rhymeScores.length).toFixed(1) : '-';
+            document.getElementById('flowScore').textContent = 
+                flowScores.length ? (flowScores.reduce((a,b)=>a+b,0)/flowScores.length).toFixed(1) : '-';
+            document.getElementById('punchlineCount').textContent = punchlines.length || '-';
+
+            // Sections
+            const container = document.getElementById('sectionsContainer');
+            container.innerHTML = '';
+
+            (data.sections || []).forEach((sec, idx) => {
+                if (sec.empty) return;
+                const card = document.createElement('div');
+                card.className = 'bg-rap-panel rounded-2xl border border-gray-800 p-6 fade-in';
+                card.style.animationDelay = `${idx * 0.1}s`;
+                card.innerHTML = renderSection(sec);
+                container.appendChild(card);
+            });
+
+            // Suggestions
+            const sugBox = document.getElementById('suggestionsBox');
+            const sugList = document.getElementById('suggestionsList');
+            if (data.suggestions && data.suggestions.length) {
+                sugBox.classList.remove('hidden');
+                sugList.innerHTML = data.suggestions.map(s => 
+                    `<li class="flex items-start gap-2 text-sm text-rap-text">
+                        <span class="text-rap-accent mt-0.5">▸</span>
+                        <span>${escapeHtml(s)}</span>
+                    </li>`
+                ).join('');
+            } else {
+                sugBox.classList.add('hidden');
+            }
+
+            // Voice feedback
+            buildVoiceFeedback(data);
+            document.getElementById('voiceFeedback').classList.remove('hidden');
+
+            // Scroll to results
+            results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function buildVoiceFeedback(data) {
+            let text = `Rapper Coach 分析报告。综合评分 ${data.overall_score} 分。`;
+            
+            (data.sections || []).forEach(sec => {
+                if (sec.empty) return;
+                text += `${sec.section}部分。`;
+                if (sec.rhyme) {
+                    text += `韵脚评分 ${sec.rhyme.score} 分。`;
+                }
+                if (sec.flow) {
+                    text += `Flow 评分 ${sec.flow.overall_score} 分。`;
+                    if (sec.flow.breath_points) {
+                        const urgent = sec.flow.breath_points.filter(b => b.urgency === 'high');
+                        if (urgent.length) {
+                            text += `注意，有 ${urgent.length} 处需要换气。`;
+                        }
+                    }
+                }
+            });
+            
+            if (data.suggestions && data.suggestions.length) {
+                text += '改进建议：' + data.suggestions.slice(0, 2).join('；') + '。';
+            }
+            
+            currentFeedbackText = text;
+        }
+
+        function renderSection(sec) {
+            let html = `<div class="flex items-center gap-3 mb-4">
+                <span class="px-2.5 py-1 rounded-md bg-gray-800 text-xs font-bold text-rap-accent uppercase tracking-wider">${sec.section}</span>
+                <span class="text-xs text-rap-muted">${sec.line_count || 0} 行</span>
+            </div>`;
+
+            // Rhyme
+            if (sec.rhyme) {
+                html += `<div class="mb-4">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="text-xs font-semibold text-emerald-400">韵脚</span>
+                        <span class="text-xs text-rap-muted">评分 ${sec.rhyme.score}/10 · 模式 ${sec.rhyme.scheme || 'N/A'}</span>
+                    </div>`;
+                if (sec.rhyme.tail_rhyme_groups && sec.rhyme.tail_rhyme_groups.length) {
+                    html += `<div class="flex flex-wrap gap-2">`;
+                    sec.rhyme.tail_rhyme_groups.forEach(g => {
+                        const typeClass = g.type === 'exact' ? 'rhyme-exact' : (g.type === 'family' ? 'rhyme-family' : 'rhyme-slant');
+                        const typeLabel = g.type === 'exact' ? '完美' : (g.type === 'family' ? '家族' : '斜韵');
+                        html += `<span class="px-2 py-1 rounded bg-gray-800/50 text-xs ${typeClass}">
+                            ${typeLabel}: ${g.words ? g.words.join(' · ') : ''}
+                        </span>`;
+                    });
+                    html += `</div>`;
+                }
+                html += `</div>`;
+            }
+
+            // Flow
+            if (sec.flow) {
+                html += `<div class="mb-4">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="text-xs font-semibold text-amber-400">Flow</span>
+                        <span class="text-xs text-rap-muted">评分 ${sec.flow.overall_score}/10 · 贴合度 ${sec.flow.pocket_score} · 变化度 ${sec.flow.variation_score}</span>
+                    </div>`;
+                if (sec.flow.beat_visualization) {
+                    html += `<div class="bg-rap-dark rounded-xl p-4 overflow-x-auto">
+                        <pre class="beat-grid text-xs text-rap-muted leading-loose whitespace-pre">${escapeHtml(sec.flow.beat_visualization)}</pre>
+                    </div>`;
+                }
+                if (sec.flow.breath_points && sec.flow.breath_points.length) {
+                    const urgent = sec.flow.breath_points.filter(b => b.urgency === 'high');
+                    if (urgent.length) {
+                        html += `<div class="mt-2 flex items-center gap-2 text-xs text-red-400">
+                            <span>⚠️</span> <span>${urgent.length} 处急需换气</span>
+                        </div>`;
+                    }
+                }
+                html += `</div>`;
+            }
+
+            // Punchlines
+            if (sec.punchlines && sec.punchlines.length) {
+                html += `<div class="mb-4">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="text-xs font-semibold text-red-400">Punchline</span>
+                        <span class="text-xs text-rap-muted">检测到 ${sec.punchlines.length} 处</span>
+                    </div>
+                    <div class="space-y-2">`;
+                sec.punchlines.slice(0, 3).forEach(p => {
+                    html += `<div class="bar-line">
+                        <div class="text-sm text-rap-text">${escapeHtml(p.line)}</div>
+                        <div class="text-xs text-rap-muted mt-1">${p.reasons ? p.reasons.join(' · ') : ''}</div>
+                    </div>`;
+                });
+                html += `</div></div>`;
+            }
+
+            // Vocabulary
+            if (sec.vocabulary) {
+                html += `<div class="flex items-center gap-4 text-xs text-rap-muted">
+                    <span>词汇丰富度: <strong class="text-rap-text">${sec.vocabulary.richness_ratio}</strong></span>
+                    <span>总字数: ${sec.vocabulary.total_chars}</span>
+                    <span>不重复: ${sec.vocabulary.unique_chars}</span>
+                </div>`;
+            }
+
+            return html;
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Close modal on outside click
+        document.getElementById('apiModal').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) hideApiSettings();
+        });
+    </script>
+</body>
+</html>

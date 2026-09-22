@@ -290,9 +290,8 @@ export function App() {
           {isLastBeat && dialogue.heart?.canContinue && (dialogue.heart.choicePoint
             ? <><p className="heart-choice-prompt">这一刻，你想以怎样的心绪回应？</p><HeartHand key={state.revision} state={state} bootstrap={bootstrap!} busy={busy}
                 onObservationChange={() => setHeartObservationRefresh(n => n + 1)}
-                onPreview={cardId => gameApi.previewHeart(cardId, state.revision)}
                 onUse={(cardId, previewId) => perform(() => gameApi.useHeart(cardId, state.revision, previewId))} /></>
-            : <div className="dialogue-continue-row"><span>{busy ? "两人的对话正在继续……" : "对话自然推进，重要时刻再选择心绪。"}</span><button disabled={busy} type="button" onClick={() => void perform(() => gameApi.useHeart(null, state.revision))}>继续对话 →</button></div>)}
+            : <div className="dialogue-continue-row"><span>这是旧存档留下的普通断点。</span><button disabled={busy} type="button" onClick={() => void perform(() => gameApi.useHeart(null, state.revision))}>衔接到下一决策点 →</button></div>)}
           {dialogue.heart && <><p className="heart-trial-note">七人拾绪 · 九种态度。多数回应会推动实际后果；没有合适后果时，也会转向新的交流焦点。</p><HeartObserver revision={state.revision} refreshKey={heartObservationRefresh} /></>}
           {isLastBeat && !canContinue && !isWaitingForNpc && (
             <p className="conversation-done">本次交谈已结束。返回场景，继续你的行程吧。</p>
@@ -660,6 +659,17 @@ export function App() {
                 {inventoryItems.length === 0 && <p className="prototype-notice">背包为空，目前没有可以供奉的载体。</p>}
                 {isNight && <div className="end-day-panel"><p>{gameState.day === 7 ? "这是最后一个夜晚。结束后状态将冻结，并根据七日事实生成结局。" : gameState.ruleChangedThisNight ? "规则已经写入全镇状态。" : "不必每晚修改规则，你可以选择跳过。"}</p><button disabled={busy} type="button" onClick={() => void perform(gameApi.endDay)}>{gameState.day === 7 ? (busy ? "正在生成结局……" : "结束第七天，生成结局") : gameState.ruleChangedThisNight ? "结束今天" : "今晚不修改，结束今天"}</button></div>}
               </div>
+            </div>
+            <div className="rule-echoes">
+              <h2>镇上的回声</h2>
+              <p>这里记下你亲耳听过的回应。规则会更换，人们说过的话仍会留下。</p>
+              {gameState.eventLog.filter(event => event.type === "rule_callback").length === 0
+                ? <p className="prototype-notice">还没有听到镇民的回应。供奉后，去和他们聊聊吧。</p>
+                : <ul>{gameState.eventLog.filter(event => event.type === "rule_callback").slice(-7).reverse().map(event => <li key={event.id}>
+                    <strong>{bootstrap.npcs.find(npc => npc.id === event.actorId)?.name ?? "镇民"} · 第 {event.day} 天</strong>
+                    {event.details.ruleText && <p><small>关于「{event.details.ruleText}」</small></p>}
+                    <p>{event.details.quote ?? event.details.text}</p>
+                  </li>)}</ul>}
             </div>
           </section>
         )}

@@ -3,6 +3,7 @@ import type { GameState } from "../../packages/shared/src/index.ts";
 export const MAX_ENCOUNTER_LINES = 24;
 export const WIND_DOWN_LINES = 18;
 export const MAX_ENCOUNTER_CHOICES = 5;
+export const MAX_GENERATED_BEATS = 12;
 
 export function encounterPacing(state: GameState, hasSelectedLine: boolean) {
   let start = state.eventLog.length - 1;
@@ -15,7 +16,9 @@ export function encounterPacing(state: GameState, hasSelectedLine: boolean) {
   const stage = mustClose ? "closing" : spoken >= 14 || choices >= 4 ? "winding_down" : "developing";
   // Reserve the next selected player line and one NPC farewell when continuing.
   // Old saves already over the limit receive one farewell rather than losing played dialogue.
-  const maxGeneratedLines = Math.max(1, Math.min(5, remaining - Number(hasSelectedLine) - (mustClose ? 0 : 2)));
+  // One request prepares the whole readable run up to the next real decision or
+  // the end of the meeting. The UI then reveals these beats without another AI call.
+  const maxGeneratedLines = Math.max(1, Math.min(MAX_GENERATED_BEATS, remaining - Number(hasSelectedLine) - (mustClose ? 0 : 2)));
   return { maxLines: MAX_ENCOUNTER_LINES, windDownAt: WIND_DOWN_LINES, maxChoices: MAX_ENCOUNTER_CHOICES,
     spoken, choices, remaining, mustClose, stage, maxGeneratedLines };
 }

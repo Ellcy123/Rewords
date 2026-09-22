@@ -171,6 +171,12 @@ export const HeartPreviewSchema = z.object({
   provider: z.enum(["mock", "deepseek", "mock_fallback"])
 });
 export type HeartPreview = z.infer<typeof HeartPreviewSchema>;
+export const HeartOptionsSchema = z.object({
+  revision: z.number().int().nonnegative(), pending: z.number().int().nonnegative(), complete: z.boolean(),
+  options: z.array(HeartPreviewSchema.extend({ cardId: z.string().min(1).nullable() })).max(10)
+});
+export type HeartOptions = z.infer<typeof HeartOptionsSchema>;
+
 
 // A deliberately public projection. No GameState, private role sheet or future beats.
 export const HeartDirectorInputSchema = z.object({
@@ -237,7 +243,7 @@ export const ActionPlanProposalSchema = z.object({
   type: z.literal("meet"), targetNpcId: z.literal("player"), locationId: z.string().min(1),
   arriveAt: z.number().int().nonnegative(), waitUntil: z.number().int().nonnegative(),
   reason: z.string().min(1).max(160), quote: z.string().min(1).max(120),
-  beatIndex: z.number().int().min(0).max(4)
+  beatIndex: z.number().int().min(0).max(11)
 });
 export type ActionPlanProposal = z.infer<typeof ActionPlanProposalSchema>;
 export const NpcActionPlanSchema = ActionPlanProposalSchema.omit({ beatIndex: true }).extend({
@@ -249,9 +255,16 @@ export type NpcActionPlan = z.infer<typeof NpcActionPlanSchema>;
 export const HeartConsequenceSchema = z.object({
   type: z.enum(["material", "sorting_offer", "sorting_cancel", "meeting", "pause", "case_action"]),
   actionId: z.string().min(1).nullable().default(null),
-  beatIndex: z.number().int().min(0).max(4), quote: z.string().trim().min(1).max(120)
+  beatIndex: z.number().int().min(0).max(11), quote: z.string().trim().min(1).max(120)
 });
 export type HeartConsequence = z.infer<typeof HeartConsequenceSchema>;
+
+export const RuleReactionSchema = z.object({
+  ruleId: z.string().min(1).max(160), beatIndex: z.number().int().min(0).max(11),
+  quote: z.string().trim().min(1).max(240), stance: z.string().trim().min(2).max(160),
+  demand: z.string().trim().min(2).max(160)
+});
+export type RuleReaction = z.infer<typeof RuleReactionSchema>;
 
 export const DialogueResultSchema = z.object({
   heart: z.object({
@@ -261,22 +274,26 @@ export const DialogueResultSchema = z.object({
     consequence: HeartConsequenceSchema.nullable().default(null),
     spendEventId: z.string().nullable().default(null),
     consequenceApplied: z.boolean().default(false),
-    pickups: z.array(z.object({ beatIndex: z.number().int().min(0).max(4), kind: HeartKindSchema, quote: z.string().min(1).max(180) })).max(1)
+    pickups: z.array(z.object({ beatIndex: z.number().int().min(0).max(11), kind: HeartKindSchema, quote: z.string().min(1).max(180) })).max(1)
   }).optional(),
   speakerId: z.string().min(1),
   line: z.string().min(1).max(240),
   stageDirection: z.string().max(240).optional(),
   emotion: z.string().min(1),
-  continuations: z.array(DialogueContinuationSchema).max(4).default([]),
+  continuations: z.array(DialogueContinuationSchema).max(11).default([]),
   options: z.array(DialogueOptionSchema).max(3),
   debug: z.object({
     provider: z.enum(["mock", "deepseek", "mock_fallback"]),
     decision: z.string().min(1),
+    ruleReactions: z.array(RuleReactionSchema).max(2).optional(),
     usedFacts: z.array(z.string()),
     // Facts explicitly spoken to the player in this generated segment. Unlike
     // usedFacts, private facts used only to shape an NPC's lie or hesitation do
     // not belong here.
     disclosedFacts: z.array(z.string()).default([]),
+    // Heart dialogue can disclose facts before the final beat. These anchors let
+    // the player knowledge ledger advance only when that spoken beat is shown.
+    disclosures: z.array(z.object({ factId: z.string().min(1), beatIndex: z.number().int().min(0).max(11) })).max(12).default([]),
     promptVersion: z.string().min(1).optional(),
     model: z.string().min(1).optional(),
     latencyMs: z.number().int().nonnegative().optional(),
@@ -319,7 +336,9 @@ export const AiLogEntrySchema = z.object({
   attemptCount: z.number().int().positive(),
   success: z.boolean(),
   usedFacts: z.array(z.string()),
-  errorCode: z.string().nullable()
+  errorCode: z.string().nullable(),
+  detail: z.string().optional(),
+  repairedFields: z.array(z.string().min(1).max(80)).max(48).optional()
 });
 export type AiLogEntry = z.infer<typeof AiLogEntrySchema>;
 
