@@ -1,0 +1,11 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1045 &1
+EditorBuildSettings:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Scenes:
+  - enabled: 1
+    path: Assets/CatGame/Scenes/CatRun.unity
+    guid: e931d1f3ec7f546469bde9dc25c7f49b
+  m_configObjects: {}

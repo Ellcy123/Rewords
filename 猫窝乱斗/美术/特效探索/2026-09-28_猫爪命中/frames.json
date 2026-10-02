@@ -1,0 +1,19 @@
+{
+  "frame_size": [
+    512,
+    512
+  ],
+  "effect_ms": 380,
+  "pause_ms": 800,
+  "durations_ms": [
+    40,
+    50,
+    70,
+    60,
+    70,
+    90,
+    800
+  ],
+  "source": "Codex built-in generated 3x2 sheet",
+  "processing": "equal cell crops; original alpha retained; blue-gray backdrop for GIF only; no alignment, warping or interpolation"
+}

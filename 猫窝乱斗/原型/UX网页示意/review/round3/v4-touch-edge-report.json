@@ -1,0 +1,350 @@
+{
+  "firstColumnImageTouch": {
+    "selector": "#stored-cat img",
+    "col": 0,
+    "hover": {
+      "catPos": null,
+      "ghostHidden": false,
+      "ghostInvalid": false,
+      "ghostLeft": "0%",
+      "green": [
+        0,
+        1,
+        2
+      ],
+      "hint": "松手放下",
+      "trace": [
+        {
+          "type": "pointerdown",
+          "id": 2,
+          "pointerType": "touch",
+          "target": "stored-cat"
+        },
+        {
+          "type": "gotpointercapture",
+          "id": 2,
+          "pointerType": "touch",
+          "target": "stored-cat"
+        },
+        {
+          "type": "pointermove",
+          "id": 2,
+          "pointerType": "touch",
+          "target": "stored-cat"
+        },
+        {
+          "type": "pointermove",
+          "id": 2,
+          "pointerType": "touch",
+          "target": "stored-cat"
+        },
+        {
+          "type": "pointermove",
+          "id": 2,
+          "pointerType": "touch",
+          "target": "stored-cat"
+        },
+        {
+          "type": "pointermove",
+          "id": 2,
+          "pointerType": "touch",
+          "target": "stored-cat"
+        },
+        {
+          "type": "pointermove",
+          "id": 2,
+          "pointerType": "touch",
+          "target": "stored-cat"
+        },
+        {
+          "type": "pointermove",
+          "id": 2,
+          "pointerType": "touch",
+          "target": "stored-cat"
+        },
+        {
+          "type": "pointermove",
+          "id": 2,
+          "pointerType": "touch",
+          "target": "stored-cat"
+        },
+        {
+          "type": "pointermove",
+          "id": 2,
+          "pointerType": "touch",
+          "target": "stored-cat"
+        },
+        {
+          "type": "pointermove",
+          "id": 2,
+          "pointerType": "touch",
+          "target": "stored-cat"
+        }
+      ]
+    },
+    "end": {
+      "catPos": 0,
+      "hint": "给面条买件玩具，再拖到它旁边",
+      "trace": [
+        {
+          "type": "pointerdown",
+          "id": 2,
+          "pointerType": "touch",
+          "target": "stored-cat"
+        },
+        {
+          "type": "gotpointercapture",
+          "id": 2,
+          "pointerType": "touch",
+          "target": "stored-cat"
+        },
+        {
+          "type": "pointermove",
+          "id": 2,
+          "pointerType": "touch",
+          "target": "stored-cat"
+        },
+        {
+          "type": "pointermove",
+          "id": 2,
+          "pointerType": "touch",
+          "target": "stored-cat"
+        },
+        {
+          "type": "pointermove",
+          "id": 2,
+          "pointerType": "touch",
+          "target": "stored-cat"
+        },
+        {
+          "type": "pointermove",
+          "id": 2,
+          "pointerType": "touch",
+          "target": "stored-cat"
+        },
+        {
+          "type": "pointermove",
+          "id": 2,
+          "pointerType": "touch",
+          "target": "stored-cat"
+        },
+        {
+          "type": "pointermove",
+          "id": 2,
+          "pointerType": "touch",
+          "target": "stored-cat"
+        },
+        {
+          "type": "pointermove",
+          "id": 2,
+          "pointerType": "touch",
+          "target": "stored-cat"
+        },
+        {
+          "type": "pointermove",
+          "id": 2,
+          "pointerType": "touch",
+          "target": "stored-cat"
+        },
+        {
+          "type": "pointermove",
+          "id": 2,
+          "pointerType": "touch",
+          "target": "stored-cat"
+        },
+        {
+          "type": "pointermove",
+          "id": 2,
+          "pointerType": "touch",
+          "target": "stored-cat"
+        },
+        {
+          "type": "pointerup",
+          "id": 2,
+          "pointerType": "touch",
+          "target": "stored-cat"
+        },
+        {
+          "type": "lostpointercapture",
+          "id": 2,
+          "pointerType": "touch",
+          "target": "stored-cat"
+        }
+      ]
+    }
+  },
+  "fourthColumnTextTouch": {
+    "selector": "#stored-cat span",
+    "col": 3,
+    "hover": {
+      "catPos": null,
+      "ghostHidden": false,
+      "ghostInvalid": false,
+      "ghostLeft": "25%",
+      "green": [
+        1,
+        2,
+        3
+      ],
+      "hint": "松手放下",
+      "trace": [
+        {
+          "type": "pointerdown",
+          "id": 2,
+          "pointerType": "touch",
+          "target": "stored-cat"
+        },
+        {
+          "type": "gotpointercapture",
+          "id": 2,
+          "pointerType": "touch",
+          "target": "stored-cat"
+        },
+        {
+          "type": "pointermove",
+          "id": 2,
+          "pointerType": "touch",
+          "target": "stored-cat"
+        },
+        {
+          "type": "pointermove",
+          "id": 2,
+          "pointerType": "touch",
+          "target": "stored-cat"
+        },
+        {
+          "type": "pointermove",
+          "id": 2,
+          "pointerType": "touch",
+          "target": "stored-cat"
+        },
+        {
+          "type": "pointermove",
+          "id": 2,
+          "pointerType": "touch",
+          "target": "stored-cat"
+        },
+        {
+          "type": "pointermove",
+          "id": 2,
+          "pointerType": "touch",
+          "target": "stored-cat"
+        },
+        {
+          "type": "pointermove",
+          "id": 2,
+          "pointerType": "touch",
+          "target": "stored-cat"
+        },
+        {
+          "type": "pointermove",
+          "id": 2,
+          "pointerType": "touch",
+          "target": "stored-cat"
+        },
+        {
+          "type": "pointermove",
+          "id": 2,
+          "pointerType": "touch",
+          "target": "stored-cat"
+        },
+        {
+          "type": "pointermove",
+          "id": 2,
+          "pointerType": "touch",
+          "target": "stored-cat"
+        }
+      ]
+    },
+    "end": {
+      "catPos": 1,
+      "hint": "给面条买件玩具，再拖到它旁边",
+      "trace": [
+        {
+          "type": "pointerdown",
+          "id": 2,
+          "pointerType": "touch",
+          "target": "stored-cat"
+        },
+        {
+          "type": "gotpointercapture",
+          "id": 2,
+          "pointerType": "touch",
+          "target": "stored-cat"
+        },
+        {
+          "type": "pointermove",
+          "id": 2,
+          "pointerType": "touch",
+          "target": "stored-cat"
+        },
+        {
+          "type": "pointermove",
+          "id": 2,
+          "pointerType": "touch",
+          "target": "stored-cat"
+        },
+        {
+          "type": "pointermove",
+          "id": 2,
+          "pointerType": "touch",
+          "target": "stored-cat"
+        },
+        {
+          "type": "pointermove",
+          "id": 2,
+          "pointerType": "touch",
+          "target": "stored-cat"
+        },
+        {
+          "type": "pointermove",
+          "id": 2,
+          "pointerType": "touch",
+          "target": "stored-cat"
+        },
+        {
+          "type": "pointermove",
+          "id": 2,
+          "pointerType": "touch",
+          "target": "stored-cat"
+        },
+        {
+          "type": "pointermove",
+          "id": 2,
+          "pointerType": "touch",
+          "target": "stored-cat"
+        },
+        {
+          "type": "pointermove",
+          "id": 2,
+          "pointerType": "touch",
+          "target": "stored-cat"
+        },
+        {
+          "type": "pointermove",
+          "id": 2,
+          "pointerType": "touch",
+          "target": "stored-cat"
+        },
+        {
+          "type": "pointermove",
+          "id": 2,
+          "pointerType": "touch",
+          "target": "stored-cat"
+        },
+        {
+          "type": "pointerup",
+          "id": 2,
+          "pointerType": "touch",
+          "target": "stored-cat"
+        },
+        {
+          "type": "lostpointercapture",
+          "id": 2,
+          "pointerType": "touch",
+          "target": "stored-cat"
+        }
+      ]
+    }
+  }
+}

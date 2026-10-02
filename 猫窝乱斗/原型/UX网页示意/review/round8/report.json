@@ -1,0 +1,741 @@
+{
+  "startedAt": "2026-10-01T13:44:36.482Z",
+  "checks": [
+    {
+      "name": "默认进入主界面",
+      "pass": true,
+      "actual": "hub",
+      "expected": "hub"
+    },
+    {
+      "name": "桌面主界面可见",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "签到弹窗关闭不发奖",
+      "pass": true,
+      "actual": 120,
+      "expected": 120
+    },
+    {
+      "name": "签到奖励 +30 且单次",
+      "pass": true,
+      "actual": 150,
+      "expected": 150
+    },
+    {
+      "name": "签到再次打开后领取禁用",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "补给弹窗关闭不发奖",
+      "pass": true,
+      "actual": 150,
+      "expected": 150
+    },
+    {
+      "name": "补给奖励 +40 且单次",
+      "pass": true,
+      "actual": 190,
+      "expected": 190
+    },
+    {
+      "name": "补给再次打开后领取禁用",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "培育每次消费 40 并提升等级",
+      "pass": true,
+      "actual": {
+        "coins": 30,
+        "level": "Lv.5 → Lv.6"
+      },
+      "expected": {
+        "coins": 30,
+        "level": "Lv.5"
+      }
+    },
+    {
+      "name": "余额不足时培养禁用",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "连续培养后关闭弹窗焦点回到可用猫入口",
+      "pass": true,
+      "actual": {
+        "html": "<button class=\"hub-cat-scene\" data-action=\"cat\" aria-label=\"查看面条猫\"><img class=\"hub-nest\" src=\"assets/nest_fabric_v1.png\" alt=\"布艺猫窝\"><img class=\"hub-resident\" src=\"assets/cat_noodle_pose0.png\" alt=\"面条猫\"><span>面条 <b>Lv.5</b> ♡</span></button>",
+        "action": "cat",
+        "connected": true
+      },
+      "expected": "data-action=cat 且元素连接在文档中"
+    },
+    {
+      "name": "猫咪导航显示图鉴页",
+      "pass": true,
+      "actual": "我的猫咪 1 / 3",
+      "expected": "我的猫咪"
+    },
+    {
+      "name": "用品图鉴显示三项",
+      "pass": true,
+      "actual": 3,
+      "expected": 3
+    },
+    {
+      "name": "任务未完成时不可领取奖励",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "任务入口跳转到爬楼且不发奖",
+      "pass": true,
+      "actual": {
+        "tower": true,
+        "coins": 30
+      },
+      "expected": {
+        "tower": true,
+        "coins": 30
+      }
+    },
+    {
+      "name": "楼层列表可上下滚动",
+      "pass": true,
+      "actual": {
+        "scrollHeight": 677,
+        "clientHeight": 321,
+        "initialScrollTop": 0,
+        "overflow": true
+      },
+      "expected": "scrollHeight > clientHeight"
+    },
+    {
+      "name": "楼层列表可滚到顶部和底部",
+      "pass": true,
+      "actual": {
+        "scrollTop": 356,
+        "max": 356
+      },
+      "expected": "scrollTop advances"
+    },
+    {
+      "name": "锁定层可查看但不能挑战",
+      "pass": true,
+      "actual": {
+        "disabled": true,
+        "label": "先通过前一层"
+      },
+      "expected": {
+        "disabled": true,
+        "label": "先通过前一层"
+      }
+    },
+    {
+      "name": "第 2 层锁定且详情可切换",
+      "pass": true,
+      "actual": {
+        "selected": "true",
+        "challengeDisabled": true
+      },
+      "expected": {
+        "selected": "true",
+        "challengeDisabled": true
+      }
+    },
+    {
+      "name": "第一层可挑战",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "第一层跳转到已有准备界面且猫未预放",
+      "pass": true,
+      "actual": {
+        "study": "combat",
+        "stored": true,
+        "placed": false
+      },
+      "expected": {
+        "study": "combat",
+        "stored": true,
+        "placed": false
+      }
+    },
+    {
+      "name": "真实鼠标拖放面条入窝",
+      "pass": true,
+      "actual": {
+        "placed": true,
+        "stored": false
+      },
+      "expected": {
+        "placed": true,
+        "stored": false
+      }
+    },
+    {
+      "name": "原准备页购买玩具只扣局内金币",
+      "pass": true,
+      "actual": {
+        "gold": "7",
+        "stored": true
+      },
+      "expected": {
+        "gold": "7",
+        "stored": true
+      }
+    },
+    {
+      "name": "真实鼠标拖放玩具并触发邻接",
+      "pass": true,
+      "actual": {
+        "placed": true,
+        "linked": true
+      },
+      "expected": {
+        "placed": true,
+        "linked": true
+      }
+    },
+    {
+      "name": "开战后进入自动战斗",
+      "pass": true,
+      "actual": "battle",
+      "expected": "battle"
+    },
+    {
+      "name": "战斗可切到 2 倍速",
+      "pass": true,
+      "actual": {
+        "text": "×2",
+        "pressed": "true"
+      },
+      "expected": {
+        "text": "×2",
+        "pressed": "true"
+      }
+    },
+    {
+      "name": "2 倍速下战斗时钟推进约双倍",
+      "pass": true,
+      "actual": {
+        "before": 24.6,
+        "after": 23,
+        "delta": 1.6000000000000014
+      },
+      "expected": "delta >= 1.1s / 800ms real time"
+    },
+    {
+      "name": "第一层战斗实际到达胜利结算",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "结算时倍速入口禁用",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "首通返回楼层并发放 30 培养币",
+      "pass": true,
+      "actual": {
+        "study": "hub",
+        "coins": 60,
+        "selected": "2"
+      },
+      "expected": {
+        "study": "hub",
+        "coins": 60,
+        "selected": "2"
+      }
+    },
+    {
+      "name": "重复点击首通返回不重复发奖",
+      "pass": true,
+      "actual": 60,
+      "expected": 60
+    },
+    {
+      "name": "首通任务奖励 +50",
+      "pass": true,
+      "actual": 110,
+      "expected": 110
+    },
+    {
+      "name": "任务奖励再次打开后领取禁用",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "任务奖励无法重复增加余额",
+      "pass": true,
+      "actual": 110,
+      "expected": 110
+    },
+    {
+      "name": "390 宽屏幕没有横向溢出",
+      "pass": true,
+      "actual": {
+        "innerWidth": 390,
+        "scrollWidth": 390,
+        "device": {
+          "x": 12,
+          "y": 242.28125,
+          "width": 366,
+          "height": 650.65625,
+          "top": 242.28125,
+          "right": 378,
+          "bottom": 892.9375,
+          "left": 12
+        },
+        "screen": {
+          "x": 12,
+          "y": 242.28125,
+          "width": 366,
+          "height": 650.6618041992188,
+          "top": 242.28125,
+          "right": 378,
+          "bottom": 892.9430541992188,
+          "left": 12
+        },
+        "nav": [
+          {
+            "text": "♧\n猫咪",
+            "rect": {
+              "x": 12,
+              "y": 828.189208984375,
+              "width": 91.5,
+              "height": 64.75384521484375,
+              "top": 828.189208984375,
+              "right": 103.5,
+              "bottom": 892.9430541992188,
+              "left": 12
+            }
+          },
+          {
+            "text": "⌂\n小屋",
+            "rect": {
+              "x": 103.5,
+              "y": 828.189208984375,
+              "width": 91.5,
+              "height": 64.75384521484375,
+              "top": 828.189208984375,
+              "right": 195,
+              "bottom": 892.9430541992188,
+              "left": 103.5
+            }
+          },
+          {
+            "text": "▤\n爬楼",
+            "rect": {
+              "x": 195,
+              "y": 828.189208984375,
+              "width": 91.5,
+              "height": 64.75384521484375,
+              "top": 828.189208984375,
+              "right": 286.5,
+              "bottom": 892.9430541992188,
+              "left": 195
+            }
+          },
+          {
+            "text": "◇\n图鉴",
+            "rect": {
+              "x": 286.5,
+              "y": 828.189208984375,
+              "width": 91.5,
+              "height": 64.75384521484375,
+              "top": 828.189208984375,
+              "right": 378,
+              "bottom": 892.9430541992188,
+              "left": 286.5
+            }
+          }
+        ]
+      },
+      "expected": "scrollWidth <= innerWidth"
+    },
+    {
+      "name": "390 宽签到弹窗位于可视区",
+      "pass": true,
+      "actual": {
+        "rect": {
+          "x": 19,
+          "y": 244.296875,
+          "width": 352,
+          "height": 355.390625,
+          "top": 244.296875,
+          "right": 371,
+          "bottom": 599.6875,
+          "left": 19
+        },
+        "scrollHeight": 353,
+        "clientHeight": 353,
+        "open": true
+      },
+      "expected": "dialog fully inside viewport"
+    },
+    {
+      "name": "360 宽屏幕没有横向溢出",
+      "pass": true,
+      "actual": {
+        "innerWidth": 360,
+        "scrollWidth": 360,
+        "device": {
+          "x": 12,
+          "y": 193.28125,
+          "width": 336,
+          "height": 597.328125,
+          "top": 193.28125,
+          "right": 348,
+          "bottom": 790.609375,
+          "left": 12
+        },
+        "screen": {
+          "x": 12,
+          "y": 193.28125,
+          "width": 336,
+          "height": 597.328857421875,
+          "top": 193.28125,
+          "right": 348,
+          "bottom": 790.610107421875,
+          "left": 12
+        }
+      },
+      "expected": "scrollWidth <= innerWidth"
+    },
+    {
+      "name": "旧准备与战斗分组仍可进入",
+      "pass": true,
+      "actual": {
+        "study": "combat",
+        "prep": true
+      },
+      "expected": {
+        "study": "combat",
+        "prep": true
+      }
+    },
+    {
+      "name": "旧准备页空窝时禁止开战",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "旧准备页购买后仍可拖放猫咪",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "旧准备页购买后仍可拖放用品并触发联动",
+      "pass": true,
+      "actual": {
+        "placed": true,
+        "linked": true
+      },
+      "expected": {
+        "placed": true,
+        "linked": true
+      }
+    },
+    {
+      "name": "旧准备页开战进入旧战斗",
+      "pass": true,
+      "actual": "battle",
+      "expected": "battle"
+    },
+    {
+      "name": "旧战斗倍速入口正常",
+      "pass": true,
+      "actual": "×2",
+      "expected": "×2"
+    },
+    {
+      "name": "旧准备页阵容战斗可到结算",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    }
+  ],
+  "issues": [],
+  "consoleErrors": [],
+  "pageErrors": [],
+  "badResponses": [],
+  "screenshots": [
+    "desktop-home.png",
+    "desktop-signin-dialog.png",
+    "desktop-supply-dialog.png",
+    "desktop-cat-dialog.png",
+    "desktop-cultivation-insufficient.png",
+    "desktop-cats.png",
+    "desktop-locked-cat-dialog.png",
+    "desktop-index.png",
+    "desktop-index-item-dialog.png",
+    "desktop-task-locked.png",
+    "desktop-tower-initial.png",
+    "desktop-tower-top.png",
+    "desktop-tower-bottom.png",
+    "desktop-tower-floor6.png",
+    "desktop-chapter-dialog.png",
+    "desktop-tower-floor1.png",
+    "desktop-prep-empty.png",
+    "desktop-prep-placed.png",
+    "desktop-battle-speed2.png",
+    "desktop-victory.png",
+    "desktop-task-claimed.png",
+    "390-home.png",
+    "390-tower.png",
+    "390-tower-locked.png",
+    "390-signin-dialog.png",
+    "390-cat-dialog.png",
+    "360-home.png",
+    "360-tower.png",
+    "360-tower-locked.png",
+    "360-supply-dialog.png",
+    "desktop-old-group-victory.png",
+    "toast-after-final-390.png"
+  ],
+  "runtime": {
+    "desktopViewport": {
+      "width": 1440,
+      "height": 1050
+    },
+    "mobile390": {
+      "innerWidth": 390,
+      "scrollWidth": 390,
+      "device": {
+        "x": 12,
+        "y": 242.28125,
+        "width": 366,
+        "height": 650.65625,
+        "top": 242.28125,
+        "right": 378,
+        "bottom": 892.9375,
+        "left": 12
+      },
+      "screen": {
+        "x": 12,
+        "y": 242.28125,
+        "width": 366,
+        "height": 650.6618041992188,
+        "top": 242.28125,
+        "right": 378,
+        "bottom": 892.9430541992188,
+        "left": 12
+      },
+      "nav": [
+        {
+          "text": "♧\n猫咪",
+          "rect": {
+            "x": 12,
+            "y": 828.189208984375,
+            "width": 91.5,
+            "height": 64.75384521484375,
+            "top": 828.189208984375,
+            "right": 103.5,
+            "bottom": 892.9430541992188,
+            "left": 12
+          }
+        },
+        {
+          "text": "⌂\n小屋",
+          "rect": {
+            "x": 103.5,
+            "y": 828.189208984375,
+            "width": 91.5,
+            "height": 64.75384521484375,
+            "top": 828.189208984375,
+            "right": 195,
+            "bottom": 892.9430541992188,
+            "left": 103.5
+          }
+        },
+        {
+          "text": "▤\n爬楼",
+          "rect": {
+            "x": 195,
+            "y": 828.189208984375,
+            "width": 91.5,
+            "height": 64.75384521484375,
+            "top": 828.189208984375,
+            "right": 286.5,
+            "bottom": 892.9430541992188,
+            "left": 195
+          }
+        },
+        {
+          "text": "◇\n图鉴",
+          "rect": {
+            "x": 286.5,
+            "y": 828.189208984375,
+            "width": 91.5,
+            "height": 64.75384521484375,
+            "top": 828.189208984375,
+            "right": 378,
+            "bottom": 892.9430541992188,
+            "left": 286.5
+          }
+        }
+      ]
+    },
+    "mobile360": {
+      "innerWidth": 360,
+      "scrollWidth": 360,
+      "device": {
+        "x": 12,
+        "y": 193.28125,
+        "width": 336,
+        "height": 597.328125,
+        "top": 193.28125,
+        "right": 348,
+        "bottom": 790.609375,
+        "left": 12
+      },
+      "screen": {
+        "x": 12,
+        "y": 193.28125,
+        "width": 336,
+        "height": 597.328857421875,
+        "top": 193.28125,
+        "right": 348,
+        "bottom": 790.610107421875,
+        "left": 12
+      }
+    },
+    "floorMetrics": {
+      "scrollHeight": 677,
+      "clientHeight": 321,
+      "initialScrollTop": 0,
+      "overflow": true
+    },
+    "timerBeforeSpeed": 24.6,
+    "timerAfterSpeed": 23,
+    "oldVictory": true
+  },
+  "finishedAt": "2026-10-01T13:51:36.629Z",
+  "finalTargeted": {
+    "toast": {
+      "text": "补给到账 · +40 培养币",
+      "rect": {
+        "x": 30.769229888916016,
+        "y": 268.358154296875,
+        "width": 328.4615478515625,
+        "height": 36.60003662109375,
+        "top": 268.358154296875,
+        "right": 359.2307777404785,
+        "bottom": 304.95819091796875,
+        "left": 30.769229888916016
+      },
+      "top": "80px"
+    },
+    "action": {
+      "x": 28.89230728149414,
+      "y": 721.9430541992188,
+      "width": 332.21539306640625,
+      "height": 43.169189453125,
+      "top": 721.9430541992188,
+      "right": 361.1077003479004,
+      "bottom": 765.1122436523438,
+      "left": 28.89230728149414
+    },
+    "overlap": false,
+    "insufficient": true,
+    "focusX": {
+      "html": "<button class=\"hub-cat-scene\" data-action=\"cat\" aria-label=\"查看面条猫\"><img class=\"hub-nest\" src=\"assets/nest_fabric_v1.png\" alt=\"布艺猫窝\"><img class=\"hub-resident\" src=\"assets/cat_noodle_pose0.png\" alt=\"面条猫\"><span>面条 <b>Lv.5</b> ♡</span></button>",
+      "action": "cat",
+      "connected": true
+    },
+    "focusEsc": {
+      "html": "<button class=\"hub-cat-scene\" data-action=\"cat\" aria-label=\"查看面条猫\"><img class=\"hub-nest\" src=\"assets/nest_fabric_v1.png\" alt=\"布艺猫窝\"><img class=\"hub-resident\" src=\"assets/cat_noodle_pose0.png\" alt=\"面条猫\"><span>面条 <b>Lv.5</b> ♡</span></button>",
+      "action": "cat",
+      "connected": true,
+      "dialogOpen": false
+    },
+    "consoleErrors": [
+      {
+        "text": "Failed to load resource: the server responded with a status of 404 (File not found)",
+        "location": {
+          "url": "http://127.0.0.1:8876/favicon.ico",
+          "line": 0,
+          "column": 0,
+          "lineNumber": 0,
+          "columnNumber": 0
+        }
+      }
+    ],
+    "responses": []
+  },
+  "finalRetest": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "iconLink": "data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%278%27 fill=%27%23e7c98f%27/%3E%3Ctext x=%274%27 y=%2724%27 font-size=%2724%27%3E猫%3C/text%3E%3C/svg%3E",
+    "requestedFaviconIco": false,
+    "badResponses": [],
+    "requestFailures": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "emptyBeforeReward": {
+      "text": "",
+      "visibility": "hidden",
+      "height": 36
+    },
+    "toast": {
+      "text": "补给到账 · +40 培养币",
+      "visibility": "visible",
+      "rect": {
+        "x": 12,
+        "y": 230.28125,
+        "width": 366,
+        "height": 36,
+        "top": 230.28125,
+        "right": 378,
+        "bottom": 266.28125,
+        "left": 12
+      },
+      "height": 36
+    },
+    "hubIntro": {
+      "x": 12,
+      "y": 146.6875,
+      "width": 366,
+      "height": 77.59375,
+      "top": 146.6875,
+      "right": 378,
+      "bottom": 224.28125,
+      "left": 12
+    },
+    "hubScreen": {
+      "x": 12,
+      "y": 280.28125,
+      "width": 366,
+      "height": 650.6618041992188,
+      "top": 280.28125,
+      "right": 378,
+      "bottom": 930.9430541992188,
+      "left": 12
+    },
+    "toastIntersectsHubScreen": false,
+    "emptyAfterRewardExpiry": {
+      "text": "",
+      "visibility": "hidden",
+      "height": 36
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "name": "CatGame.PlayModeTests",
+  "references": [
+    "CatGame.Core",
+    "CatGame.Runtime",
+    "CatGame.Presentation"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ]
+}

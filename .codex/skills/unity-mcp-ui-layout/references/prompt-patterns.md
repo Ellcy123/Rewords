@@ -1,0 +1,455 @@
+# Prompt Patterns for Unity MCP UI Work
+
+Use these patterns to keep UI work incremental and verifiable.
+
+## Pattern 1: Start With Discovery
+
+Use when the scene already contains UI.
+
+```text
+Inspect the current scene UI before editing anything.
+Identify whether this is UGUI or UI Toolkit.
+List the root UI objects/files, the scaling setup, and the likely source of the layout issue.
+Do not modify assets yet.
+```
+
+## Pattern 2: Build the Shell First
+
+Use when creating a new interface from scratch.
+
+```text
+Create only the root UI shell for this screen.
+Set up the correct canvas or root visual element, scaling rules, and the main top-level regions.
+Do not add detailed widgets yet.
+After creating the shell, capture a screenshot and summarize what still needs adjustment.
+```
+
+## Pattern 3: Add One Region
+
+Use after the shell is stable.
+
+```text
+Add only the [header/content/footer/sidebar/modal] region.
+Keep layout rules clean and avoid hard-coded positions unless unavoidable.
+After the change, capture a screenshot and check for clipping, uneven spacing, or anchor issues.
+```
+
+## Pattern 4: Repair a Broken Layout
+
+Use when the current UI exists but looks wrong.
+
+```text
+Fix this layout without redesigning unrelated parts.
+Inspect the parent chain first and explain whether the issue comes from scaling, anchors/flex rules, text sizing, or conflicting layout controllers.
+Apply the smallest structural fix, then verify with a screenshot.
+```
+
+## Pattern 4A: Stay In Repair Mode
+
+Use when the screen already exists and the user wants a bounded fix, not a redesign.
+
+```text
+Treat this as a repair of the existing UI, not as a new screen build.
+Inspect the current parent chain first, keep the scope bounded to the named region, and preserve the current style unless it is the direct source of the problem.
+Only widen the change if you can explain why the parent structure or shared asset is the real cause.
+```
+
+## Pattern 5: Cross-Resolution Verification
+
+Use before finalizing.
+
+```text
+Verify this UI at the main target resolution and at one additional aspect ratio.
+Report which elements stretch, clip, drift, or bunch together.
+Only make the minimum changes needed to stabilize the layout across both views.
+```
+
+## Pattern 6: Image Plus Resolution Layout Build
+
+Use when the user provides a mockup or screenshot and target resolution.
+
+```text
+Use the attached layout image as the composition reference and [WIDTHxHEIGHT] as the reference resolution.
+Before creating objects, run a layer-to-Transform tree pass, identify the major UI regions, group the top-level composition by anchor ownership, and estimate each region's normalized position and size.
+If raster item analysis is useful, produce a candidate item ledger with confidence band, evidence, suggested role, crop padding, 9-slice candidate status, and accept/hold/reject review decision before item-level UI rect planning.
+For any split runtime or repeated item, produce an item-level UI rect plan with source rect, normalized rect, parent-local rect or fit mode, and asset/crop plan.
+Create the parent containers and anchors first.
+If the same structure repeats, make one reusable prefab or reusable layout block before placing all copies.
+If a region looks like a single image resource, keep it as one image unless runtime behavior requires it to be split.
+Do not translate the image into raw pixel coordinates unless a fixed-size element truly requires it.
+After implementation, capture a screenshot and compare it against the reference image.
+Use `manage_camera` for the screenshot capture.
+```
+
+If no explicit target resolution is provided, use the mockup image's native resolution as the reference resolution instead of falling back immediately to `1920x1080`.
+
+When the plan needs fixed sections or will be reused across agents, use `../../templates/mockup-layout-plan.yaml` for the layer tree, candidate item ledger, item rect plan, asset crop plan, and verification targets.
+
+## Pattern 6A: Mockup Screenshot To Prefab
+
+Use when the user uploads or drops a mockup screenshot, design image, reference image, or UI 시안 and asks to turn, convert, make, generate, or create a Unity UI prefab.
+
+```text
+Use the uploaded mockup screenshot as the composition reference.
+Before creating prefab assets, produce a layer-to-RectTransform tree pass, identify the target UI stack, the top-level anchor-owned regions, and the repeated structures that should become reusable prefabs or layout blocks.
+If using semi-automated item detection, produce a candidate item ledger first and only promote accepted candidates into item-level UI rect plans.
+For split runtime leaves and repeated prefab units, produce an item-level UI rect plan with source rect, normalized rect, parent-local rect or fit mode, and asset/crop plan.
+Create parent containers before leaf widgets, keep decorative baked regions whole unless runtime behavior requires splitting, and verify the prefab instance with a screenshot.
+```
+
+For a structured planning artifact, copy `../../templates/mockup-layout-plan.yaml` and keep accepted, held, and rejected candidates separated before object creation.
+
+## Pattern 7: Image-Based Layout Repair
+
+Use when the current UI should match an image more closely.
+
+```text
+Compare the current UI against the provided layout image at [WIDTHxHEIGHT].
+Find where the composition diverges.
+Fix parent containers, top-level anchor grouping, and scaling rules before adjusting local offsets.
+Convert repeated structures into reusable prefabs or reusable layout blocks when the same shape appears multiple times.
+Collapse over-modeled decorative regions back into a single image when they are likely one baked asset.
+Keep the repair proportional to the reference image, not tied to arbitrary screen pixels.
+Use `manage_camera` to verify the repaired result against the image.
+```
+
+## Pattern 17: Use Mockup Native Resolution First
+
+Use when the user provides a design image but does not explicitly name a target resolution.
+
+```text
+Inspect the mockup image and capture its native pixel resolution first.
+Use that mockup resolution as the planning reference frame instead of defaulting to 1920x1080.
+Estimate geometry as normalized ratios from the mockup, then convert those ratios into anchors and offsets for implementation.
+If a separate target resolution is later provided, keep the mockup as the composition space and the target resolution as the implementation space.
+```
+
+## Pattern 18: Decompose the Mockup by Runtime Responsibility
+
+Use when a mockup exists and the agent might over-split decorative regions into fake widgets.
+
+```text
+Before creating objects, inspect the mockup and decide which regions should stay as one baked visual asset, which regions should become interactive UI elements, and which repeated regions should become reusable blocks.
+Decompose by runtime responsibility, not by visual outline alone.
+If a candidate item ledger is produced, review each candidate as accept/hold/reject before turning it into a split item.
+For each runtime or repeated item that is split out, record its item-level UI rect plan and explain why the split is needed.
+Keep decorative regions whole unless interaction, animation, dynamic text, or adaptive layout requires separation.
+Turn repeated structures into reusable prefabs or reusable layout blocks instead of rebuilding them manually.
+```
+
+## Pattern 19: Stabilize Text Before Shrinking Fonts
+
+Use when labels, counters, or descriptions are breaking the layout.
+
+```text
+Treat text as a layout driver for this task.
+Inspect the parent width rule, wrapping behavior, overflow mode, and reusable text styles first.
+Decide explicitly whether each important text region should stay single-line, wrap, truncate, or grow its container.
+Only reduce font size after the container and sibling layout rules are already stable.
+Leave reasonable headroom for slightly longer labels or runtime value growth.
+```
+
+## Pattern 20: Map a Notch-Agnostic Mockup Into Safe Area
+
+Use when a mobile mockup looks like a clean rectangle but the real target device has a notch or home indicator.
+
+```text
+Treat the mockup as composition guidance, not as raw unsafe edge geometry.
+Identify the correct safe-area owner first, then remap top and bottom spacing inside that safe-area-owned container.
+Preserve the mockup's hierarchy and spacing rhythm, but do not preserve raw top or bottom edge pixels if that would place controls into unsafe areas.
+Verify portrait and landscape when the target product supports both.
+```
+
+## Pattern 21: Avoid Risky Shared Asset Base Edits
+
+Use when the requested change may touch a common prefab, sprite, material, or TMP style.
+
+```text
+Inspect whether this change targets a truly shared asset family before editing it.
+If the request is one-screen or one-flow specific, prefer a variant, wrapper, or local override instead of editing the shared base directly.
+Only edit the shared asset when the change clearly belongs to the common contract and would make sense across other usages too.
+```
+
+## Pattern 22: Repair a UI Toolkit Screen Through Container Ownership
+
+Use when the target clearly belongs to UI Toolkit.
+
+```text
+Treat this as a UI Toolkit repair.
+Inspect the current UIDocument, UXML, USS, and visual tree first.
+Identify which containers should own flex direction, width, overflow, and scroll behavior.
+Reduce leaf-level overrides, move repeatable intent into USS classes, and verify the result at the target width and one narrower width.
+```
+
+## Pattern 23: Stabilize UI Toolkit Text and Overflow
+
+Use when UI Toolkit labels, tabs, or body text are breaking the layout.
+
+```text
+Treat text behavior as structural.
+Inspect the parent width rule, white-space or wrapping behavior, overflow handling, and reusable USS text roles first.
+Decide whether important text regions should wrap, truncate, remain single-line, or grow their parent before shrinking fonts.
+Verify the result at a narrower width so the fix is not overfit to one screen size.
+```
+
+## Pattern 23A: UI Toolkit Mockup Build
+
+Use when UI Toolkit is explicit or project-inferred from decisive ownership evidence.
+
+```text
+Route this mockup build through ui-stack-selection.md and references/ui-toolkit-build-workflow.md.
+Approve the neutral mockup-layout-plan/v2 plan before creating or updating UXML and USS, then verify the resolved visual tree, import and console state, main and alternate screenshots, and applicable behavior.
+Treat the user's word "prefab" as reusable intent: default to a UXML/VisualTreeAsset template plus USS classes, and create a host prefab only for explicit host reuse or scene lifecycle ownership.
+Report tool limitations and fallback evidence.
+```
+
+## Pattern 24: Verify Another Known Usage Before Shared Base Edit
+
+Use when a requested fix might touch a shared prefab, sprite, material, or TMP style directly.
+
+```text
+Before editing the shared asset directly, inspect one additional known usage of the same asset family.
+Compare whether the requested change really belongs to the shared contract or should stay local through a variant, wrapper, duplicated asset, or local override.
+Do not edit the shared base until that comparison is explicit.
+```
+
+## Pattern 25: Verify a Shared Sprite or Material First
+
+Use when a local visual repair might otherwise mutate a common sprite or material.
+
+```text
+Inspect whether this sprite or material is shared before changing it.
+Find one additional usage of the same asset and compare whether the requested visual adjustment should really apply there too.
+If the change is local, keep it in a duplicated or screen-owned asset instead of mutating the shared one.
+```
+
+## Pattern 26: Verify a Shared TMP Style First
+
+Use when a text rescue might otherwise rewrite a common text style.
+
+```text
+Inspect whether the current TMP style is shared before changing it.
+Find one additional usage of the same style role and compare whether the requested text adjustment belongs to the shared role or only to this screen.
+If it is only a local rescue, keep it out of the shared style.
+```
+
+## Pattern 27: Verify With Longer Localized Strings
+
+Use when the screen must survive both shorter source text and longer translated text.
+
+```text
+Treat this as a localization-sensitive layout task.
+Verify the UI with one shorter source-text set and one longer translated-text set before calling the layout stable.
+For each important text region, decide whether it should wrap, truncate, remain single-line, or grow its container.
+Do not use font shrinking as the default first fix.
+```
+
+## Pattern 28: Stabilize Long Labels, Body Text, and Number Growth Together
+
+Use when long labels, multi-line descriptions, and growing counters all compete for space.
+
+```text
+Inspect which containers own width and spacing first.
+Let descriptions wrap where appropriate, keep button labels balanced, and give counters room for realistic value growth.
+Do not rely on extreme auto-size ranges or one-screen-only string lengths.
+Verify the result with one longer text sample and one larger numeric sample.
+```
+
+## Pattern 29: Verify Mobile Layout Across Device Profiles
+
+Use when the screen is mobile-first and should not be approved after one portrait check only.
+
+```text
+Verify this mobile UI at the main target profile, one taller phone profile, and one wider mobile or tablet profile when the product may support it.
+Report what changes in safe area pressure, spacing, clipping, and panel balance across those profiles.
+Do not assume portrait-only unless the product or task explicitly says so.
+```
+
+## Pattern 30: Compare Current UI Against the Mockup First
+
+Use when a screen already exists and should be repaired toward a reference image.
+
+```text
+Compare the current UI against the provided mockup before making changes.
+Identify which mismatches come from parent containers, anchor ownership, scaling rules, safe-area handling, or text behavior.
+Fix the highest-impact structural mismatch first, then verify the repaired result against the mockup with a screenshot.
+```
+
+## Pattern 31: Repair Only One Named Region
+
+Use when the user wants a bounded repair rather than a broad redesign.
+
+```text
+Repair only the named region of the current UI.
+Keep the rest of the screen unchanged unless the parent structure is the direct cause.
+Inspect the current parent chain first, explain the likely structural cause, then apply the smallest fix that stabilizes that region.
+Verify both the repaired region and one full-screen view after the change.
+```
+
+## Pattern 8: Script-Aware UI Editing
+
+Use when script changes are necessary.
+
+```text
+Make the required script or component changes for this UI feature.
+Script tools trigger automatic import and compilation; wait for editor state to settle and use `read_console` for errors before continuing with more UI work.
+Then use `manage_camera` to capture a screenshot and confirm the UI still matches the intended layout.
+```
+
+## Pattern 9: Default Repair Strategy
+
+Use when the request is vague.
+
+```text
+Do not generate the whole UI at once.
+Inspect first, then create or fix the interface in small slices.
+Prioritize structure over visual polish, and verify each slice with a screenshot before moving on.
+```
+
+## Pattern 9A: Decide Repair Mode vs Build Mode First
+
+Use when it is not yet clear whether the request is a bounded repair or a fresh screen build.
+
+```text
+Inspect the current UI first and decide whether this request should stay in repair mode or switch to build mode.
+If the relevant UI already exists, default to repair mode until a rebuild is clearly justified.
+If a rebuild is required, explain why the existing structure is not worth preserving before switching modes.
+```
+
+## Pattern 9B: Follow Asset Discovery Priority
+
+Use when asset-aware mode is active and the project likely already has reusable UI assets.
+
+```text
+Treat this as asset-aware work and follow a strict discovery order.
+Check reusable prefabs first, then variant or wrapper paths, then existing sprite-backed visuals, then text style systems, then materials. For missing image roles, verify an available image-generation skill and its execution requirements before asking about temporary generation or generating. Without the skill, skip both the generation question and generation even if an image tool exists, and use project assets or authorized placeholders. If an index is unavailable, inspect project assets directly.
+Do not jump straight to placeholder-driven reconstruction while obvious reusable assets still exist.
+```
+
+## Pattern 9C: Name and Place Assets Deliberately
+
+Use when asset-aware mode creates or promotes UI assets during the task.
+
+```text
+If this work creates, extracts, or promotes UI assets, name and place them deliberately.
+Keep shared assets in predictable shared UI folders, keep screen-owned assets near the screen that owns them, and keep placeholder assets visibly provisional.
+Do not leave reusable assets with clone, copy, temp, or coordinate-based names.
+```
+
+## Pattern 9D: Normalize Shared vs Screen-Owned Asset Placement
+
+Use when asset-aware work also needs naming and folder cleanup.
+
+```text
+Normalize the names and folder placement of the UI assets touched by this change.
+Decide which assets are truly shared and which are still screen-owned.
+Move shared assets into stable common UI folders, keep screen-owned assets near the screen that owns them, group real variant families near their base prefab, and keep placeholders visibly provisional.
+Do not keep copy-history or coordinate-based names.
+```
+
+## Pattern 10: UGUI HUD Build
+
+Use when building or repairing a HUD.
+
+```text
+Build this screen as UGUI HUD.
+Use a `Canvas -> SafeAreaRoot -> HUDRoot` structure and create corner or center containers before leaf widgets.
+Choose anchors by screen role: top-left, top-right, bottom-left, bottom-right, bottom-center, or center.
+Do not hand-place repeated buttons or status icons if a layout group should own them.
+Turn repeated HUD clusters into reusable prefabs when the same structure appears more than once.
+After implementation, capture a screenshot at [WIDTHxHEIGHT] and one alternate aspect ratio.
+```
+
+## Pattern 11: UGUI Inventory Build
+
+Use when building inventories, shops, crafting panels, or equipment windows.
+
+```text
+Build this UI as a UGUI inventory-style panel.
+Create the main panel first, then split it into navigation, list or grid, detail panel, and bottom actions as needed.
+Use layout groups for repeated slots and rows instead of manually positioning each slot.
+Keep sizing parent-driven and verify that the detail panel does not overlap the list at [WIDTHxHEIGHT].
+```
+
+## Pattern 12: UGUI Popup Build
+
+Use when building or repairing a modal popup.
+
+```text
+Build this UI as a UGUI popup with `Canvas -> ModalLayer`, and keep `Dimmer` and `PopupRoot` as siblings under `ModalLayer`.
+Apply safe-area handling to `PopupRoot`, not to `ModalLayer` and not to individual popup children.
+Keep the dimmer full-screen and keep popup content local to `PopupRoot`.
+Use centered anchors for the popup by default, then use `manage_camera` to verify that close buttons and footer actions stay inside the safe area at [WIDTHxHEIGHT].
+```
+
+## Pattern 13: UGUI Mobile Safe Area Repair
+
+Use when mobile UI clips into the notch, rounded corners, or home indicator area.
+
+```text
+Repair this mobile UGUI layout with explicit safe-area ownership.
+Use `SafeAreaRoot` for normal full-screen UI, but for modal popups apply safe-area handling to `PopupRoot`.
+Remove duplicate per-widget safe-area offsets where a single parent should own them.
+Verify both portrait and landscape and report any controls that still touch unsafe edges.
+```
+
+## Pattern 14: Reusable Prefab First
+
+Use when the same UI shape appears more than once.
+
+```text
+Inspect the repeated UI structures on this screen before rebuilding them.
+Choose the cleanest shared structure, extract one reusable prefab or template-style block, and keep screen-level placement in the parent container.
+Only vary data-level content such as text, icon, count, or state per instance.
+Verify that one structural change propagates cleanly across repeated instances.
+```
+
+## Pattern 15: Reuse Existing Prefab Before Creating a New One
+
+Use when the project may already contain a similar reusable widget.
+
+```text
+Before creating a new prefab, inspect whether the project already contains a reusable UI block for this role.
+Choose explicitly between direct reuse, prefab variant, thin wrapper, or a new base prefab.
+Do not edit a shared base prefab for a one-screen request unless you verify the impact on another known usage.
+Keep screen-level placement in the parent container rather than pushing one-screen offsets into the shared prefab.
+```
+
+## Pattern 16: Use a Prefab Variant, Not a Base Edit
+
+Use when the base prefab is structurally right but the current screen needs scoped differences.
+
+```text
+Inspect the existing base prefab and determine whether this request should be solved as a prefab variant instead of a direct base edit.
+Keep the base contract intact, limit overrides to local visuals, optional sections, or scoped behavior, and do not push one-screen placement rules into the variant asset.
+If the variant would need too many structural overrides, stop and reconsider a wrapper or new base prefab instead.
+Verify the target variant and one related base-family usage with screenshots.
+```
+
+## Mixed-Agent Capability Routing
+
+Use when work is already delegated or orchestration is authorized. Follow `agent-capability-routing.md`; this prompt does not require creating a fixed team.
+
+```text
+서브에이전트별로 실제 이미지 수신과 비전, 이미지 생성 스킬과 도구,
+작업 파일 접근, Unity 연결을 먼저 확인해서 역할을 나눠줘.
+비전이 없는 작업자에게는 확인된 구조와 좌표, 자산 경로를 전달해 구현만 맡기고,
+이미지 분석과 최종 시각 검수는 해당 이미지를 볼 수 있는 담당자에게 맡겨줘.
+생성 여부 질문과 생성은 스킬을 보유하고 실행 가능한 담당자만 수행해줘.
+상위 에이전트의 기능이나 이미지 첨부가 자동으로 전달된다고 가정하지 말고,
+각 결과에 입력·출력 버전, 실제 수행한 검사와 담당자, 미완료 검증을 남겨줘.
+```
+
+## Sequential UI Planning With Image Resources
+
+Use when a new screen needs user decisions before implementation. Follow `ui-planning-workflow.md` and `image-asset-workflow.md`.
+
+```text
+이 시안으로 Unity UI를 만들되, 먼저 목적과 동작에서 미정인 부분을 하나씩 질문해줘.
+시안과 프로젝트 근거로 영역 구성과 트리 구조를 제안하고, 확정된 내용부터 구현해줘.
+이미 답한 결정은 다시 묻지 말고, 프로젝트 이미지 리소스를 직접 확인해서 적합한 것을 재사용해줘.
+부족한 이미지가 있고 에이전트가 이미지 생성 스킬을 보유하며 실행할 수 있는 경우에만 임시 리소스를 만들지 확인해줘.
+이미지 생성 스킬이 없으면 도구만 있더라도 생성 여부를 묻거나 생성하지 말아줘.
+생성하기로 정한 이미지는 검수하고 Unity에 임포트해 해당 UI에 적용한 뒤 화면에서 검증해줘.
+임시 리소스 여부와 남은 시각 검토는 기술 검증 결과와 구분해서 알려줘.
+```

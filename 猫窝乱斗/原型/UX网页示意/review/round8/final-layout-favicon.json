@@ -1,0 +1,58 @@
+{
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "iconLink": "data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%278%27 fill=%27%23e7c98f%27/%3E%3Ctext x=%274%27 y=%2724%27 font-size=%2724%27%3E猫%3C/text%3E%3C/svg%3E",
+  "requestedFaviconIco": false,
+  "badResponses": [],
+  "requestFailures": [],
+  "consoleErrors": [],
+  "pageErrors": [],
+  "emptyBeforeReward": {
+    "text": "",
+    "visibility": "hidden",
+    "height": 36
+  },
+  "toast": {
+    "text": "补给到账 · +40 培养币",
+    "visibility": "visible",
+    "rect": {
+      "x": 12,
+      "y": 230.28125,
+      "width": 366,
+      "height": 36,
+      "top": 230.28125,
+      "right": 378,
+      "bottom": 266.28125,
+      "left": 12
+    },
+    "height": 36
+  },
+  "hubIntro": {
+    "x": 12,
+    "y": 146.6875,
+    "width": 366,
+    "height": 77.59375,
+    "top": 146.6875,
+    "right": 378,
+    "bottom": 224.28125,
+    "left": 12
+  },
+  "hubScreen": {
+    "x": 12,
+    "y": 280.28125,
+    "width": 366,
+    "height": 650.6618041992188,
+    "top": 280.28125,
+    "right": 378,
+    "bottom": 930.9430541992188,
+    "left": 12
+  },
+  "toastIntersectsHubScreen": false,
+  "emptyAfterRewardExpiry": {
+    "text": "",
+    "visibility": "hidden",
+    "height": 36
+  }
+}

@@ -1,0 +1,12 @@
+
+Aborting batchmode due to failure:
+Scripts have compiler errors.
+
+The Editor log reported the following errors:
+  CS0136 Assets/CatGame/Tests/PlayMode/PaperUiRegressionPlayModeTests.cs(73,28): A local or parameter named 'name' cannot be declared in this scope because that name is used in an enclosing local scope to define a local or parameter
+  CS0136 Assets/CatGame/Tests/PlayMode/PaperUiRegressionPlayModeTests.cs(82,28): A local or parameter named 'name' cannot be declared in this scope because that name is used in an enclosing local scope to define a local or parameter
+  CS0136 Assets/CatGame/Tests/PlayMode/PaperUiRegressionPlayModeTests.cs(73,28): A local or parameter named 'name' cannot be declared in this scope because that name is used in an enclosing local scope to define a local or parameter
+  CS0136 Assets/CatGame/Tests/PlayMode/PaperUiRegressionPlayModeTests.cs(82,28): A local or parameter named 'name' cannot be declared in this scope because that name is used in an enclosing local scope to define a local or parameter
+  CS0136 Assets/CatGame/Tests/PlayMode/PaperUiRegressionPlayModeTests.cs(73,28): A local or parameter named 'name' cannot be declared in this scope because that name is used in an enclosing local scope to define a local or parameter
+  CS0136 Assets/CatGame/Tests/PlayMode/PaperUiRegressionPlayModeTests.cs(82,28): A local or parameter named 'name' cannot be declared in this scope because that name is used in an enclosing local scope to define a local or parameter
+  [crash] Scripts have compiler errors.

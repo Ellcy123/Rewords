@@ -1,0 +1,332 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f33695b1d9b2e4458a5d0f1eeef17b1b, type: 3}
+  m_Name: GameContent
+  m_EditorClassIdentifier: CatGame.Runtime::CatGame.Runtime.GameContent
+  definition:
+    version: demo-4-v1
+    initialGold: 10
+    initialSize: 4
+    initialCatId: noodle
+    expansionPrices: 080000000c000000
+    pieces:
+    - id: noodle
+      displayName: "\u9762\u6761"
+      description: "\u6BCF 3 \u6B21\u653B\u51FB\uFF1A\u989D\u5916\u8FDE\u51FB 2 \u6B21"
+      targetCat: 
+      isCat: 1
+      price: 6
+      damage: 4
+      intervalTicks: 20000
+      skillEvery: 3
+      skillValue: 2
+      skill: 1
+      effect: 0
+      effectValue: 0
+      poses:
+      - cells:
+        - x: 0
+          y: 0
+        - x: 1
+          y: 0
+        - x: 2
+          y: 0
+      - cells:
+        - x: 0
+          y: 0
+        - x: 1
+          y: 0
+        - x: 0
+          y: 1
+    - id: hammer
+      displayName: "\u9524\u9524"
+      description: "\u6BCF 3 \u6B21\u653B\u51FB\uFF1A\u53CC\u500D\u91CD\u51FB"
+      targetCat: 
+      isCat: 1
+      price: 6
+      damage: 9
+      intervalTicks: 30000
+      skillEvery: 3
+      skillValue: 2
+      skill: 2
+      effect: 0
+      effectValue: 0
+      poses:
+      - cells:
+        - x: 0
+          y: 0
+        - x: 1
+          y: 0
+        - x: 2
+          y: 0
+        - x: 3
+          y: 0
+      - cells:
+        - x: 0
+          y: 0
+        - x: 1
+          y: 0
+        - x: 0
+          y: 1
+        - x: 1
+          y: 1
+    - id: pillow
+      displayName: "\u6795\u5934"
+      description: "\u6BCF 3 \u6B21\u653B\u51FB\uFF1A\u5168\u961F\u62A4\u76FE +6"
+      targetCat: 
+      isCat: 1
+      price: 5
+      damage: 2
+      intervalTicks: 25000
+      skillEvery: 3
+      skillValue: 6
+      skill: 3
+      effect: 0
+      effectValue: 0
+      poses:
+      - cells:
+        - x: 0
+          y: 0
+        - x: 1
+          y: 0
+    - id: feather
+      displayName: "\u7FBD\u6BDB\u9017\u732B\u68D2"
+      description: "\u76F8\u90BB\u732B\u653B\u51FB\u901F\u5EA6 +60%"
+      targetCat: 
+      isCat: 0
+      price: 3
+      damage: 0
+      intervalTicks: 0
+      skillEvery: 3
+      skillValue: 0
+      skill: 0
+      effect: 0
+      effectValue: 60
+      poses:
+      - cells:
+        - x: 0
+          y: 0
+        - x: 1
+          y: 0
+    - id: bell
+      displayName: "\u54D1\u94C3\u94DB"
+      description: "\u76F8\u90BB\u732B\u6BCF\u6B21\u653B\u51FB +2"
+      targetCat: 
+      isCat: 0
+      price: 3
+      damage: 0
+      intervalTicks: 0
+      skillEvery: 3
+      skillValue: 0
+      skill: 0
+      effect: 1
+      effectValue: 2
+      poses:
+      - cells:
+        - x: 0
+          y: 0
+    - id: mouse
+      displayName: "\u53D1\u6761\u9F20"
+      description: "\u76F8\u90BB\u9762\u6761\u8FDE\u51FB\u65F6\u989D\u5916\u4F24\u5BB3
+        +8"
+      targetCat: noodle
+      isCat: 0
+      price: 4
+      damage: 0
+      intervalTicks: 0
+      skillEvery: 3
+      skillValue: 0
+      skill: 0
+      effect: 2
+      effectValue: 8
+      poses:
+      - cells:
+        - x: 0
+          y: 0
+        - x: 1
+          y: 0
+    - id: fish
+      displayName: "\u5C0F\u9C7C\u5E72"
+      description: "\u76F8\u90BB\u9524\u9524\u91CD\u51FB\u4F24\u5BB3 +6"
+      targetCat: hammer
+      isCat: 0
+      price: 4
+      damage: 0
+      intervalTicks: 0
+      skillEvery: 3
+      skillValue: 0
+      skill: 0
+      effect: 3
+      effectValue: 6
+      poses:
+      - cells:
+        - x: 0
+          y: 0
+    - id: cushion
+      displayName: "\u65E7\u8F6F\u57AB"
+      description: "\u6BCF\u53EA\u76F8\u90BB\u732B\u63D0\u4F9B\u5F00\u573A\u62A4\u76FE
+        +6"
+      targetCat: 
+      isCat: 0
+      price: 3
+      damage: 0
+      intervalTicks: 0
+      skillEvery: 3
+      skillValue: 0
+      skill: 0
+      effect: 4
+      effectValue: 6
+      poses:
+      - cells:
+        - x: 0
+          y: 0
+        - x: 1
+          y: 0
+    - id: lamp
+      displayName: "\u6B6A\u5934\u591C\u706F"
+      description: "\u76F8\u90BB\u732B\u6BCF\u6B21\u6280\u80FD\uFF1A\u62A4\u76FE
+        +2"
+      targetCat: 
+      isCat: 0
+      price: 4
+      damage: 0
+      intervalTicks: 0
+      skillEvery: 3
+      skillValue: 0
+      skill: 0
+      effect: 5
+      effectValue: 2
+      poses:
+      - cells:
+        - x: 0
+          y: 0
+    stages:
+    - id: under-bed
+      displayName: "\u5E8A\u5E95\u7684\u624B"
+      hint: "\u4E70\u9017\u732B\u68D2\uFF0C\u8D34\u7740\u9762\u6761\u653E\uFF1A\u653B\u51FB\u4F1A\u66F4\u5FEB\u3002"
+      enemyHP: 32
+      enemyDamage: 3
+      enemyIntervalTicks: 30000
+      playerHP: 40
+      limitTicks: 250000
+      reward: 6
+      advancedShop: 0
+      shop:
+      - feather
+      - 
+      - 
+    - id: clock
+      displayName: "\u5012\u8D70\u95F9\u949F"
+      hint: "\u54D1\u94C3\u94DB\u8D34\u7740\u732B\u653E\uFF0C\u6BCF\u4E00\u51FB\u90FD\u66F4\u75BC\u3002"
+      enemyHP: 50
+      enemyDamage: 4
+      enemyIntervalTicks: 30000
+      playerHP: 40
+      limitTicks: 250000
+      reward: 6
+      advancedShop: 0
+      shop:
+      - bell
+      - feather
+      - 
+    - id: wardrobe
+      displayName: "\u8863\u67DC\u957F\u5F71"
+      hint: "\u53D1\u6761\u9F20\u8D34\u7740\u9762\u6761\uFF0C\u8FDE\u51FB\u4F1A\u8FFD\u52A0\u4F24\u5BB3\u3002"
+      enemyHP: 70
+      enemyDamage: 5
+      enemyIntervalTicks: 30000
+      playerHP: 40
+      limitTicks: 250000
+      reward: 6
+      advancedShop: 0
+      shop:
+      - mouse
+      - bell
+      - feather
+    - id: dream-eater
+      displayName: "\u5077\u68A6\u7684\u5BA2\u4EBA"
+      hint: "\u65B0\u732B\u4E0A\u67B6\uFF01\u53EF\u6362\u59FF\u52BF\u3001\u4E70\u683C\u5B50\uFF0C\u8BA9\u7528\u54C1\u540C\u65F6\u8FDE\u5230\u591A\u53EA\u732B\u3002"
+      enemyHP: 160
+      enemyDamage: 6
+      enemyIntervalTicks: 25000
+      playerHP: 40
+      limitTicks: 250000
+      reward: 6
+      advancedShop: 1
+      shop:
+      - hammer
+      - pillow
+      - cushion
+      - fish
+      - lamp
+      - feather
+      - bell
+      - mouse
+      - noodle
+  font: {fileID: 12800000, guid: 3f95c5994d4d146e3b49997ff12070c6, type: 3}
+  visuals:
+  - id: bg_bedroom_gameplay
+    sprite: {fileID: 21300000, guid: 4a95cff6882b0465caa23b95f62bdefd, type: 3}
+  - id: cat_hammer_pose0
+    sprite: {fileID: 21300000, guid: f71a0d9991d534bdf8866d5fb90efb68, type: 3}
+  - id: cat_hammer_pose1
+    sprite: {fileID: 21300000, guid: d38eb5c80b6d145f8b5322c93b72bdd2, type: 3}
+  - id: cat_noodle_pose0
+    sprite: {fileID: 21300000, guid: 48df9246ace4d4d398c38f543dc63559, type: 3}
+  - id: cat_noodle_pose1
+    sprite: {fileID: 21300000, guid: 3e29ce71fe96e4772b2279ee93056092, type: 3}
+  - id: cat_pillow_pose0
+    sprite: {fileID: 21300000, guid: 1f16861ba5edb4e4da84fe1627d45e06, type: 3}
+  - id: enemy_clock
+    sprite: {fileID: 21300000, guid: 784704a865be1408a95820d54a02dd9e, type: 3}
+  - id: enemy_clock_dial
+    sprite: {fileID: 21300000, guid: 9fd533119c8f84bba89059f96d860c34, type: 3}
+  - id: enemy_under_bed
+    sprite: {fileID: 21300000, guid: d00d615ecca8d43afbc23fc1d92b0218, type: 3}
+  - id: enemy_under_bed_display
+    sprite: {fileID: 21300000, guid: b443cbfa02c9a4fe1ae206ac83757290, type: 3}
+  - id: enemy_wardrobe
+    sprite: {fileID: 21300000, guid: 7b85749d8f8ab42ce8afd20fe530b95c, type: 3}
+  - id: enemy_wardrobe_display
+    sprite: {fileID: 21300000, guid: 3a075090ec2f14ec589af2eb842c4b3e, type: 3}
+  - id: item_bell
+    sprite: {fileID: 21300000, guid: cd5c85cfb68544c838781d4bbde2a32a, type: 3}
+  - id: item_cushion
+    sprite: {fileID: 21300000, guid: af537ed98555a46ddb94ffb23ca5dd68, type: 3}
+  - id: item_feather
+    sprite: {fileID: 21300000, guid: 2bcc2fa48f9c444d1b46c64f394f565e, type: 3}
+  - id: item_fish
+    sprite: {fileID: 21300000, guid: 1fe79b948df834eb19da6a6e6c98e057, type: 3}
+  - id: item_lamp
+    sprite: {fileID: 21300000, guid: 1b61cd681a80a42239e7b74b48934859, type: 3}
+  - id: item_mouse
+    sprite: {fileID: 21300000, guid: c91a0f4fea3c94bf3be485d1765a660e, type: 3}
+  - id: ui_button_disabled
+    sprite: {fileID: 21300000, guid: 6ffe302258ec74175a121bf92224766c, type: 3}
+  - id: ui_button_normal
+    sprite: {fileID: 21300000, guid: d236c7d50502244c2bade84856120aa9, type: 3}
+  - id: ui_button_pressed
+    sprite: {fileID: 21300000, guid: 907bacd0d8fa641fcae7c0a6f7876a95, type: 3}
+  - id: ui_cell_connected
+    sprite: {fileID: 21300000, guid: facd376e504d3475ca2fb991648eb7a1, type: 3}
+  - id: ui_cell_invalid
+    sprite: {fileID: 21300000, guid: 04391d1581a61463eb7dd1ea84e4f68a, type: 3}
+  - id: ui_cell_normal
+    sprite: {fileID: 21300000, guid: f7fc2ff7437ca4235b402ce48b164b99, type: 3}
+  - id: ui_cell_selected
+    sprite: {fileID: 21300000, guid: fa4742eeb7d824c8c92da88cd48cd978, type: 3}
+  - id: ui_panel
+    sprite: {fileID: 21300000, guid: e1aefba780b71496f90aa3c1248ccf3d, type: 3}
+  - id: ui_shop_disabled
+    sprite: {fileID: 21300000, guid: dce1d9e26acfb40aa8a93e27b61fcbc5, type: 3}
+  - id: ui_shop_normal
+    sprite: {fileID: 21300000, guid: 42978e01e12564eb4a74e24aca2c5ca7, type: 3}

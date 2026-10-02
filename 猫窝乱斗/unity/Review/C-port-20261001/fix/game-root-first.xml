@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="9" result="Failed(Child)" total="9" passed="7" failed="2" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-10-01 13:46:19Z" end-time="2026-10-01 13:46:19Z" duration="0.8921486">
+  <test-suite type="TestSuite" id="1020" name="猫窝乱斗 Demo" fullname="猫窝乱斗 Demo" runstate="Runnable" testcasecount="12" result="Failed" site="Child" start-time="2026-10-01 13:46:19Z" end-time="2026-10-01 13:46:19Z" duration="0.892149" total="9" passed="7" failed="2" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1015" name="CatGame.PlayModeTests.dll" fullname="/Users/m4/project/rewords/猫窝乱斗/unity/Library/ScriptAssemblies/CatGame.PlayModeTests.dll" runstate="Runnable" testcasecount="12" result="Failed" site="Child" start-time="2026-10-01 13:46:19Z" end-time="2026-10-01 13:46:19Z" duration="0.888796" total="9" passed="7" failed="2" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="81378" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1016" name="CatGame" fullname="CatGame" runstate="Runnable" testcasecount="12" result="Failed" site="Child" start-time="2026-10-01 13:46:19Z" end-time="2026-10-01 13:46:19Z" duration="0.888483" total="9" passed="7" failed="2" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="1017" name="Tests" fullname="CatGame.Tests" runstate="Runnable" testcasecount="12" result="Failed" site="Child" start-time="2026-10-01 13:46:19Z" end-time="2026-10-01 13:46:19Z" duration="0.888299" total="9" passed="7" failed="2" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestSuite" id="1018" name="PlayMode" fullname="CatGame.Tests.PlayMode" runstate="Runnable" testcasecount="12" result="Failed" site="Child" start-time="2026-10-01 13:46:19Z" end-time="2026-10-01 13:46:19Z" duration="0.888073" total="9" passed="7" failed="2" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-suite type="TestFixture" id="1001" name="GameRootPlayModeTests" fullname="CatGame.Tests.PlayMode.GameRootPlayModeTests" classname="CatGame.Tests.PlayMode.GameRootPlayModeTests" runstate="Runnable" testcasecount="9" result="Failed" site="Child" start-time="2026-10-01 13:46:19Z" end-time="2026-10-01 13:46:19Z" duration="0.887527" total="9" passed="7" failed="2" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1004" name="BattleAttackSwitchesCatFramesAndShowsClawEffect" fullname="CatGame.Tests.PlayMode.GameRootPlayModeTests.BattleAttackSwitchesCatFramesAndShowsClawEffect" methodname="BattleAttackSwitchesCatFramesAndShowsClawEffect" classname="CatGame.Tests.PlayMode.GameRootPlayModeTests" runstate="Runnable" seed="1446461772" result="Passed" start-time="2026-10-01 13:46:19Z" end-time="2026-10-01 13:46:19Z" duration="0.131909" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1003" name="FormalArtRegistryAndWholeFootprintRenderingAreActive" fullname="CatGame.Tests.PlayMode.GameRootPlayModeTests.FormalArtRegistryAndWholeFootprintRenderingAreActive" methodname="FormalArtRegistryAndWholeFootprintRenderingAreActive" classname="CatGame.Tests.PlayMode.GameRootPlayModeTests" runstate="Runnable" seed="1687654494" result="Passed" start-time="2026-10-01 13:46:19Z" end-time="2026-10-01 13:46:19Z" duration="0.011582" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1010" name="GoldRewardAdCancellationPreservesGoldAndConfirmationAwardsFour" fullname="CatGame.Tests.PlayMode.GameRootPlayModeTests.GoldRewardAdCancellationPreservesGoldAndConfirmationAwardsFour" methodname="GoldRewardAdCancellationPreservesGoldAndConfirmationAwardsFour" classname="CatGame.Tests.PlayMode.GameRootPlayModeTests" runstate="Runnable" seed="1102823854" result="Passed" start-time="2026-10-01 13:46:19Z" end-time="2026-10-01 13:46:19Z" duration="0.021152" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1007" name="ManualPauseApplicationPauseAndFocusDoNotUnpauseEachOther" fullname="CatGame.Tests.PlayMode.GameRootPlayModeTests.ManualPauseApplicationPauseAndFocusDoNotUnpauseEachOther" methodname="ManualPauseApplicationPauseAndFocusDoNotUnpauseEachOther" classname="CatGame.Tests.PlayMode.GameRootPlayModeTests" runstate="Runnable" seed="2109065406" result="Passed" start-time="2026-10-01 13:46:19Z" end-time="2026-10-01 13:46:19Z" duration="0.153080" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1009" name="MenuRestartCanCancelOrConfirmWithoutLosingTheWrongRun" fullname="CatGame.Tests.PlayMode.GameRootPlayModeTests.MenuRestartCanCancelOrConfirmWithoutLosingTheWrongRun" methodname="MenuRestartCanCancelOrConfirmWithoutLosingTheWrongRun" classname="CatGame.Tests.PlayMode.GameRootPlayModeTests" runstate="Runnable" seed="562249374" result="Passed" start-time="2026-10-01 13:46:19Z" end-time="2026-10-01 13:46:19Z" duration="0.030045" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1002" name="PreparationBattleAndResultPanelsStayInTheirPhaseSlots" fullname="CatGame.Tests.PlayMode.GameRootPlayModeTests.PreparationBattleAndResultPanelsStayInTheirPhaseSlots" methodname="PreparationBattleAndResultPanelsStayInTheirPhaseSlots" classname="CatGame.Tests.PlayMode.GameRootPlayModeTests" runstate="Runnable" seed="1309231859" result="Failed" start-time="2026-10-01 13:46:19Z" end-time="2026-10-01 13:46:19Z" duration="0.015356" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  FabricNest overlaps TeamStatus vertically.
+  Expected: less than or equal to 853.423096f
+  But was:  855.692322f
+]]></message>
+                  <stack-trace><![CDATA[at CatGame.Tests.PlayMode.GameRootPlayModeTests.AssertSeparated (System.String upperName, System.String lowerName) [0x00040] in /Users/m4/project/rewords/猫窝乱斗/unity/Assets/CatGame/Tests/PlayMode/GameRootPlayModeTests.cs:297
+at CatGame.Tests.PlayMode.GameRootPlayModeTests+<PreparationBattleAndResultPanelsStayInTheirPhaseSlots>d__5.MoveNext () [0x004a5] in /Users/m4/project/rewords/猫窝乱斗/unity/Assets/CatGame/Tests/PlayMode/GameRootPlayModeTests.cs:83
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in ./Library/PackageCache/com.unity.test-framework@629486125cfc/UnityEngine.TestRunner/NUnitExtensions/Attributes/TestEnumerator.cs:44
+]]></stack-trace>
+                </failure>
+              </test-case>
+              <test-case id="1008" name="SpeedAndManualPauseControlTheSameCombatClock" fullname="CatGame.Tests.PlayMode.GameRootPlayModeTests.SpeedAndManualPauseControlTheSameCombatClock" methodname="SpeedAndManualPauseControlTheSameCombatClock" classname="CatGame.Tests.PlayMode.GameRootPlayModeTests" runstate="Runnable" seed="1787131122" result="Passed" start-time="2026-10-01 13:46:19Z" end-time="2026-10-01 13:46:19Z" duration="0.492061" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1005" name="StandaloneInputModuleRaycastsAndRoutesMouseClickToShopButton" fullname="CatGame.Tests.PlayMode.GameRootPlayModeTests.StandaloneInputModuleRaycastsAndRoutesMouseClickToShopButton" methodname="StandaloneInputModuleRaycastsAndRoutesMouseClickToShopButton" classname="CatGame.Tests.PlayMode.GameRootPlayModeTests" runstate="Runnable" seed="859964319" result="Passed" start-time="2026-10-01 13:46:19Z" end-time="2026-10-01 13:46:19Z" duration="0.017928" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1006" name="UiPointerEventsBuyDragStartAndAdvanceThroughAllFourStages" fullname="CatGame.Tests.PlayMode.GameRootPlayModeTests.UiPointerEventsBuyDragStartAndAdvanceThroughAllFourStages" methodname="UiPointerEventsBuyDragStartAndAdvanceThroughAllFourStages" classname="CatGame.Tests.PlayMode.GameRootPlayModeTests" runstate="Runnable" seed="107301820" result="Failed" start-time="2026-10-01 13:46:19Z" end-time="2026-10-01 13:46:19Z" duration="0.009450" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  Expected: 1
+  But was:  0
+]]></message>
+                  <stack-trace><![CDATA[at CatGame.Tests.PlayMode.GameRootPlayModeTests+<UiPointerEventsBuyDragStartAndAdvanceThroughAllFourStages>d__9.MoveNext () [0x000d5] in /Users/m4/project/rewords/猫窝乱斗/unity/Assets/CatGame/Tests/PlayMode/GameRootPlayModeTests.cs:192
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in ./Library/PackageCache/com.unity.test-framework@629486125cfc/UnityEngine.TestRunner/NUnitExtensions/Attributes/TestEnumerator.cs:44
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[Saving results to: /Users/m4/project/rewords/猫窝乱斗/unity/Review/C-port-20261001/fix/game-root-first.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

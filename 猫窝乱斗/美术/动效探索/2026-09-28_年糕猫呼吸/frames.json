@@ -1,0 +1,54 @@
+{
+  "cell": [
+    512,
+    512
+  ],
+  "output_frame": [
+    608,
+    608
+  ],
+  "common_padding": [
+    32,
+    16
+  ],
+  "loop_ms": 2000,
+  "alignment": "integer translation matched on fixed face ROI; no deformation or interpolation",
+  "frames": [
+    {
+      "frame": 1,
+      "dx": 0,
+      "dy": 0,
+      "duration_ms": 400
+    },
+    {
+      "frame": 2,
+      "dx": 15,
+      "dy": 0,
+      "duration_ms": 300
+    },
+    {
+      "frame": 3,
+      "dx": 27,
+      "dy": 0,
+      "duration_ms": 300
+    },
+    {
+      "frame": 4,
+      "dx": 0,
+      "dy": 69,
+      "duration_ms": 400
+    },
+    {
+      "frame": 5,
+      "dx": 15,
+      "dy": 69,
+      "duration_ms": 300
+    },
+    {
+      "frame": 6,
+      "dx": 26,
+      "dy": 69,
+      "duration_ms": 300
+    }
+  ]
+}

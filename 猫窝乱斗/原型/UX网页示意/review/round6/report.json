@@ -1,0 +1,165 @@
+{
+  "revision": "v9.2",
+  "checks": [
+    {
+      "name": "desktop C sample is 390×693 frame",
+      "pass": true,
+      "detail": "{\"x\":37,\"y\":253.796875,\"width\":390,\"height\":693.328125}"
+    },
+    {
+      "name": "desktop prep is 390×693 frame",
+      "pass": true,
+      "detail": "{\"x\":226,\"y\":1334.921875,\"width\":390,\"height\":693.328125}"
+    },
+    {
+      "name": "390 prep shop, price, coins, and purchase control visible",
+      "pass": true,
+      "detail": "pre-purchase shop view captured"
+    },
+    {
+      "name": "buy toy deducts 3 gold",
+      "pass": true,
+      "detail": "coins=7"
+    },
+    {
+      "name": "both cat and toy remain visible in storage after purchase",
+      "pass": true,
+      "detail": "cat=true, toy=true"
+    },
+    {
+      "name": "mouse drag places cat in nest",
+      "pass": true,
+      "detail": "cat position=left: 0%; top: 25%;"
+    },
+    {
+      "name": "toy placed on adjacent row and link indicator appears",
+      "pass": true,
+      "detail": "已连接面条 · 出爪更快了"
+    },
+    {
+      "name": "390 battle countdown has seconds suffix and attack label",
+      "pass": true,
+      "detail": "{\"timer\":\"23.4秒\",\"intent\":\"1.4\",\"unitVisible\":true,\"attack\":\"普通攻击\"}"
+    },
+    {
+      "name": "pause label is explicit and timer/HP freeze",
+      "pass": true,
+      "detail": "{\"pausedStart\":{\"timer\":\"23.0秒\",\"enemy\":\"28 / 32\",\"status\":\"已暂停\"},\"pausedEnd\":{\"timer\":\"23.0秒\",\"enemy\":\"28 / 32\",\"status\":\"已暂停\"}}"
+    },
+    {
+      "name": "continue restores live combat",
+      "pass": true,
+      "detail": "Ⅱ"
+    },
+    {
+      "name": "timer advances after continue",
+      "pass": true,
+      "detail": "before=23.0秒, after=22.3秒"
+    },
+    {
+      "name": "victory has no seconds suffix or return-this-night button",
+      "pass": true,
+      "detail": "result=✦ 美梦守住了 ✦ 胜利 第 1 夜已完成, intent=已结束"
+    },
+    {
+      "name": "360 narrow prep still shows both storage pieces and 7 coins",
+      "pass": true,
+      "detail": "both item cards visible after buying"
+    },
+    {
+      "name": "360 narrow prep shows connected toy hint",
+      "pass": true,
+      "detail": "已连接面条 · 出爪更快了"
+    },
+    {
+      "name": "360 battle frame is scaled to fit and countdown suffix stays visible",
+      "pass": true,
+      "detail": "{\"timer\":\"23.4秒\",\"intent\":\"1.4\",\"screen\":{\"x\":12,\"y\":183.078125,\"width\":336,\"height\":597.328857421875,\"top\":183.078125,\"right\":348,\"bottom\":780.406982421875,\"left\":12},\"unitVisible\":true}"
+    },
+    {
+      "name": "no page errors",
+      "pass": true,
+      "detail": "none"
+    }
+  ],
+  "screenshots": [
+    "/Users/m4/project/rewords/猫窝乱斗/原型/UX网页示意/review/round6/c-text-frame.png",
+    "/Users/m4/project/rewords/猫窝乱斗/原型/UX网页示意/review/round6/prep-text-frame.png",
+    "/Users/m4/project/rewords/猫窝乱斗/原型/UX网页示意/review/round6/prep-shop-390.png",
+    "/Users/m4/project/rewords/猫窝乱斗/原型/UX网页示意/review/round6/prep-linked-390.png",
+    "/Users/m4/project/rewords/猫窝乱斗/原型/UX网页示意/review/round6/battle-active-390.png",
+    "/Users/m4/project/rewords/猫窝乱斗/原型/UX网页示意/review/round6/battle-paused-390.png",
+    "/Users/m4/project/rewords/猫窝乱斗/原型/UX网页示意/review/round6/battle-victory-390.png",
+    "/Users/m4/project/rewords/猫窝乱斗/原型/UX网页示意/review/round6/prep-purchased-360.png",
+    "/Users/m4/project/rewords/猫窝乱斗/原型/UX网页示意/review/round6/battle-active-360.png",
+    "/Users/m4/project/rewords/猫窝乱斗/原型/UX网页示意/review/round6/prep-shop-360.png"
+  ],
+  "errors": [],
+  "metrics390Prep": {
+    ".game-header": {
+      "x": 12,
+      "y": 96.4,
+      "width": 366,
+      "height": 75.1,
+      "text": "今晚的对手 · 床底的手\n第 1 夜 布置猫窝\n先放入猫咪"
+    },
+    ".shop": {
+      "x": 12,
+      "y": 171.5,
+      "width": 366,
+      "height": 125.8,
+      "text": "床边小铺\n●\n10\n金币\n＋\n逗猫棒\n\n贴着猫放 · 加速\n\n买下 · 3 金币"
+    },
+    "#buy": {
+      "x": 184.7,
+      "y": 251.3,
+      "width": 118.6,
+      "height": 35.7,
+      "text": "买下 · 3 金币"
+    },
+    ".gold": {
+      "x": 241.4,
+      "y": 176.2,
+      "width": 116,
+      "height": 37.5,
+      "text": "●\n10\n金币\n＋"
+    },
+    ".board-heading": {
+      "x": 12,
+      "y": 297.2,
+      "width": 366,
+      "height": 37.5,
+      "text": "猫窝\n先拖入面条\n♥ 40"
+    },
+    ".hint": {
+      "x": 32.6,
+      "y": 651,
+      "width": 324.7,
+      "height": 22.5,
+      "text": "先把待放区的面条拖进猫窝"
+    },
+    "#storage": {
+      "x": 30.8,
+      "y": 677.3,
+      "width": 328.5,
+      "height": 64.8,
+      "text": "待放区 1\n按住拖入\n面条\n3 格"
+    },
+    "#stored-cat": {
+      "x": 30.8,
+      "y": 701.7,
+      "width": 159.5,
+      "height": 41.3,
+      "text": "面条\n3 格"
+    }
+  },
+  "metricsNote": "An initial geometry sample queried duplicated selectors outside #battle-screen and was discarded; it is not used as evidence. The run script now scopes all battle geometry under #battle-screen. Visual findings use the final screenshots and the remaining direct state assertions.",
+  "visualReview": {
+    "result": "PASS",
+    "revision": "v9.2",
+    "cFrame": "Readable HP and next-hit group; 1.5-second static countdown is distinct from standard attack feedback.",
+    "narrowBattle": "At 360 viewport, rendered battle frame is 336×597 px; text remains readable and all health bars, nest, and cat label remain inside the frame.",
+    "preparation": "At 360 viewport, product, price, purchase button, gold, connected-toy hint, and both stored pieces are visible and legible.",
+    "note": "Visual judgment is based on screenshots; it is not a user aesthetic acceptance."
+  }
+}

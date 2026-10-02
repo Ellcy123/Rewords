@@ -1,0 +1,38 @@
+{
+  "id": "cat_noodle_curl",
+  "folder": "01_角色/面条/蜷曲/待机与普攻",
+  "source_reference": "/Users/m4/project/rewords/猫窝乱斗/美术/导出/首批正式资产/角色/cat_noodle_curl.png",
+  "sheet_px": [
+    1536,
+    1024
+  ],
+  "cell_px": [
+    512,
+    512
+  ],
+  "alpha_extrema": [
+    0,
+    254
+  ],
+  "state": "first_pass_review",
+  "timing": {
+    "idle_ms": [
+      420,
+      420,
+      420
+    ],
+    "attack_ms": [
+      120,
+      80,
+      180,
+      350
+    ],
+    "attack_order": [
+      4,
+      5,
+      6,
+      1
+    ]
+  },
+  "processing": "equal-cell crop and GIF backdrop only; no inpainting, alignment, warp or retouch"
+}

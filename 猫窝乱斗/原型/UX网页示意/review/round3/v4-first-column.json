@@ -1,0 +1,219 @@
+{
+  "hover": {
+    "catPos": null,
+    "ghostHidden": false,
+    "ghostInvalid": false,
+    "ghostLeft": "0%",
+    "ghostTop": "0%",
+    "targets": [
+      0,
+      1,
+      2
+    ],
+    "hint": "松手放下",
+    "trace": [
+      {
+        "type": "pointermove",
+        "target": "stored-cat",
+        "pointerType": "mouse",
+        "x": 161,
+        "y": 816
+      },
+      {
+        "type": "pointerdown",
+        "target": "stored-cat",
+        "pointerType": "mouse",
+        "x": 161,
+        "y": 816
+      },
+      {
+        "type": "gotpointercapture",
+        "target": "stored-cat",
+        "pointerType": "mouse",
+        "x": 161,
+        "y": 779
+      },
+      {
+        "type": "pointermove",
+        "target": "stored-cat",
+        "pointerType": "mouse",
+        "x": 161,
+        "y": 779
+      },
+      {
+        "type": "pointermove",
+        "target": "stored-cat",
+        "pointerType": "mouse",
+        "x": 160,
+        "y": 743
+      },
+      {
+        "type": "pointermove",
+        "target": "stored-cat",
+        "pointerType": "mouse",
+        "x": 160,
+        "y": 706
+      },
+      {
+        "type": "pointermove",
+        "target": "stored-cat",
+        "pointerType": "mouse",
+        "x": 159,
+        "y": 669
+      },
+      {
+        "type": "pointermove",
+        "target": "stored-cat",
+        "pointerType": "mouse",
+        "x": 159,
+        "y": 633
+      },
+      {
+        "type": "pointermove",
+        "target": "stored-cat",
+        "pointerType": "mouse",
+        "x": 158,
+        "y": 596
+      },
+      {
+        "type": "pointermove",
+        "target": "stored-cat",
+        "pointerType": "mouse",
+        "x": 158,
+        "y": 560
+      },
+      {
+        "type": "pointermove",
+        "target": "stored-cat",
+        "pointerType": "mouse",
+        "x": 158,
+        "y": 523
+      },
+      {
+        "type": "pointermove",
+        "target": "stored-cat",
+        "pointerType": "mouse",
+        "x": 157,
+        "y": 487
+      },
+      {
+        "type": "pointermove",
+        "target": "stored-cat",
+        "pointerType": "mouse",
+        "x": 157,
+        "y": 450
+      }
+    ]
+  },
+  "final": {
+    "catPos": 0,
+    "hint": "给面条买件玩具，再拖到它旁边",
+    "trace": [
+      {
+        "type": "pointermove",
+        "target": "stored-cat",
+        "pointerType": "mouse",
+        "x": 161,
+        "y": 816
+      },
+      {
+        "type": "pointerdown",
+        "target": "stored-cat",
+        "pointerType": "mouse",
+        "x": 161,
+        "y": 816
+      },
+      {
+        "type": "gotpointercapture",
+        "target": "stored-cat",
+        "pointerType": "mouse",
+        "x": 161,
+        "y": 779
+      },
+      {
+        "type": "pointermove",
+        "target": "stored-cat",
+        "pointerType": "mouse",
+        "x": 161,
+        "y": 779
+      },
+      {
+        "type": "pointermove",
+        "target": "stored-cat",
+        "pointerType": "mouse",
+        "x": 160,
+        "y": 743
+      },
+      {
+        "type": "pointermove",
+        "target": "stored-cat",
+        "pointerType": "mouse",
+        "x": 160,
+        "y": 706
+      },
+      {
+        "type": "pointermove",
+        "target": "stored-cat",
+        "pointerType": "mouse",
+        "x": 159,
+        "y": 669
+      },
+      {
+        "type": "pointermove",
+        "target": "stored-cat",
+        "pointerType": "mouse",
+        "x": 159,
+        "y": 633
+      },
+      {
+        "type": "pointermove",
+        "target": "stored-cat",
+        "pointerType": "mouse",
+        "x": 158,
+        "y": 596
+      },
+      {
+        "type": "pointermove",
+        "target": "stored-cat",
+        "pointerType": "mouse",
+        "x": 158,
+        "y": 560
+      },
+      {
+        "type": "pointermove",
+        "target": "stored-cat",
+        "pointerType": "mouse",
+        "x": 158,
+        "y": 523
+      },
+      {
+        "type": "pointermove",
+        "target": "stored-cat",
+        "pointerType": "mouse",
+        "x": 157,
+        "y": 487
+      },
+      {
+        "type": "pointermove",
+        "target": "stored-cat",
+        "pointerType": "mouse",
+        "x": 157,
+        "y": 450
+      },
+      {
+        "type": "pointerup",
+        "target": "stored-cat",
+        "pointerType": "mouse",
+        "x": 157,
+        "y": 450
+      },
+      {
+        "type": "lostpointercapture",
+        "target": "stored-cat",
+        "pointerType": "mouse",
+        "x": 157,
+        "y": 450
+      }
+    ]
+  }
+}

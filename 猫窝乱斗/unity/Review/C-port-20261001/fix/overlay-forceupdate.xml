@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="1" result="Failed(Child)" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-10-01 13:58:18Z" end-time="2026-10-01 13:58:18Z" duration="0.1489123">
+  <test-suite type="TestSuite" id="1020" name="猫窝乱斗 Demo" fullname="猫窝乱斗 Demo" runstate="Runnable" testcasecount="12" result="Failed" site="Child" start-time="2026-10-01 13:58:18Z" end-time="2026-10-01 13:58:18Z" duration="0.148912" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1015" name="CatGame.PlayModeTests.dll" fullname="/Users/m4/project/rewords/猫窝乱斗/unity/Library/ScriptAssemblies/CatGame.PlayModeTests.dll" runstate="Runnable" testcasecount="12" result="Failed" site="Child" start-time="2026-10-01 13:58:18Z" end-time="2026-10-01 13:58:18Z" duration="0.145789" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="83198" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1016" name="CatGame" fullname="CatGame" runstate="Runnable" testcasecount="12" result="Failed" site="Child" start-time="2026-10-01 13:58:18Z" end-time="2026-10-01 13:58:18Z" duration="0.145529" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="1017" name="Tests" fullname="CatGame.Tests" runstate="Runnable" testcasecount="12" result="Failed" site="Child" start-time="2026-10-01 13:58:18Z" end-time="2026-10-01 13:58:18Z" duration="0.145340" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestSuite" id="1018" name="PlayMode" fullname="CatGame.Tests.PlayMode" runstate="Runnable" testcasecount="12" result="Failed" site="Child" start-time="2026-10-01 13:58:18Z" end-time="2026-10-01 13:58:18Z" duration="0.145116" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-suite type="TestFixture" id="1001" name="GameRootPlayModeTests" fullname="CatGame.Tests.PlayMode.GameRootPlayModeTests" classname="CatGame.Tests.PlayMode.GameRootPlayModeTests" runstate="Runnable" testcasecount="9" result="Failed" site="Child" start-time="2026-10-01 13:58:18Z" end-time="2026-10-01 13:58:18Z" duration="0.144536" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1006" name="UiPointerEventsBuyDragStartAndAdvanceThroughAllFourStages" fullname="CatGame.Tests.PlayMode.GameRootPlayModeTests.UiPointerEventsBuyDragStartAndAdvanceThroughAllFourStages" methodname="UiPointerEventsBuyDragStartAndAdvanceThroughAllFourStages" classname="CatGame.Tests.PlayMode.GameRootPlayModeTests" runstate="Runnable" seed="1543944071" result="Failed" start-time="2026-10-01 13:58:18Z" end-time="2026-10-01 13:58:18Z" duration="0.140086" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  The settlement overlay must intercept input meant for the underlying speed control. Top hit: PortraitFrame; hits: PortraitFrame
+  Expected: True
+  But was:  False
+]]></message>
+                  <stack-trace><![CDATA[at CatGame.Tests.PlayMode.GameRootPlayModeTests+<UiPointerEventsBuyDragStartAndAdvanceThroughAllFourStages>d__9.MoveNext () [0x005d6] in /Users/m4/project/rewords/猫窝乱斗/unity/Assets/CatGame/Tests/PlayMode/GameRootPlayModeTests.cs:261
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in ./Library/PackageCache/com.unity.test-framework@629486125cfc/UnityEngine.TestRunner/NUnitExtensions/Attributes/TestEnumerator.cs:44
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[Saving results to: /Users/m4/project/rewords/猫窝乱斗/unity/Review/C-port-20261001/fix/overlay-forceupdate.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

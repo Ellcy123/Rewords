@@ -1,0 +1,99 @@
+{
+  "initial": {
+    "gold": 10,
+    "owned": false,
+    "catPos": null,
+    "pos": null,
+    "connected": false,
+    "startDisabled": true,
+    "catStoredHidden": false,
+    "toyStoredHidden": true,
+    "catHidden": true,
+    "toyPlacedHidden": true
+  },
+  "clickCellDidNotPlace": true,
+  "buy": {
+    "gold": 7,
+    "toyWaits": true
+  },
+  "catPlaced": {
+    "gold": 7,
+    "owned": true,
+    "catPos": 5,
+    "pos": null,
+    "connected": false,
+    "startDisabled": false,
+    "catStoredHidden": true,
+    "toyStoredHidden": false,
+    "catHidden": false,
+    "toyPlacedHidden": true
+  },
+  "linkedLineup": {
+    "gold": 7,
+    "owned": true,
+    "catPos": 5,
+    "pos": 1,
+    "connected": true,
+    "startDisabled": false,
+    "catStoredHidden": true,
+    "toyStoredHidden": true,
+    "catHidden": false,
+    "toyPlacedHidden": false
+  },
+  "collisionRestored": true,
+  "outOfBoundsRestored": true,
+  "toyReturned": {
+    "gold": 7,
+    "owned": true,
+    "catPos": 5,
+    "pos": null,
+    "connected": false,
+    "startDisabled": false,
+    "catStoredHidden": true,
+    "toyStoredHidden": false,
+    "catHidden": false,
+    "toyPlacedHidden": true
+  },
+  "catReturned": {
+    "gold": 7,
+    "owned": true,
+    "catPos": null,
+    "pos": null,
+    "connected": false,
+    "startDisabled": true,
+    "catStoredHidden": false,
+    "toyStoredHidden": false,
+    "catHidden": true,
+    "toyPlacedHidden": true
+  },
+  "restored": {
+    "gold": 7,
+    "owned": true,
+    "catPos": 5,
+    "pos": 1,
+    "connected": true,
+    "startDisabled": false,
+    "catStoredHidden": true,
+    "toyStoredHidden": true,
+    "catHidden": false,
+    "toyPlacedHidden": false
+  },
+  "battle": {
+    "phaseText": "自动战斗 · 无需操作",
+    "cells": 0,
+    "shop": 0,
+    "board": 0,
+    "catHidden": false,
+    "toyHidden": false,
+    "catPosition": [
+      "25%",
+      "25%"
+    ],
+    "toyPosition": [
+      "25%",
+      "0%"
+    ],
+    "prepInert": true
+  },
+  "errors": []
+}

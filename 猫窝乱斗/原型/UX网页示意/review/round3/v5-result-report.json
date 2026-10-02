@@ -1,0 +1,36 @@
+{
+  "flow": "drag cat to index 5 -> start -> wait 11.2 seconds -> victory -> test prep/battle tabs and start -> reset",
+  "victory": {
+    "phase": "result",
+    "resultVisible": true,
+    "backButtonPresent": false,
+    "resultBackButtonPresent": false,
+    "visibleReturnToPrepButtons": 0
+  },
+  "afterSwitchingToPrep": {
+    "phaseStillResult": true,
+    "startText": "本夜已完成",
+    "startDisabled": true,
+    "shopInert": true,
+    "boardInert": true,
+    "storageInert": true,
+    "programmaticStartClickKeepsResult": true
+  },
+  "tabs": {
+    "switchToBattleKeepsResult": true,
+    "switchBackToPrepKeepsResult": true,
+    "tabChangeDoesNotUnlockArrangement": true
+  },
+  "externalReset": {
+    "phase": "prep",
+    "gold": 10,
+    "catPos": null,
+    "toyPos": null,
+    "storedCatVisible": true,
+    "boardCatHidden": true,
+    "startDisabled": true
+  },
+  "pageErrors": [],
+  "consoleNote": "First run logged one generic resource 404; a clean navigation with HTTP response monitoring found no 4xx and no page errors.",
+  "screenshots": ["v5-result-victory.png", "v5-result-full.png"]
+}

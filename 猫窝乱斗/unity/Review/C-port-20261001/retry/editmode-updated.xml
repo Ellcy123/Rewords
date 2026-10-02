@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="18" result="Passed" total="18" passed="18" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-10-01 13:30:25Z" end-time="2026-10-01 13:30:25Z" duration="0.0358333">
+  <test-suite type="TestSuite" id="1000" name="猫窝乱斗 Demo" fullname="猫窝乱斗 Demo" runstate="Runnable" testcasecount="18" result="Passed" start-time="2026-10-01 13:30:25Z" end-time="2026-10-01 13:30:25Z" duration="0.035833" total="18" passed="18" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1020" name="CatGame.EditModeTests.dll" fullname="/Users/m4/project/rewords/猫窝乱斗/unity/Library/ScriptAssemblies/CatGame.EditModeTests.dll" runstate="Runnable" testcasecount="18" result="Passed" start-time="2026-10-01 13:30:25Z" end-time="2026-10-01 13:30:25Z" duration="0.032404" total="18" passed="18" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="78925" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1021" name="CatGame" fullname="CatGame" runstate="Runnable" testcasecount="18" result="Passed" start-time="2026-10-01 13:30:25Z" end-time="2026-10-01 13:30:25Z" duration="0.032248" total="18" passed="18" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1022" name="Tests" fullname="CatGame.Tests" runstate="Runnable" testcasecount="18" result="Passed" start-time="2026-10-01 13:30:25Z" end-time="2026-10-01 13:30:25Z" duration="0.032136" total="18" passed="18" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1023" name="EditMode" fullname="CatGame.Tests.EditMode" runstate="Runnable" testcasecount="18" result="Passed" start-time="2026-10-01 13:30:25Z" end-time="2026-10-01 13:30:25Z" duration="0.032011" total="18" passed="18" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1001" name="CoreAndSessionTests" fullname="CatGame.Tests.EditMode.CoreAndSessionTests" classname="CatGame.Tests.EditMode.CoreAndSessionTests" runstate="Runnable" testcasecount="18" result="Passed" start-time="2026-10-01 13:30:25Z" end-time="2026-10-01 13:30:25Z" duration="0.031567" total="18" passed="18" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1004" name="AdjacencyRequiresAnOrthogonalSharedEdge" fullname="CatGame.Tests.EditMode.CoreAndSessionTests.AdjacencyRequiresAnOrthogonalSharedEdge" methodname="AdjacencyRequiresAnOrthogonalSharedEdge" classname="CatGame.Tests.EditMode.CoreAndSessionTests" runstate="Runnable" seed="206917340" result="Passed" start-time="2026-10-01 13:30:25Z" end-time="2026-10-01 13:30:25Z" duration="0.005329" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1009" name="ExactDeadlineEventIsResolvedBeforeTimeout" fullname="CatGame.Tests.EditMode.CoreAndSessionTests.ExactDeadlineEventIsResolvedBeforeTimeout" methodname="ExactDeadlineEventIsResolvedBeforeTimeout" classname="CatGame.Tests.EditMode.CoreAndSessionTests" runstate="Runnable" seed="1199664469" result="Passed" start-time="2026-10-01 13:30:25Z" end-time="2026-10-01 13:30:25Z" duration="0.003165" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1011" name="FourStageRecommendedPurchasesCarryGoldAndRewardsForwardExactlyOnce" fullname="CatGame.Tests.EditMode.CoreAndSessionTests.FourStageRecommendedPurchasesCarryGoldAndRewardsForwardExactlyOnce" methodname="FourStageRecommendedPurchasesCarryGoldAndRewardsForwardExactlyOnce" classname="CatGame.Tests.EditMode.CoreAndSessionTests" runstate="Runnable" seed="584825810" result="Passed" start-time="2026-10-01 13:30:25Z" end-time="2026-10-01 13:30:25Z" duration="0.004683" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1013" name="FourthStageRefreshBuySellAndExpansionUseExpectedCosts" fullname="CatGame.Tests.EditMode.CoreAndSessionTests.FourthStageRefreshBuySellAndExpansionUseExpectedCosts" methodname="FourthStageRefreshBuySellAndExpansionUseExpectedCosts" classname="CatGame.Tests.EditMode.CoreAndSessionTests" runstate="Runnable" seed="1197819233" result="Passed" start-time="2026-10-01 13:30:25Z" end-time="2026-10-01 13:30:25Z" duration="0.000615" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1016" name="GoldAdCancelDoesNotConsumeAndRepeatedSuccessPaysOnlyOnce" fullname="CatGame.Tests.EditMode.CoreAndSessionTests.GoldAdCancelDoesNotConsumeAndRepeatedSuccessPaysOnlyOnce" methodname="GoldAdCancelDoesNotConsumeAndRepeatedSuccessPaysOnlyOnce" classname="CatGame.Tests.EditMode.CoreAndSessionTests" runstate="Runnable" seed="1673315603" result="Passed" start-time="2026-10-01 13:30:25Z" end-time="2026-10-01 13:30:25Z" duration="0.000246" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1019" name="JsonStoreRestoresValidBackupAndQuarantinesCorruptPrimary" fullname="CatGame.Tests.EditMode.CoreAndSessionTests.JsonStoreRestoresValidBackupAndQuarantinesCorruptPrimary" methodname="JsonStoreRestoresValidBackupAndQuarantinesCorruptPrimary" classname="CatGame.Tests.EditMode.CoreAndSessionTests" runstate="Runnable" seed="1805470743" result="Passed" start-time="2026-10-01 13:30:25Z" end-time="2026-10-01 13:30:25Z" duration="0.006825" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1018" name="LoadingBattleRestartsFromSavedFormationWithoutCreditingAnotherReward" fullname="CatGame.Tests.EditMode.CoreAndSessionTests.LoadingBattleRestartsFromSavedFormationWithoutCreditingAnotherReward" methodname="LoadingBattleRestartsFromSavedFormationWithoutCreditingAnotherReward" classname="CatGame.Tests.EditMode.CoreAndSessionTests" runstate="Runnable" seed="1686199007" result="Passed" start-time="2026-10-01 13:30:25Z" end-time="2026-10-01 13:30:25Z" duration="0.000348" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1015" name="NewRunStartsWithCatWaitingAndRequiresPlacementBeforeBattle" fullname="CatGame.Tests.EditMode.CoreAndSessionTests.NewRunStartsWithCatWaitingAndRequiresPlacementBeforeBattle" methodname="NewRunStartsWithCatWaitingAndRequiresPlacementBeforeBattle" classname="CatGame.Tests.EditMode.CoreAndSessionTests" runstate="Runnable" seed="1514753882" result="Passed" start-time="2026-10-01 13:30:25Z" end-time="2026-10-01 13:30:25Z" duration="0.000316" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1003" name="PlacementRejectsOverlapAndOutOfBoundsButAllowsOwnCells" fullname="CatGame.Tests.EditMode.CoreAndSessionTests.PlacementRejectsOverlapAndOutOfBoundsButAllowsOwnCells" methodname="PlacementRejectsOverlapAndOutOfBoundsButAllowsOwnCells" classname="CatGame.Tests.EditMode.CoreAndSessionTests" runstate="Runnable" seed="1124302679" result="Passed" start-time="2026-10-01 13:30:25Z" end-time="2026-10-01 13:30:25Z" duration="0.000172" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1012" name="RecommendedRunCanWinTheDefault160HpFourthStageWithSharedOpeningShield" fullname="CatGame.Tests.EditMode.CoreAndSessionTests.RecommendedRunCanWinTheDefault160HpFourthStageWithSharedOpeningShield" methodname="RecommendedRunCanWinTheDefault160HpFourthStageWithSharedOpeningShield" classname="CatGame.Tests.EditMode.CoreAndSessionTests" runstate="Runnable" seed="629035097" result="Passed" start-time="2026-10-01 13:30:25Z" end-time="2026-10-01 13:30:25Z" duration="0.002955" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1017" name="ReviveRestartsTheSameLineupAtTwentyPercentExtraHealthAndCannotRepeat" fullname="CatGame.Tests.EditMode.CoreAndSessionTests.ReviveRestartsTheSameLineupAtTwentyPercentExtraHealthAndCannotRepeat" methodname="ReviveRestartsTheSameLineupAtTwentyPercentExtraHealthAndCannotRepeat" classname="CatGame.Tests.EditMode.CoreAndSessionTests" runstate="Runnable" seed="644188094" result="Passed" start-time="2026-10-01 13:30:25Z" end-time="2026-10-01 13:30:25Z" duration="0.000197" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1007" name="SameTimeLethalAttacksResolveTogetherAndMutualDeathIsALoss" fullname="CatGame.Tests.EditMode.CoreAndSessionTests.SameTimeLethalAttacksResolveTogetherAndMutualDeathIsALoss" methodname="SameTimeLethalAttacksResolveTogetherAndMutualDeathIsALoss" classname="CatGame.Tests.EditMode.CoreAndSessionTests" runstate="Runnable" seed="1304872200" result="Passed" start-time="2026-10-01 13:30:25Z" end-time="2026-10-01 13:30:25Z" duration="0.000115" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1005" name="SameTypeEquipmentCountsOncePerCatAndCanServeMultipleCats" fullname="CatGame.Tests.EditMode.CoreAndSessionTests.SameTypeEquipmentCountsOncePerCatAndCanServeMultipleCats" methodname="SameTypeEquipmentCountsOncePerCatAndCanServeMultipleCats" classname="CatGame.Tests.EditMode.CoreAndSessionTests" runstate="Runnable" seed="519296692" result="Passed" start-time="2026-10-01 13:30:25Z" end-time="2026-10-01 13:30:25Z" duration="0.000233" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1002" name="ShapeRotationNormalizesCoordinatesAndReturnsAfterFourTurns" fullname="CatGame.Tests.EditMode.CoreAndSessionTests.ShapeRotationNormalizesCoordinatesAndReturnsAfterFourTurns" methodname="ShapeRotationNormalizesCoordinatesAndReturnsAfterFourTurns" classname="CatGame.Tests.EditMode.CoreAndSessionTests" runstate="Runnable" seed="194713150" result="Passed" start-time="2026-10-01 13:30:25Z" end-time="2026-10-01 13:30:25Z" duration="0.000364" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1008" name="SkillShieldIsAvailableAgainstEnemyAttackAtTheSameTime" fullname="CatGame.Tests.EditMode.CoreAndSessionTests.SkillShieldIsAvailableAgainstEnemyAttackAtTheSameTime" methodname="SkillShieldIsAvailableAgainstEnemyAttackAtTheSameTime" classname="CatGame.Tests.EditMode.CoreAndSessionTests" runstate="Runnable" seed="1449753861" result="Passed" start-time="2026-10-01 13:30:25Z" end-time="2026-10-01 13:30:25Z" duration="0.000207" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1014" name="StartBattleRequiresACatOnTheBoard" fullname="CatGame.Tests.EditMode.CoreAndSessionTests.StartBattleRequiresACatOnTheBoard" methodname="StartBattleRequiresACatOnTheBoard" classname="CatGame.Tests.EditMode.CoreAndSessionTests" runstate="Runnable" seed="1953455230" result="Passed" start-time="2026-10-01 13:30:25Z" end-time="2026-10-01 13:30:25Z" duration="0.000125" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1006" name="ThreeCatsTriggerTheirOwnSkillsAndShieldOnTheirThirdAttack" fullname="CatGame.Tests.EditMode.CoreAndSessionTests.ThreeCatsTriggerTheirOwnSkillsAndShieldOnTheirThirdAttack" methodname="ThreeCatsTriggerTheirOwnSkillsAndShieldOnTheirThirdAttack" classname="CatGame.Tests.EditMode.CoreAndSessionTests" runstate="Runnable" seed="2146644966" result="Passed" start-time="2026-10-01 13:30:25Z" end-time="2026-10-01 13:30:25Z" duration="0.000210" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1010" name="TimeoutFailsAndCannotBeRevivedWithAnAd" fullname="CatGame.Tests.EditMode.CoreAndSessionTests.TimeoutFailsAndCannotBeRevivedWithAnAd" methodname="TimeoutFailsAndCannotBeRevivedWithAnAd" classname="CatGame.Tests.EditMode.CoreAndSessionTests" runstate="Runnable" seed="503668548" result="Passed" start-time="2026-10-01 13:30:25Z" end-time="2026-10-01 13:30:25Z" duration="0.000104" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: /Users/m4/project/rewords/猫窝乱斗/unity/Review/C-port-20261001/retry/editmode-updated.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

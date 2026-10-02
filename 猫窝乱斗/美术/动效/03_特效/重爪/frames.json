@@ -1,0 +1,30 @@
+{
+  "id": "heavy_impact",
+  "folder": "03_特效/重爪",
+  "source_reference": null,
+  "sheet_px": [
+    1536,
+    1024
+  ],
+  "cell_px": [
+    512,
+    512
+  ],
+  "alpha_extrema": [
+    0,
+    254
+  ],
+  "state": "first_pass_review",
+  "timing": {
+    "motion_ms": [
+      80,
+      90,
+      110,
+      90,
+      100,
+      130
+    ],
+    "showcase_pause_ms": 700
+  },
+  "processing": "equal-cell crop and GIF backdrop only; no inpainting, alignment, warp or retouch"
+}

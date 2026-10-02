@@ -1,0 +1,19 @@
+{
+  "success": true,
+  "command": "test",
+  "data": {
+    "projectPath": "/Users/m4/project/rewords/猫窝乱斗/unity",
+    "output": "/Users/m4/project/rewords/猫窝乱斗/unity/Review/C-port-20261001/retry/editmode-updated.xml",
+    "reports": {
+      "nunit": "/Users/m4/project/rewords/猫窝乱斗/unity/Review/C-port-20261001/retry/editmode-updated.xml",
+      "junit": null
+    },
+    "coverage": {
+      "requested": false,
+      "enabled": false,
+      "output": null
+    }
+  },
+  "errors": [],
+  "warnings": []
+}

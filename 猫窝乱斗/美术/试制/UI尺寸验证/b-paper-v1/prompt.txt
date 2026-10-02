@@ -1,0 +1,7 @@
+Use case: ui-mockup
+为《猫窝乱斗》试制一个主按钮的普通状态无字底图。所附 B 版纸片拼贴是唯一 UI 风格参考，重点继承参考中左侧黄色按钮的切角、墨线和双层错位纸片，绝不改为圆润软糖或绿色圆角按钮。仅输出单个完整按钮，不输出整张样板、不输出状态合集。
+设计方向：纸片拼贴。面板像精心裁出的平面纸片，微斜的切角和一处折角作为设计语言，边缘完整利落。按钮是两层错位纸片，按下态使错位收拢，选中物品格通过第二层外框表示。仅局部一小处纸纹，绝不满屏纸纹、写实瓦楞纸、撕裂毛边、胶带装饰或复古做旧。设计成熟而俏皮，造型简洁。
+本件配色：沿用 B 样图按钮的暖琥珀前纸与深橙底衬纸，深棕墨线。此配色仅适用于本件按钮，不是全项目固定配色。
+本件几何适配：最终逻辑尺寸248×52，横向宽条；可见按钮比例尽量248:52。前纸平直、两端简洁切角，衬纸只向右下露出相当于最终2–3像素的窄边。不要额外套宽边框。墨线最终约1.5像素。文字安全区约中心212×30，必须平整安静。按钮自身不画折角以免影响这件窄条按钮的文字；折角留给同家族大面板。只画底图，无播放符号、无文字、无字形、无数字、无装饰短线、无猫爪。完全正视二维平面，完整边缘、透明背景、适量透明留边。后续用程序叠加深棕文字，不能预画。
+美术风格提示词（沿用B原段）：
+stylized 2D hand-drawn game UI artwork, economical confident ink outlines, subtly irregular outer contours, controlled consistent border weight, clear simple silhouettes, clean flat fills, restrained planar shading, minimal surface rendering, generous quiet interiors, coherent corner shapes, clear visual hierarchy, crisp readability at small scale, understated playful character, no preschool picture-book aesthetic, no decorative clutter, no all-over grain, no soft-focus glow, no airbrushed gradients, no plastic gloss, no photorealistic materials, no 3D rendering

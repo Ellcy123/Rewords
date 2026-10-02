@@ -1,0 +1,134 @@
+{
+  "arranged": {
+    "phase": "prep",
+    "layout": "a",
+    "gold": 7,
+    "catPos": 5,
+    "toyPos": 1,
+    "boss": "32 / 32",
+    "ours": "40 / 40",
+    "timer": "25.0秒",
+    "intent": "等待开战",
+    "elapsed": null,
+    "period": null,
+    "bossStriking": false
+  },
+  "layouts": [
+    "a",
+    "b",
+    "c"
+  ],
+  "firstFeatherHit": {
+    "phase": "battle",
+    "layout": "a",
+    "gold": 7,
+    "catPos": 5,
+    "toyPos": 1,
+    "boss": "28 / 32",
+    "ours": "40 / 40",
+    "timer": "23.5秒",
+    "intent": "1.5 秒",
+    "elapsed": 1452.3999998569489,
+    "period": 1250,
+    "bossStriking": false
+  },
+  "frozen": {
+    "phase": "battle",
+    "layout": "a",
+    "gold": 7,
+    "catPos": 5,
+    "toyPos": 1,
+    "boss": "28 / 32",
+    "ours": "40 / 40",
+    "timer": "23.5秒",
+    "intent": "1.5 秒",
+    "elapsed": 1452.3999998569489,
+    "period": 1250,
+    "bossStriking": false
+  },
+  "frozenAfter": {
+    "phase": "battle",
+    "layout": "a",
+    "gold": 7,
+    "catPos": 5,
+    "toyPos": 1,
+    "boss": "28 / 32",
+    "ours": "40 / 40",
+    "timer": "23.5秒",
+    "intent": "1.5 秒",
+    "elapsed": 1452.3999998569489,
+    "period": 1250,
+    "bossStriking": false
+  },
+  "bossHit": {
+    "phase": "battle",
+    "layout": "a",
+    "gold": 7,
+    "catPos": 5,
+    "toyPos": 1,
+    "boss": "24 / 32",
+    "ours": "37 / 40",
+    "timer": "21.6秒",
+    "intent": "2.6 秒",
+    "elapsed": 3356.699999809265,
+    "period": 1250,
+    "bossStriking": true
+  },
+  "afterAnimationCleared": false,
+  "victory": {
+    "phase": "result",
+    "resultVisible": true,
+    "returnControls": 0,
+    "prepInert": [
+      true,
+      true,
+      true
+    ]
+  },
+  "noFeather": {
+    "at1350": {
+      "phase": "battle",
+      "layout": "a",
+      "gold": 10,
+      "catPos": 5,
+      "toyPos": null,
+      "boss": "32 / 32",
+      "ours": "40 / 40",
+      "timer": "23.6秒",
+      "intent": "1.6 秒",
+      "elapsed": 1352.7999999523163,
+      "period": 2000,
+      "bossStriking": false
+    },
+    "at2150": {
+      "phase": "battle",
+      "layout": "a",
+      "gold": 10,
+      "catPos": 5,
+      "toyPos": null,
+      "boss": "28 / 32",
+      "ours": "40 / 40",
+      "timer": "22.8秒",
+      "intent": "0.8 秒",
+      "elapsed": 2151.5999999046326,
+      "period": 2000,
+      "bossStriking": false
+    }
+  },
+  "errors": {
+    "page": [],
+    "console": [
+      {
+        "text": "Failed to load resource: the server responded with a status of 404 (File not found)",
+        "location": {
+          "url": "http://127.0.0.1:8876/favicon.ico",
+          "line": 0,
+          "column": 0,
+          "lineNumber": 0,
+          "columnNumber": 0
+        }
+      }
+    ],
+    "http": []
+  }
+}

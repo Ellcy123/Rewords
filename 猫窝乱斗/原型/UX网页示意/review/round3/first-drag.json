@@ -1,0 +1,39 @@
+{
+  "initial": {
+    "catPos": null,
+    "pos": null,
+    "storedCatHidden": false,
+    "startDisabled": true,
+    "cells": [
+      "DIV",
+      "DIV",
+      "DIV",
+      "DIV",
+      "DIV",
+      "DIV",
+      "DIV",
+      "DIV",
+      "DIV",
+      "DIV",
+      "DIV",
+      "DIV",
+      "DIV",
+      "DIV",
+      "DIV",
+      "DIV"
+    ]
+  },
+  "placed": {
+    "catPos": 5,
+    "pos": null,
+    "storedCatHidden": true,
+    "catHidden": false,
+    "startDisabled": false,
+    "hint": "给面条买件玩具，再拖到它旁边"
+  },
+  "target": {
+    "x": 315.75,
+    "y": 529.84375
+  },
+  "errors": []
+}

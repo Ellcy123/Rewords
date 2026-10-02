@@ -1,0 +1,6 @@
+{
+  "name": "CatGame.Runtime",
+  "references": [
+    "CatGame.Core"
+  ]
+}

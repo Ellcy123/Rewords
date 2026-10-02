@@ -1,0 +1,35 @@
+{
+  "before": {
+    "viewport": {
+      "w": 390,
+      "h": 844
+    },
+    "screenCss": [
+      390,
+      693
+    ],
+    "frame": {
+      "w": 366,
+      "h": 650.66
+    },
+    "tabs": "flex",
+    "prep": "block",
+    "battle": "none",
+    "catPos": null,
+    "catStoredHidden": false
+  },
+  "placed": {
+    "catPos": 5,
+    "storedHidden": true,
+    "catHidden": false,
+    "startDisabled": false,
+    "hint": "给面条买件玩具，再拖到它旁边"
+  },
+  "touchApi": "CDP Input.dispatchTouchEvent",
+  "target": {
+    "x": 232.30385074615478,
+    "y": 525.5990423202516
+  },
+  "switch": "battle tab and prep tab passed",
+  "errors": []
+}

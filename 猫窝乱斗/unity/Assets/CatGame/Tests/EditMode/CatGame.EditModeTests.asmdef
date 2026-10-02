@@ -1,0 +1,14 @@
+{
+  "name": "CatGame.EditModeTests",
+  "references": [
+    "CatGame.Core",
+    "CatGame.Runtime",
+    "CatGame.Editor"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ]
+}

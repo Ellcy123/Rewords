@@ -1,0 +1,165 @@
+{
+  "arranged": {
+    "gold": 7,
+    "catPos": 5,
+    "toyPos": 1,
+    "connected": true,
+    "phase": "prep",
+    "layout": "a",
+    "timer": "25.0秒",
+    "intent": "等待开战",
+    "boss": "32 / 32",
+    "ours": "40 / 40",
+    "combatElapsed": null,
+    "catPeriod": null
+  },
+  "switches": [
+    {
+      "gold": 7,
+      "catPos": 5,
+      "toyPos": 1,
+      "connected": true,
+      "phase": "prep",
+      "layout": "a",
+      "timer": "25.0秒",
+      "intent": "等待开战",
+      "boss": "32 / 32",
+      "ours": "40 / 40",
+      "combatElapsed": null,
+      "catPeriod": null
+    },
+    {
+      "gold": 7,
+      "catPos": 5,
+      "toyPos": 1,
+      "connected": true,
+      "phase": "prep",
+      "layout": "b",
+      "timer": "25.0秒",
+      "intent": "等待开战",
+      "boss": "32 / 32",
+      "ours": "40 / 40",
+      "combatElapsed": null,
+      "catPeriod": null
+    },
+    {
+      "gold": 7,
+      "catPos": 5,
+      "toyPos": 1,
+      "connected": true,
+      "phase": "prep",
+      "layout": "c",
+      "timer": "25.0秒",
+      "intent": "等待开战",
+      "boss": "32 / 32",
+      "ours": "40 / 40",
+      "combatElapsed": null,
+      "catPeriod": null
+    }
+  ],
+  "connectedEarly": {
+    "gold": 7,
+    "catPos": 5,
+    "toyPos": 1,
+    "connected": true,
+    "phase": "battle",
+    "layout": "a",
+    "timer": "23.5秒",
+    "intent": "1.5 秒",
+    "boss": "28 / 32",
+    "ours": "40 / 40",
+    "combatElapsed": 1451.6999998092651,
+    "catPeriod": 1250
+  },
+  "paused": {
+    "before": {
+      "gold": 7,
+      "catPos": 5,
+      "toyPos": 1,
+      "connected": true,
+      "phase": "battle",
+      "layout": "a",
+      "timer": "23.5秒",
+      "intent": "1.5 秒",
+      "boss": "28 / 32",
+      "ours": "40 / 40",
+      "combatElapsed": 1451.6999998092651,
+      "catPeriod": 1250
+    },
+    "after": {
+      "gold": 7,
+      "catPos": 5,
+      "toyPos": 1,
+      "connected": true,
+      "phase": "battle",
+      "layout": "a",
+      "timer": "23.5秒",
+      "intent": "1.5 秒",
+      "boss": "28 / 32",
+      "ours": "40 / 40",
+      "combatElapsed": 1451.6999998092651,
+      "catPeriod": 1250
+    }
+  },
+  "bossAttack": {
+    "gold": 7,
+    "catPos": 5,
+    "toyPos": 1,
+    "connected": true,
+    "phase": "battle",
+    "layout": "a",
+    "timer": "21.7秒",
+    "intent": "2.7 秒",
+    "boss": "24 / 32",
+    "ours": "37 / 40",
+    "combatElapsed": 3331.9999997615814,
+    "catPeriod": 1250
+  },
+  "win": {
+    "phase": "result",
+    "resultVisible": true,
+    "returnControls": 0,
+    "prepInert": [
+      true,
+      true,
+      true
+    ],
+    "startText": "本夜已完成",
+    "startDisabled": true
+  },
+  "noToy": {
+    "before2s": {
+      "gold": 10,
+      "catPos": 5,
+      "toyPos": null,
+      "connected": false,
+      "phase": "battle",
+      "layout": "a",
+      "timer": "23.6秒",
+      "intent": "1.6 秒",
+      "boss": "32 / 32",
+      "ours": "40 / 40",
+      "combatElapsed": 1352.7999999523163,
+      "catPeriod": 2000
+    },
+    "after2s": {
+      "gold": 10,
+      "catPos": 5,
+      "toyPos": null,
+      "connected": false,
+      "phase": "battle",
+      "layout": "a",
+      "timer": "22.8秒",
+      "intent": "0.8 秒",
+      "boss": "28 / 32",
+      "ours": "40 / 40",
+      "combatElapsed": 2151.5,
+      "catPeriod": 2000
+    }
+  },
+  "pageErrors": [],
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 404 (File not found)"
+  ],
+  "badResponses": []
+}

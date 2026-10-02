@@ -1,0 +1,486 @@
+[
+  {
+    "id": "cat_noodle_stretch",
+    "folder": "01_角色/面条/伸展/待机与普攻",
+    "source_reference": "/Users/m4/project/rewords/猫窝乱斗/美术/导出/首批正式资产/角色/cat_noodle_stretch.png",
+    "sheet_px": [
+      1536,
+      1024
+    ],
+    "cell_px": [
+      512,
+      512
+    ],
+    "alpha_extrema": [
+      0,
+      254
+    ],
+    "state": "first_pass_review",
+    "timing": {
+      "idle_ms": [
+        420,
+        420,
+        420
+      ],
+      "attack_ms": [
+        120,
+        80,
+        180,
+        350
+      ],
+      "attack_order": [
+        4,
+        5,
+        6,
+        1
+      ]
+    },
+    "processing": "equal-cell crop and GIF backdrop only; no inpainting, alignment, warp or retouch"
+  },
+  {
+    "id": "cat_noodle_curl",
+    "folder": "01_角色/面条/蜷曲/待机与普攻",
+    "source_reference": "/Users/m4/project/rewords/猫窝乱斗/美术/导出/首批正式资产/角色/cat_noodle_curl.png",
+    "sheet_px": [
+      1536,
+      1024
+    ],
+    "cell_px": [
+      512,
+      512
+    ],
+    "alpha_extrema": [
+      0,
+      254
+    ],
+    "state": "first_pass_review",
+    "timing": {
+      "idle_ms": [
+        420,
+        420,
+        420
+      ],
+      "attack_ms": [
+        120,
+        80,
+        180,
+        350
+      ],
+      "attack_order": [
+        4,
+        5,
+        6,
+        1
+      ]
+    },
+    "processing": "equal-cell crop and GIF backdrop only; no inpainting, alignment, warp or retouch"
+  },
+  {
+    "id": "cat_hammer_stretch",
+    "folder": "01_角色/锤锤/伸展/待机与普攻",
+    "source_reference": "/Users/m4/project/rewords/猫窝乱斗/美术/导出/首批正式资产/角色/cat_hammer_stretch.png",
+    "sheet_px": [
+      1536,
+      1024
+    ],
+    "cell_px": [
+      512,
+      512
+    ],
+    "alpha_extrema": [
+      0,
+      254
+    ],
+    "state": "first_pass_review",
+    "timing": {
+      "idle_ms": [
+        420,
+        420,
+        420
+      ],
+      "attack_ms": [
+        120,
+        80,
+        180,
+        350
+      ],
+      "attack_order": [
+        4,
+        5,
+        6,
+        1
+      ]
+    },
+    "processing": "equal-cell crop and GIF backdrop only; no inpainting, alignment, warp or retouch"
+  },
+  {
+    "id": "cat_hammer_curl",
+    "folder": "01_角色/锤锤/蜷曲/待机与普攻",
+    "source_reference": "/Users/m4/project/rewords/猫窝乱斗/美术/导出/首批正式资产/角色/cat_hammer_curl.png",
+    "sheet_px": [
+      1536,
+      1024
+    ],
+    "cell_px": [
+      512,
+      512
+    ],
+    "alpha_extrema": [
+      0,
+      254
+    ],
+    "state": "first_pass_review",
+    "timing": {
+      "idle_ms": [
+        420,
+        420,
+        420
+      ],
+      "attack_ms": [
+        120,
+        80,
+        180,
+        350
+      ],
+      "attack_order": [
+        4,
+        5,
+        6,
+        1
+      ]
+    },
+    "processing": "equal-cell crop and GIF backdrop only; no inpainting, alignment, warp or retouch"
+  },
+  {
+    "id": "cat_pillow_flat",
+    "folder": "01_角色/枕头/扁卧/待机与普攻",
+    "source_reference": "/Users/m4/project/rewords/猫窝乱斗/美术/导出/首批正式资产/角色/cat_pillow_flat.png",
+    "sheet_px": [
+      1536,
+      1024
+    ],
+    "cell_px": [
+      512,
+      512
+    ],
+    "alpha_extrema": [
+      0,
+      254
+    ],
+    "state": "first_pass_review",
+    "timing": {
+      "idle_ms": [
+        420,
+        420,
+        420
+      ],
+      "attack_ms": [
+        120,
+        80,
+        180,
+        350
+      ],
+      "attack_order": [
+        4,
+        5,
+        6,
+        1
+      ]
+    },
+    "processing": "equal-cell crop and GIF backdrop only; no inpainting, alignment, warp or retouch"
+  },
+  {
+    "id": "enemy_under_bed",
+    "folder": "02_梦魇/床底的手/待机与攻击",
+    "source_reference": "/Users/m4/project/rewords/猫窝乱斗/美术/导出/首批正式资产/梦魇/enemy_under_bed.png",
+    "sheet_px": [
+      1536,
+      1024
+    ],
+    "cell_px": [
+      512,
+      512
+    ],
+    "alpha_extrema": [
+      0,
+      254
+    ],
+    "state": "first_pass_review",
+    "timing": {
+      "idle_ms": [
+        420,
+        420,
+        420
+      ],
+      "attack_ms": [
+        120,
+        80,
+        180,
+        350
+      ],
+      "attack_order": [
+        4,
+        5,
+        6,
+        1
+      ]
+    },
+    "processing": "equal-cell crop and GIF backdrop only; no inpainting, alignment, warp or retouch"
+  },
+  {
+    "id": "enemy_clock",
+    "folder": "02_梦魇/倒走闹钟/待机与攻击",
+    "source_reference": "/Users/m4/project/rewords/猫窝乱斗/美术/导出/首批正式资产/梦魇/enemy_clock.png",
+    "sheet_px": [
+      1536,
+      1024
+    ],
+    "cell_px": [
+      512,
+      512
+    ],
+    "alpha_extrema": [
+      0,
+      254
+    ],
+    "state": "first_pass_review",
+    "timing": {
+      "idle_ms": [
+        420,
+        420,
+        420
+      ],
+      "attack_ms": [
+        120,
+        80,
+        180,
+        350
+      ],
+      "attack_order": [
+        4,
+        5,
+        6,
+        1
+      ]
+    },
+    "processing": "equal-cell crop and GIF backdrop only; no inpainting, alignment, warp or retouch"
+  },
+  {
+    "id": "enemy_wardrobe",
+    "folder": "02_梦魇/衣柜长影/待机与攻击",
+    "source_reference": "/Users/m4/project/rewords/猫窝乱斗/美术/导出/首批正式资产/梦魇/enemy_wardrobe.png",
+    "sheet_px": [
+      1536,
+      1024
+    ],
+    "cell_px": [
+      512,
+      512
+    ],
+    "alpha_extrema": [
+      0,
+      254
+    ],
+    "state": "first_pass_review",
+    "timing": {
+      "idle_ms": [
+        420,
+        420,
+        420
+      ],
+      "attack_ms": [
+        120,
+        80,
+        180,
+        350
+      ],
+      "attack_order": [
+        4,
+        5,
+        6,
+        1
+      ]
+    },
+    "processing": "equal-cell crop and GIF backdrop only; no inpainting, alignment, warp or retouch"
+  },
+  {
+    "id": "noodle_combo",
+    "folder": "01_角色/面条/伸展/连抓技能",
+    "source_reference": "/Users/m4/project/rewords/猫窝乱斗/美术/导出/首批正式资产/角色/cat_noodle_stretch.png",
+    "sheet_px": [
+      1536,
+      1024
+    ],
+    "cell_px": [
+      512,
+      512
+    ],
+    "alpha_extrema": [
+      0,
+      254
+    ],
+    "state": "first_pass_review",
+    "timing": {
+      "motion_ms": [
+        80,
+        90,
+        110,
+        90,
+        100,
+        130
+      ],
+      "showcase_pause_ms": 700
+    },
+    "processing": "equal-cell crop and GIF backdrop only; no inpainting, alignment, warp or retouch"
+  },
+  {
+    "id": "hammer_heavy",
+    "folder": "01_角色/锤锤/伸展/重爪技能",
+    "source_reference": "/Users/m4/project/rewords/猫窝乱斗/美术/导出/首批正式资产/角色/cat_hammer_stretch.png",
+    "sheet_px": [
+      1536,
+      1024
+    ],
+    "cell_px": [
+      512,
+      512
+    ],
+    "alpha_extrema": [
+      0,
+      254
+    ],
+    "state": "first_pass_review",
+    "timing": {
+      "motion_ms": [
+        80,
+        90,
+        110,
+        90,
+        100,
+        130
+      ],
+      "showcase_pause_ms": 700
+    },
+    "processing": "equal-cell crop and GIF backdrop only; no inpainting, alignment, warp or retouch"
+  },
+  {
+    "id": "pillow_shield",
+    "folder": "01_角色/枕头/扁卧/呼噜技能",
+    "source_reference": "/Users/m4/project/rewords/猫窝乱斗/美术/导出/首批正式资产/角色/cat_pillow_flat.png",
+    "sheet_px": [
+      1536,
+      1024
+    ],
+    "cell_px": [
+      512,
+      512
+    ],
+    "alpha_extrema": [
+      0,
+      254
+    ],
+    "state": "first_pass_review",
+    "timing": {
+      "motion_ms": [
+        80,
+        90,
+        110,
+        90,
+        100,
+        130
+      ],
+      "showcase_pause_ms": 700
+    },
+    "processing": "equal-cell crop and GIF backdrop only; no inpainting, alignment, warp or retouch"
+  },
+  {
+    "id": "heavy_impact",
+    "folder": "03_特效/重爪",
+    "source_reference": null,
+    "sheet_px": [
+      1536,
+      1024
+    ],
+    "cell_px": [
+      512,
+      512
+    ],
+    "alpha_extrema": [
+      0,
+      254
+    ],
+    "state": "first_pass_review",
+    "timing": {
+      "motion_ms": [
+        80,
+        90,
+        110,
+        90,
+        100,
+        130
+      ],
+      "showcase_pause_ms": 700
+    },
+    "processing": "equal-cell crop and GIF backdrop only; no inpainting, alignment, warp or retouch"
+  },
+  {
+    "id": "shield_bloom",
+    "folder": "03_特效/护盾",
+    "source_reference": null,
+    "sheet_px": [
+      1536,
+      1024
+    ],
+    "cell_px": [
+      512,
+      512
+    ],
+    "alpha_extrema": [
+      0,
+      254
+    ],
+    "state": "first_pass_review",
+    "timing": {
+      "motion_ms": [
+        80,
+        90,
+        110,
+        90,
+        100,
+        130
+      ],
+      "showcase_pause_ms": 700
+    },
+    "processing": "equal-cell crop and GIF backdrop only; no inpainting, alignment, warp or retouch"
+  },
+  {
+    "id": "mouse_followup",
+    "folder": "03_特效/鼠影追击",
+    "source_reference": "/Users/m4/project/rewords/猫窝乱斗/美术/导出/首批正式资产/用品/item_mouse.png",
+    "sheet_px": [
+      1536,
+      1024
+    ],
+    "cell_px": [
+      512,
+      512
+    ],
+    "alpha_extrema": [
+      0,
+      254
+    ],
+    "state": "first_pass_review",
+    "timing": {
+      "motion_ms": [
+        80,
+        90,
+        110,
+        90,
+        100,
+        130
+      ],
+      "showcase_pause_ms": 700
+    },
+    "processing": "equal-cell crop and GIF backdrop only; no inpainting, alignment, warp or retouch"
+  }
+]

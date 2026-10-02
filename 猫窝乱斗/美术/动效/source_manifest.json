@@ -1,0 +1,86 @@
+[
+  {
+    "id": "cat_noodle_stretch",
+    "folder": "01_角色/面条/伸展/待机与普攻",
+    "source": "/Users/m4/.codex/generated_images/01a0e133-4374-7ff1-8e76-b65b14c75aca/exec-f4ce9f25-75e2-4922-bac6-9fa83b25ea1d.png",
+    "ref": "/Users/m4/project/rewords/猫窝乱斗/美术/导出/首批正式资产/角色/cat_noodle_stretch.png"
+  },
+  {
+    "id": "cat_noodle_curl",
+    "folder": "01_角色/面条/蜷曲/待机与普攻",
+    "source": "/Users/m4/.codex/generated_images/01a0e133-4374-7ff1-8e76-b65b14c75aca/exec-bedee00a-429a-4902-955f-8ce0e4798ffe.png",
+    "ref": "/Users/m4/project/rewords/猫窝乱斗/美术/导出/首批正式资产/角色/cat_noodle_curl.png"
+  },
+  {
+    "id": "cat_hammer_stretch",
+    "folder": "01_角色/锤锤/伸展/待机与普攻",
+    "source": "/Users/m4/.codex/generated_images/01a0e133-4374-7ff1-8e76-b65b14c75aca/exec-ec030a99-63a1-457c-8757-66094a1cabb1.png",
+    "ref": "/Users/m4/project/rewords/猫窝乱斗/美术/导出/首批正式资产/角色/cat_hammer_stretch.png"
+  },
+  {
+    "id": "cat_hammer_curl",
+    "folder": "01_角色/锤锤/蜷曲/待机与普攻",
+    "source": "/Users/m4/.codex/generated_images/01a0e133-4374-7ff1-8e76-b65b14c75aca/exec-1e333f02-6371-40ad-9b71-b5ab688938ed.png",
+    "ref": "/Users/m4/project/rewords/猫窝乱斗/美术/导出/首批正式资产/角色/cat_hammer_curl.png"
+  },
+  {
+    "id": "cat_pillow_flat",
+    "folder": "01_角色/枕头/扁卧/待机与普攻",
+    "source": "/Users/m4/.codex/generated_images/01a0e133-4374-7ff1-8e76-b65b14c75aca/exec-87e99e4f-c71b-4191-b1df-4c41391a7485.png",
+    "ref": "/Users/m4/project/rewords/猫窝乱斗/美术/导出/首批正式资产/角色/cat_pillow_flat.png"
+  },
+  {
+    "id": "enemy_under_bed",
+    "folder": "02_梦魇/床底的手/待机与攻击",
+    "source": "/Users/m4/.codex/generated_images/01a0e133-4374-7ff1-8e76-b65b14c75aca/exec-39633802-9688-4af8-b0ee-09941d369cf9.png",
+    "ref": "/Users/m4/project/rewords/猫窝乱斗/美术/导出/首批正式资产/梦魇/enemy_under_bed.png"
+  },
+  {
+    "id": "enemy_clock",
+    "folder": "02_梦魇/倒走闹钟/待机与攻击",
+    "source": "/Users/m4/.codex/generated_images/01a0e133-4374-7ff1-8e76-b65b14c75aca/exec-54b0bedc-91e6-4def-a686-bdeea0ae1b00.png",
+    "ref": "/Users/m4/project/rewords/猫窝乱斗/美术/导出/首批正式资产/梦魇/enemy_clock.png"
+  },
+  {
+    "id": "enemy_wardrobe",
+    "folder": "02_梦魇/衣柜长影/待机与攻击",
+    "source": "/Users/m4/.codex/generated_images/01a0e133-4374-7ff1-8e76-b65b14c75aca/exec-7e69eb1a-8445-4d3b-968d-1670a39b8bf7.png",
+    "ref": "/Users/m4/project/rewords/猫窝乱斗/美术/导出/首批正式资产/梦魇/enemy_wardrobe.png"
+  },
+  {
+    "id": "noodle_combo",
+    "folder": "01_角色/面条/伸展/连抓技能",
+    "source": "/Users/m4/.codex/generated_images/01a0e133-4374-7ff1-8e76-b65b14c75aca/exec-7f8b663f-a5b8-465a-a486-06a15493092f.png",
+    "ref": "/Users/m4/project/rewords/猫窝乱斗/美术/导出/首批正式资产/角色/cat_noodle_stretch.png"
+  },
+  {
+    "id": "hammer_heavy",
+    "folder": "01_角色/锤锤/伸展/重爪技能",
+    "source": "/Users/m4/.codex/generated_images/01a0e133-4374-7ff1-8e76-b65b14c75aca/exec-b6f5c092-9dda-4caf-9b3d-1118332b4823.png",
+    "ref": "/Users/m4/project/rewords/猫窝乱斗/美术/导出/首批正式资产/角色/cat_hammer_stretch.png"
+  },
+  {
+    "id": "pillow_shield",
+    "folder": "01_角色/枕头/扁卧/呼噜技能",
+    "source": "/Users/m4/.codex/generated_images/01a0e133-4374-7ff1-8e76-b65b14c75aca/exec-4b24d59f-e7c6-471a-b04f-9f5465baa283.png",
+    "ref": "/Users/m4/project/rewords/猫窝乱斗/美术/导出/首批正式资产/角色/cat_pillow_flat.png"
+  },
+  {
+    "id": "heavy_impact",
+    "folder": "03_特效/重爪",
+    "source": "/Users/m4/.codex/generated_images/01a0e133-4374-7ff1-8e76-b65b14c75aca/exec-2c4037c1-26e4-467d-9ac1-244ea2a7cea0.png",
+    "ref": null
+  },
+  {
+    "id": "shield_bloom",
+    "folder": "03_特效/护盾",
+    "source": "/Users/m4/.codex/generated_images/01a0e133-4374-7ff1-8e76-b65b14c75aca/exec-caa0852c-a135-4963-87a4-10951e58d775.png",
+    "ref": null
+  },
+  {
+    "id": "mouse_followup",
+    "folder": "03_特效/鼠影追击",
+    "source": "/Users/m4/.codex/generated_images/01a0e133-4374-7ff1-8e76-b65b14c75aca/exec-5e0f844b-9b45-4dc4-a1e5-5dd1f98c2461.png",
+    "ref": "/Users/m4/project/rewords/猫窝乱斗/美术/导出/首批正式资产/用品/item_mouse.png"
+  }
+]

@@ -1,0 +1,8 @@
+{
+  "name": "CatGame.Presentation",
+  "references": [
+    "CatGame.Core",
+    "CatGame.Runtime",
+    "Unity.ugui"
+  ]
+}

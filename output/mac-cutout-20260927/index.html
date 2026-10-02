@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>macOS 原生抠图对照</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#121519;color:#f2f3f5;font:16px -apple-system,BlinkMacSystemFont,sans-serif;padding:32px;max-width:1440px;margin:auto}h1{font-size:28px;margin:0 0 10px}p{color:#aeb7c2;line-height:1.6}header{margin-bottom:24px}button{font:inherit;background:#303845;color:white;border:1px solid #657084;border-radius:8px;padding:9px 16px;cursor:pointer;margin:0 8px 8px 0}button[aria-pressed=true]{background:#e9eff6;color:#16202c}section{margin-bottom:36px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}figure{margin:0;min-width:0}figcaption{padding:10px 0;color:#c7cfd9}.frame{aspect-ratio:1;border-radius:12px;overflow:hidden;background:#fff}.frame img{display:block;width:100%;height:100%;object-fit:contain}.cutout{background-color:#eee;background-image:conic-gradient(#ccc 25%,transparent 0 50%,#ccc 0 75%,transparent 0);background-size:24px 24px}body[data-bg=dark] .cutout{background:#151b25}body[data-bg=white] .cutout{background:white}body[data-bg=purple] .cutout{background:#783ee6}a{color:#add5ff}@media(max-width:650px){body{padding:18px}.grid{gap:10px}h1{font-size:23px}}
+</style>
+<body data-bg="checker">
+<header><h1>macOS 原生抠图对照</h1><p>原图由 AI 生成；透明 PNG 由 Finder「快速操作 → 移除背景」生成。点击切换底色，观察边缘和背景残留。</p>
+<div role="group" aria-label="抠图背景"><button data-bg="checker" aria-pressed="true">棋盘格</button><button data-bg="dark" aria-pressed="false">深色</button><button data-bg="white" aria-pressed="false">白色</button><button data-bg="purple" aria-pressed="false">紫色</button></div></header>
+<section><h2>简单：纯色背景、清晰硬边</h2><div class="grid"><figure><div class="frame"><img src="easy-original.png" alt="红色火箭原图"></div><figcaption>原图</figcaption></figure><figure><div class="frame cutout"><img src="easy-cutout.png" alt="红色火箭透明抠图"></div><figcaption><a href="easy-cutout.png" download>下载透明 PNG</a></figcaption></figure></div></section>
+<section><h2>复杂：杂乱背景、细毛、颜色接近</h2><div class="grid"><figure><div class="frame"><img src="hard-original.png" alt="花园里的长毛犬原图"></div><figcaption>原图</figcaption></figure><figure><div class="frame cutout"><img src="hard-cutout.png" alt="长毛犬透明抠图"></div><figcaption><a href="hard-cutout.png" download>下载透明 PNG</a></figcaption></figure></div></section>
+<script>document.querySelectorAll('button[data-bg]').forEach(b=>b.addEventListener('click',()=>{document.body.dataset.bg=b.dataset.bg;document.querySelectorAll('button[data-bg]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)))}));</script>
+</body></html>

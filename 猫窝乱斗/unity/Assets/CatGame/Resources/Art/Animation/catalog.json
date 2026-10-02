@@ -1,0 +1,390 @@
+{
+  "entries": [
+    {
+      "id": "cat_noodle_stretch",
+      "idleMs": [
+        420,
+        420,
+        420
+      ],
+      "attackMs": [
+        120,
+        80,
+        180,
+        350
+      ],
+      "attackOrder": [
+        4,
+        5,
+        6,
+        1
+      ],
+      "motionMs": [],
+      "crop": [
+        0,
+        142,
+        512,
+        400
+      ],
+      "source": "动效/01_角色/面条/伸展/待机与普攻",
+      "reviewState": "first_pass_review"
+    },
+    {
+      "id": "cat_noodle_curl",
+      "idleMs": [
+        420,
+        420,
+        420
+      ],
+      "attackMs": [
+        120,
+        80,
+        180,
+        350
+      ],
+      "attackOrder": [
+        4,
+        5,
+        6,
+        1
+      ],
+      "motionMs": [],
+      "crop": [
+        13,
+        37,
+        511,
+        495
+      ],
+      "source": "动效/01_角色/面条/蜷曲/待机与普攻",
+      "reviewState": "first_pass_review"
+    },
+    {
+      "id": "cat_hammer_stretch",
+      "idleMs": [
+        420,
+        420,
+        420
+      ],
+      "attackMs": [
+        120,
+        80,
+        180,
+        350
+      ],
+      "attackOrder": [
+        4,
+        5,
+        6,
+        1
+      ],
+      "motionMs": [],
+      "crop": [
+        0,
+        150,
+        512,
+        423
+      ],
+      "source": "动效/01_角色/锤锤/伸展/待机与普攻",
+      "reviewState": "first_pass_review"
+    },
+    {
+      "id": "cat_hammer_curl",
+      "idleMs": [
+        420,
+        420,
+        420
+      ],
+      "attackMs": [
+        120,
+        80,
+        180,
+        350
+      ],
+      "attackOrder": [
+        4,
+        5,
+        6,
+        1
+      ],
+      "motionMs": [],
+      "crop": [
+        6,
+        45,
+        512,
+        488
+      ],
+      "source": "动效/01_角色/锤锤/蜷曲/待机与普攻",
+      "reviewState": "first_pass_review"
+    },
+    {
+      "id": "cat_pillow_flat",
+      "idleMs": [
+        420,
+        420,
+        420
+      ],
+      "attackMs": [
+        120,
+        80,
+        180,
+        350
+      ],
+      "attackOrder": [
+        4,
+        5,
+        6,
+        1
+      ],
+      "motionMs": [],
+      "crop": [
+        0,
+        110,
+        512,
+        432
+      ],
+      "source": "动效/01_角色/枕头/扁卧/待机与普攻",
+      "reviewState": "first_pass_review"
+    },
+    {
+      "id": "enemy_under_bed",
+      "idleMs": [
+        420,
+        420,
+        420
+      ],
+      "attackMs": [
+        120,
+        80,
+        180,
+        350
+      ],
+      "attackOrder": [
+        4,
+        5,
+        6,
+        1
+      ],
+      "motionMs": [],
+      "crop": [
+        0,
+        116,
+        512,
+        421
+      ],
+      "source": "动效/02_梦魇/床底的手/待机与攻击",
+      "reviewState": "first_pass_review"
+    },
+    {
+      "id": "enemy_clock",
+      "idleMs": [
+        420,
+        420,
+        420
+      ],
+      "attackMs": [
+        120,
+        80,
+        180,
+        350
+      ],
+      "attackOrder": [
+        4,
+        5,
+        6,
+        1
+      ],
+      "motionMs": [],
+      "crop": [
+        0,
+        0,
+        512,
+        509
+      ],
+      "source": "动效/02_梦魇/倒走闹钟/待机与攻击",
+      "reviewState": "first_pass_review"
+    },
+    {
+      "id": "enemy_wardrobe",
+      "idleMs": [
+        420,
+        420,
+        420
+      ],
+      "attackMs": [
+        120,
+        80,
+        180,
+        350
+      ],
+      "attackOrder": [
+        4,
+        5,
+        6,
+        1
+      ],
+      "motionMs": [],
+      "crop": [
+        93,
+        90,
+        477,
+        428
+      ],
+      "source": "动效/02_梦魇/衣柜长影/待机与攻击",
+      "reviewState": "first_pass_review"
+    },
+    {
+      "id": "noodle_combo",
+      "idleMs": [],
+      "attackMs": [],
+      "attackOrder": [],
+      "motionMs": [
+        80,
+        90,
+        110,
+        90,
+        100,
+        130
+      ],
+      "crop": [
+        0,
+        107,
+        512,
+        446
+      ],
+      "source": "动效/01_角色/面条/伸展/连抓技能",
+      "reviewState": "first_pass_review"
+    },
+    {
+      "id": "hammer_heavy",
+      "idleMs": [],
+      "attackMs": [],
+      "attackOrder": [],
+      "motionMs": [
+        80,
+        90,
+        110,
+        90,
+        100,
+        130
+      ],
+      "crop": [
+        0,
+        207,
+        512,
+        400
+      ],
+      "source": "动效/01_角色/锤锤/伸展/重爪技能",
+      "reviewState": "first_pass_review"
+    },
+    {
+      "id": "pillow_shield",
+      "idleMs": [],
+      "attackMs": [],
+      "attackOrder": [],
+      "motionMs": [
+        80,
+        90,
+        110,
+        90,
+        100,
+        130
+      ],
+      "crop": [
+        0,
+        17,
+        512,
+        472
+      ],
+      "source": "动效/01_角色/枕头/扁卧/呼噜技能",
+      "reviewState": "first_pass_review"
+    },
+    {
+      "id": "heavy_impact",
+      "idleMs": [],
+      "attackMs": [],
+      "attackOrder": [],
+      "motionMs": [
+        80,
+        90,
+        110,
+        90,
+        100,
+        130
+      ],
+      "crop": [
+        0,
+        0,
+        507,
+        510
+      ],
+      "source": "动效/03_特效/重爪",
+      "reviewState": "first_pass_review"
+    },
+    {
+      "id": "shield_bloom",
+      "idleMs": [],
+      "attackMs": [],
+      "attackOrder": [],
+      "motionMs": [
+        80,
+        90,
+        110,
+        90,
+        100,
+        130
+      ],
+      "crop": [
+        33,
+        12,
+        495,
+        467
+      ],
+      "source": "动效/03_特效/护盾",
+      "reviewState": "first_pass_review"
+    },
+    {
+      "id": "mouse_followup",
+      "idleMs": [],
+      "attackMs": [],
+      "attackOrder": [],
+      "motionMs": [
+        80,
+        90,
+        110,
+        90,
+        100,
+        130
+      ],
+      "crop": [
+        0,
+        53,
+        512,
+        464
+      ],
+      "source": "动效/03_特效/鼠影追击",
+      "reviewState": "first_pass_review"
+    },
+    {
+      "id": "claw_hit",
+      "idleMs": [],
+      "attackMs": [],
+      "attackOrder": [],
+      "motionMs": [
+        40,
+        50,
+        70,
+        60,
+        70,
+        90
+      ],
+      "crop": [
+        36,
+        50,
+        469,
+        466
+      ],
+      "source": "特效探索/2026-09-28_猫爪命中",
+      "reviewState": "first_pass_review"
+    }
+  ]
+}

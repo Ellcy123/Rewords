@@ -1,0 +1,52 @@
+{
+  "toast": {
+    "text": "补给到账 · +40 培养币",
+    "rect": {
+      "x": 30.769229888916016,
+      "y": 268.358154296875,
+      "width": 328.4615478515625,
+      "height": 36.60003662109375,
+      "top": 268.358154296875,
+      "right": 359.2307777404785,
+      "bottom": 304.95819091796875,
+      "left": 30.769229888916016
+    },
+    "top": "80px"
+  },
+  "action": {
+    "x": 28.89230728149414,
+    "y": 721.9430541992188,
+    "width": 332.21539306640625,
+    "height": 43.169189453125,
+    "top": 721.9430541992188,
+    "right": 361.1077003479004,
+    "bottom": 765.1122436523438,
+    "left": 28.89230728149414
+  },
+  "overlap": false,
+  "insufficient": true,
+  "focusX": {
+    "html": "<button class=\"hub-cat-scene\" data-action=\"cat\" aria-label=\"查看面条猫\"><img class=\"hub-nest\" src=\"assets/nest_fabric_v1.png\" alt=\"布艺猫窝\"><img class=\"hub-resident\" src=\"assets/cat_noodle_pose0.png\" alt=\"面条猫\"><span>面条 <b>Lv.5</b> ♡</span></button>",
+    "action": "cat",
+    "connected": true
+  },
+  "focusEsc": {
+    "html": "<button class=\"hub-cat-scene\" data-action=\"cat\" aria-label=\"查看面条猫\"><img class=\"hub-nest\" src=\"assets/nest_fabric_v1.png\" alt=\"布艺猫窝\"><img class=\"hub-resident\" src=\"assets/cat_noodle_pose0.png\" alt=\"面条猫\"><span>面条 <b>Lv.5</b> ♡</span></button>",
+    "action": "cat",
+    "connected": true,
+    "dialogOpen": false
+  },
+  "consoleErrors": [
+    {
+      "text": "Failed to load resource: the server responded with a status of 404 (File not found)",
+      "location": {
+        "url": "http://127.0.0.1:8876/favicon.ico",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    }
+  ],
+  "responses": []
+}
